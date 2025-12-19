@@ -1,0 +1,141 @@
+/* RESET */
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+  color: #0b1220;
+  background: #ffffff;
+  line-height: 1.5;
+}
+img { max-width: 100%; display: block; }
+a { color: inherit; text-decoration: none; }
+
+/* LAYOUT */
+.screen {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+}
+.screen-alt {
+  background: #f6f8fc;
+}
+
+.container {
+  width: min(1100px, calc(100% - 32px));
+  margin: 0 auto;
+}
+
+/* HERO */
+.hero-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 40px;
+  align-items: center;
+}
+
+.hero-images {
+  position: relative;
+}
+
+.photo-big {
+  border-radius: 20px;
+}
+
+.photo-small {
+  position: absolute;
+  bottom: -20px;
+  right: -20px;
+  width: 160px;
+  border-radius: 16px;
+  border: 4px solid #ffffff;
+}
+
+.hero-text h1 {
+  font-size: 42px;
+  margin: 0 0 10px;
+}
+.hero-text h2 {
+  font-size: 20px;
+  color: #1f4fd6;
+  margin: 0 0 16px;
+}
+.hero-text p {
+  font-size: 18px;
+  color: #374151;
+}
+
+/* SERVIZI */
+#cosa-faccio h2 {
+  font-size: 32px;
+  margin-bottom: 32px;
+}
+
+.services {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 24px;
+}
+
+.service-card {
+  border: 1px solid #e6eaf2;
+  border-radius: 18px;
+  padding: 24px;
+  background: #ffffff;
+}
+.service-card h3 {
+  margin: 0 0 10px;
+}
+
+/* CONTATTI */
+.contact-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 32px;
+}
+
+.contact-cta {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+/* BOTTONI */
+.btn {
+  height: 48px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 24px;
+  border-radius: 12px;
+  font-weight: 700;
+  border: 1px solid transparent;
+}
+
+.btn-primary {
+  background: #1f4fd6;
+  color: #ffffff;
+}
+
+.btn-ghost {
+  border-color: #d7def0;
+  background: transparent;
+}
+
+/* RESPONSIVE */
+@media (max-width: 768px) {
+  .hero-grid,
+  .services,
+  .contact-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .photo-small {
+    position: static;
+    margin-top: 16px;
+    width: 120px;
+  }
+
+  .hero-text h1 {
+    font-size: 34px;
+  }
+}
