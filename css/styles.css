@@ -438,3 +438,6 @@ a { color: inherit; text-decoration: none; }
   .card-metrics{ grid-template-columns: 1fr; }
   .field.two{ grid-template-columns: 1fr; }
 }
+.pill-list{
+  display: none;
+}
