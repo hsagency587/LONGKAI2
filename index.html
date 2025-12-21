@@ -3,265 +3,181 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Longkai — Wing Chun a Mortara</title>
-  <meta name="description" content="Longkai: Wing Chun a Mortara (PV). Lezioni private e di gruppo. Prenota una prova." />
-  <link rel="stylesheet" href="css/styles.css" />
+
+  <title>Wing Chun – Difesa Personale e Preparazione Atleti</title>
+  <meta name="description" content="Wing Chun, difesa personale reale e preparazione atleti per competizioni." />
+
+  <link rel="stylesheet" href="styles.css" />
 </head>
 
 <body>
-  <!-- Top anchor -->
-  <div id="top"></div>
 
-  <!-- Header / Nav -->
-  <header class="site-header" role="banner">
+  <!-- HEADER -->
+  <header class="site-header">
     <div class="container header-inner">
-      <a class="brand" href="#top" aria-label="Torna all'inizio">
-        <!-- Opzionale: logo -->
-        <!-- <img src="img/logo.svg" alt="Longkai" class="brand-logo"> -->
-        <span class="brand-name">LONGKAI</span>
-      </a>
+      <span class="brand-name">Wing Chun Academy</span>
 
-      <nav class="nav" aria-label="Navigazione principale">
-        <a href="#chi-sono">Chi sono</a>
-        <a href="#cosa-faccio">Cosa faccio</a>
-        <a href="#contatti">Contatti</a>
+      <nav class="nav">
+        <a href="#chi-siamo">Chi sono</a>
+        <a href="#servizi">Cosa faccio</a>
+        <a href="#contatti" class="nav-cta">Contatti</a>
       </nav>
-
-      <!-- Mobile nav: semplice (scroll) -->
-      <a class="cta" href="#contatti">Prenota</a>
     </div>
   </header>
 
-  <main>
-    <!-- ========== SCHERMATA 1: CHI SONO ========== -->
-    <section id="chi-sono" class="screen screen-hero" aria-label="Chi sono">
-      <div class="container screen-grid">
+  <main id="top">
+
+    <!-- HERO -->
+    <section class="hero">
+      <div class="container hero-inner">
+
         <div class="hero-copy">
-          <p class="kicker">Wing Chun • Mortara (PV)</p>
-          <h1 class="headline">Allenati con metodo. Cresci con costanza.</h1>
+          <p class="kicker">Arte marziale & difesa reale</p>
+
+          <h1>Wing Chun, Difesa Personale<br>e Preparazione Atleti</h1>
+
           <p class="subhead">
-            Sono Diego, istruttore di Wing Chun. Lavoriamo su tecnica, timing, struttura e applicazione reale,
-            con un percorso chiaro e misurabile.
+            Allenamento pratico, efficace e orientato alla realtà,
+            per autodifesa e competizioni.
           </p>
 
           <div class="hero-actions">
-            <a class="button primary" href="#contatti">Prenota una prova</a>
-            <a class="button ghost" href="#cosa-faccio">Scopri i servizi</a>
-          </div>
-
-        </div>
-
-        <div class="hero-media">
-          <div class="portrait-wrap">
-            <!-- Foto grande (principale) -->
-            <img class="portrait-main" src="img/chi-sono-grande.jpg" alt="Diego — Maestro di Wing Chun" />
-            <!-- Foto piccola (secondaria) -->
-            <img class="portrait-mini" src="img/chi-sono-piccola.jpg" alt="Dettaglio allenamento Wing Chun" />
-          </div>
-
-          <div class="bio-card" aria-label="Biografia sintetica">
-            <h2 class="card-title">Bio</h2>
-            <p class="card-text">
-              Insegno Wing Chun con un approccio essenziale: basi solide, progressione tecnica e applicazione.
-              L’obiettivo è renderti più efficace, più lucido, più controllato.
-            </p>
-            <div class="card-metrics" aria-label="Dettagli rapidi">
-              <div class="metric">
-                <span class="metric-label">Sede</span>
-                <span class="metric-value">Mortara (PV)</span>
-              </div>
-              <div class="metric">
-                <span class="metric-label">Format</span>
-                <span class="metric-value">Private / Gruppi</span>
-              </div>
-              <div class="metric">
-                <span class="metric-label">Livelli</span>
-                <span class="metric-value">Base → Avanzato</span>
-              </div>
+            <div class="hero-actions-top">
+              <a class="btn btn-primary" href="#contatti">Prenota una lezione</a>
+              <a class="btn btn-ghost" href="#servizi">Scopri i percorsi</a>
             </div>
+
+            <a class="btn btn-primary btn-wide" href="#contatti">
+              Riserva il tuo posto
+            </a>
           </div>
         </div>
-      </div>
-      
-    </section>
 
-    <!-- ========== SCHERMATA 2: COSA FACCIO ========== -->
-    <section id="cosa-faccio" class="screen screen-services" aria-label="Cosa faccio">
-      <div class="container">
-        <header class="section-head">
-          <p class="kicker">Programmi e servizi</p>
-          <h2 class="section-title">Cosa faccio</h2>
-          <p class="section-subtitle">
-            Scegli un percorso. Ti guido su tecnica, sensibilità, footwork e applicazione.
+        <div class="hero-card">
+          <h2>Allenamento concreto</h2>
+          <p>
+            Tecnica, condizionamento fisico e applicazione reale.
+            Ogni percorso è adattato al livello dell’allievo.
           </p>
-        </header>
-
-        <div class="cards-grid" role="list">
-          <article class="card" role="listitem">
-            <h3 class="card-h">Lezioni private</h3>
-            <p class="card-p">
-              Percorso 1:1 con obiettivi chiari. Ideale per accelerare risultati e correggere dettagli tecnici.
-            </p>
-            <ul class="card-ul">
-              <li>Analisi tecnica e postura</li>
-              <li>Progressione settimanale</li>
-              <li>Feedback e correzioni mirate</li>
-            </ul>
-          </article>
-
-          <article class="card" role="listitem">
-            <h3 class="card-h">Piccoli gruppi</h3>
-            <p class="card-p">
-              Allenamento strutturato in gruppo, con attenzione individuale. Ottimo per costanza e confronto.
-            </p>
-            <ul class="card-ul">
-              <li>Drill, combinazioni, timing</li>
-              <li>Lavoro su distanza e angoli</li>
-              <li>Applicazioni controllate</li>
-            </ul>
-          </article>
-
-          <article class="card" role="listitem">
-            <h3 class="card-h">Percorsi su misura</h3>
-            <p class="card-p">
-              Se hai un obiettivo specifico (atletico, tecnico, focus mentale), costruiamo un piano dedicato.
-            </p>
-            <ul class="card-ul">
-              <li>Condizionamento funzionale</li>
-              <li>Mobilità e struttura</li>
-              <li>Routine brevi per casa</li>
-            </ul>
-          </article>
+          <ul class="checklist">
+            <li>Lezioni individuali e di gruppo</li>
+            <li>Preparazione fisica mirata</li>
+            <li>Applicazioni realistiche</li>
+          </ul>
         </div>
 
-        <div class="services-footer">
-          <div class="note">
-            <h3 class="note-h">Come lavoriamo</h3>
-            <p class="note-p">
-              Prima sessione: valutazione livello, obiettivi, impostazione del percorso.
-              Poi, lavoro progressivo con step chiari.
-            </p>
-          </div>
-
-          <a class="button primary" href="#contatti">Contattami e prenota</a>
-        </div>
       </div>
     </section>
 
-    <!-- ========== SCHERMATA 3: CONTATTI + PRENOTAZIONI ========== -->
-    <section id="contatti" class="screen screen-contact" aria-label="Contatti e prenotazioni">
-      <div class="container contact-grid">
-        <div class="contact-copy">
-          <header class="section-head left">
-            <p class="kicker">Contatti</p>
-            <h2 class="section-title">Parliamone</h2>
-            <p class="section-subtitle">
-              Scrivimi per info, disponibilità e costi. Se vuoi, proponi già due slot: ti confermo quello migliore.
-            </p>
-          </header>
+    <!-- CHI SONO -->
+    <section id="chi-siamo" class="section">
+      <div class="container">
 
-          <div class="contact-cards">
-            <div class="info-card">
-              <h3 class="info-h">Dove</h3>
-              <p class="info-p">Mortara (PV)</p>
-              <p class="info-muted">Inserisci qui indirizzo preciso o “su appuntamento”.</p>
-            </div>
-
-            <div class="info-card">
-              <h3 class="info-h">Contatti rapidi</h3>
-              <p class="info-p">
-                <a href="tel:+390000000000">+39 000 000 0000</a><br />
-                <a href="mailto:info@longkai-it.com">info@longkai-it.com</a>
-              </p>
-              <p class="info-muted">Aggiorna numero ed email.</p>
-            </div>
-
-            <div class="info-card">
-              <h3 class="info-h">Social</h3>
-              <p class="info-p">
-                <a href="#" target="_blank" rel="noopener">Instagram</a><br />
-                <a href="#" target="_blank" rel="noopener">Facebook</a>
-              </p>
-              <p class="info-muted">Inserisci i link reali.</p>
-            </div>
-          </div>
+        <div class="section-head">
+          <h2>Chi sono</h2>
+          <p>
+            Istruttore specializzato in Wing Chun, difesa personale
+            e preparazione atletica per atleti.
+          </p>
         </div>
 
-        <div class="form-wrap" aria-label="Modulo prenotazioni">
-          <div class="form-card">
-            <h3 class="form-title">Richiesta prenotazione</h3>
-            <p class="form-subtitle">Compila e invia. Rispondo appena possibile.</p>
-
-            <!-- Nota: questo è un form front-end. Per inviarlo davvero serve un backend o un servizio (Formspree, Netlify Forms, ecc.). -->
-            <form class="form" action="#" method="post">
-              <div class="field">
-                <label for="name">Nome e cognome</label>
-                <input id="name" name="name" type="text" autocomplete="name" placeholder="Es. Mario Rossi" required />
-              </div>
-
-              <div class="field two">
-                <div>
-                  <label for="phone">Telefono</label>
-                  <input id="phone" name="phone" type="tel" autocomplete="tel" placeholder="+39…" required />
-                </div>
-                <div>
-                  <label for="email">Email</label>
-                  <input id="email" name="email" type="email" autocomplete="email" placeholder="nome@email.it" required />
-                </div>
-              </div>
-
-              <div class="field">
-                <label for="service">Cosa ti interessa</label>
-                <select id="service" name="service" required>
-                  <option value="" disabled selected>Scegli un'opzione</option>
-                  <option>Lezione privata</option>
-                  <option>Piccolo gruppo</option>
-                  <option>Percorso su misura</option>
-                  <option>Info generiche</option>
-                </select>
-              </div>
-
-              <div class="field two">
-                <div>
-                  <label for="slot1">Disponibilità 1</label>
-                  <input id="slot1" name="slot1" type="datetime-local" required />
-                </div>
-                <div>
-                  <label for="slot2">Disponibilità 2</label>
-                  <input id="slot2" name="slot2" type="datetime-local" required />
-                </div>
-              </div>
-
-              <div class="field">
-                <label for="msg">Messaggio</label>
-                <textarea id="msg" name="msg" rows="5" placeholder="Obiettivo, livello attuale, eventuali preferenze…"></textarea>
-              </div>
-
-              <div class="form-actions">
-                <button class="button primary" type="submit">Invia richiesta</button>
-                <p class="fineprint">
-                  Inviando accetti il trattamento dati per ricontatto. (Inserisci qui link privacy, se serve.)
-                </p>
-              </div>
-            </form>
-          </div>
-
-          <div class="mini-footer">
-            <a href="#top" class="back-top">Torna su</a>
-            <span class="sep">•</span>
-            <span class="copyright">© <span id="year"></span> Longkai</span>
-          </div>
+        <div class="team-grid">
+          <article class="person-card">
+            <img src="assets/istruttore-grande.jpg" class="person-photo" alt="Istruttore Wing Chun">
+            <div class="person-body">
+              <h3>Nome Istruttore</h3>
+              <p class="role">Istruttore Wing Chun & Preparatore</p>
+              <p class="bio">
+                Percorso basato su Wing Chun tradizionale,
+                difesa personale reale e preparazione fisica
+                per competizioni e autodifesa.
+              </p>
+            </div>
+          </article>
         </div>
+
       </div>
-
-      <script>
-        // Solo per l'anno nel footer (micro JS inline)
-        document.getElementById("year").textContent = new Date().getFullYear();
-      </script>
     </section>
+
+    <!-- SERVIZI -->
+    <section id="servizi" class="section section-alt">
+      <div class="container">
+
+        <div class="section-head">
+          <h2>Cosa faccio</h2>
+          <p>Percorsi strutturati in base agli obiettivi</p>
+        </div>
+
+        <div class="services-grid">
+
+          <div class="service-card">
+            <h3>Wing Chun Tradizionale</h3>
+            <p>
+              Studio della struttura, sensibilità,
+              timing e applicazione del Wing Chun.
+            </p>
+          </div>
+
+          <div class="service-card">
+            <h3>Difesa Personale</h3>
+            <p>
+              Percorsi pratici basati su scenari reali,
+              gestione dello stress e reazione immediata.
+            </p>
+          </div>
+
+          <div class="service-card">
+            <h3>Preparazione Atleti</h3>
+            <p>
+              Preparazione fisica e tecnica per atleti
+              che partecipano a gare e competizioni.
+            </p>
+          </div>
+
+        </div>
+
+      </div>
+    </section>
+
+    <!-- CONTATTI -->
+    <section id="contatti" class="section">
+      <div class="container">
+
+        <div class="section-head">
+          <h2>Contatti</h2>
+          <p>Richiedi informazioni o prenota una lezione</p>
+        </div>
+
+        <div class="contact-grid">
+
+          <div class="contact-card">
+            <p><strong>Email:</strong> <a href="mailto:info@wingchun.it">info@wingchun.it</a></p>
+            <p><strong>Telefono:</strong> <a href="tel:+393000000000">+39 300 000 0000</a></p>
+            <p><strong>Sede:</strong> [Città]</p>
+
+            <a class="btn btn-primary" href="mailto:info@wingchun.it">
+              Contattami
+            </a>
+          </div>
+
+        </div>
+
+      </div>
+    </section>
+
   </main>
+
+  <footer class="footer">
+    <div class="container footer-inner">
+      <p>© <span id="year"></span> Wing Chun Academy</p>
+    </div>
+  </footer>
+
+  <script>
+    document.getElementById("year").textContent = new Date().getFullYear();
+  </script>
+
 </body>
 </html>
-
   
 
