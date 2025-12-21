@@ -215,3 +215,43 @@ h2 {
         font-size: 2.3rem;
     }
 }
+.side-box {
+    display: flex;
+    flex-direction: column;
+    gap: 30px;
+}
+
+/* PAGAMENTO RIDOTTO */
+.payment {
+    padding: 30px;
+}
+
+/* CONTATTI */
+.contacts {
+    background: #fff;
+    padding: 30px;
+    border-radius: 16px;
+    box-shadow: 0 15px 35px rgba(0,0,0,0.08);
+}
+
+.contacts h3 {
+    margin-bottom: 15px;
+    color: var(--primary);
+}
+
+.contacts ul {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.contacts a {
+    color: var(--dark);
+    text-decoration: none;
+    font-weight: 500;
+}
+
+.contacts a:hover {
+    color: var(--primary);
+}
