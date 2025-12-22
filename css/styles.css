@@ -450,38 +450,45 @@ h2 {
     grid-template-columns: 1fr 1fr;
     gap: 12px;
 }
-/* CONTENUTO BOX DESTRA – CONTRASTO */
-.card-style h3,
-.payment h3 {
-    color: #2a1810;
-}
+/* ===============================
+   BOX DESTRA – CONTRASTO DEFINITIVO
+   =============================== */
 
-.card-style span,
-.payment p {
-    color: #6b5a4a;
-}
-.card-style a,
-.card-style li,
-.payment a {
+.card-style {
     color: #1e1e1e;
 }
-.card-style h3,
-.payment h3 {
+
+.card-style h3 {
+    color: #2a1810;
     letter-spacing: 0.05em;
     font-weight: 600;
 }
-/* FIX CONTRASTO BOX DESTRA – FORZATO */
-.contacts h3,
-.payment h3 {
-    color: #2a1810 !important;
+
+.card-style span {
+    color: #6b5a4a;
 }
 
-.contacts .contact-list span {
-    color: #6b5a4a !important;
+.card-style a,
+.card-style li {
+    color: #1e1e1e;
 }
 
-.contacts .contact-list a,
-.payment p,
-.payment a {
-    color: #1e1e1e !important;
+/* ===============================
+   PAGAMENTO FULL WIDTH
+   =============================== */
+
+.payment-wide {
+    color: #f6f3ef;
+}
+
+.payment-wide h3 {
+    color: var(--secondary);
+}
+
+.payment-wide p {
+    color: #e8e2da;
+}
+
+.payment-wide a {
+    color: #1e1e1e;
 }
