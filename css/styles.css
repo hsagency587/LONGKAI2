@@ -13,9 +13,20 @@
 
 body {
     font-family: 'Inter', sans-serif;
-    background: var(--light);
-    color: var(--dark);
+    color: #f6f3ef;
     line-height: 1.6;
+
+    background:
+        linear-gradient(
+            rgba(30,15,10,0.78),
+            rgba(30,15,10,0.78)
+        ),
+        url("/img/logo.png");
+
+    background-repeat: no-repeat;
+    background-position: center center;
+    background-size: contain;
+    background-attachment: fixed;
 }
 
 /* HEADER */
@@ -406,16 +417,4 @@ h2 {
         grid-template-columns: 1fr;
         row-gap: 100px;
     }
-}
-.hero-bg {
-    background-image:
-        linear-gradient(
-            rgba(30,15,10,0.78),
-            rgba(30,15,10,0.78)
-        ),
-        url("/img/logo.png");
-
-    background-size: 900px;
-    background-position: right center;
-    background-repeat: no-repeat;
 }
