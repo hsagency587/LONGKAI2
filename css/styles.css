@@ -573,13 +573,15 @@ h2 {
 }
 .service-hero h1 {
     font-size: 3rem;
-    margin-bottom: 20px;
+    margin-bottom: 16px;
 }
 
 .service-intro {
     max-width: 720px;
     font-size: 1.1rem;
     opacity: 0.9;
+    margin-top: 0;
+    margin-bottom: 0;
 }
 .service-image img {
     width: 100%;
@@ -605,8 +607,16 @@ h2 {
 }
 /* HERO SERVIZIO – FIX SPAZI */
 .service-hero {
-    min-height: calc(100vh - 80px); /* tiene conto della navbar */
-    display: flex;
-    align-items: center;            /* CENTRO verticale */
-    padding-top: 0;                 /* elimina spazio inutile */
+    padding: 60px 0 40px;
+}
+
+.service-page .section {
+    padding: 60px 8%;
+}
+.service-text p {
+    margin-bottom: 14px;
+}
+
+.service-info {
+    margin-bottom: 20px;
 }
