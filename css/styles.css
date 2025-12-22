@@ -470,3 +470,18 @@ h2 {
     letter-spacing: 0.05em;
     font-weight: 600;
 }
+/* FIX CONTRASTO BOX DESTRA – FORZATO */
+.contacts h3,
+.payment h3 {
+    color: #2a1810 !important;
+}
+
+.contacts .contact-list span {
+    color: #6b5a4a !important;
+}
+
+.contacts .contact-list a,
+.payment p,
+.payment a {
+    color: #1e1e1e !important;
+}
