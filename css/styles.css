@@ -410,11 +410,15 @@ h2 {
 .hero-bg {
     background-image:
         linear-gradient(
-            rgba(30,15,10,0.75),
-            rgba(30,15,10,0.75)
+            rgba(30,15,10,0.78),
+            rgba(30,15,10,0.78)
         ),
         url("/img/logo.png");
-    background-size: contain;
-    background-position: center;
+
+    background-size: cover;
+
+    /* QUESTO È IL FIX */
+    background-position: 70% center;
+
     background-repeat: no-repeat;
 }
