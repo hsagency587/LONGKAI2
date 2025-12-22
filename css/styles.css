@@ -427,3 +427,26 @@ h2 {
 .section {
     background: transparent;
 }
+.booking-form input,
+.booking-form textarea {
+    background: rgba(20,10,7,0.75);
+    color: #f6f3ef;
+    border: 1px solid rgba(255,255,255,0.15);
+}
+
+.booking-form input::placeholder,
+.booking-form textarea::placeholder {
+    color: rgba(246,243,239,0.7);
+}
+
+.booking-form label {
+    font-size: 0.85rem;
+    color: var(--secondary);
+    margin-bottom: 6px;
+}
+
+.slot {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+}
