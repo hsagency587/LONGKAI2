@@ -184,28 +184,37 @@ h2 {
 }
 
 /* PAGAMENTO */
-.payment-wide {
-    margin-top: 80px;
-    padding: 60px 8%;
-    text-align: center;
-    background: rgba(20,10,7,0.85);
+.payment {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
 }
 
-.payment-wide h3 {
-    font-family: 'Playfair Display', serif;
-    font-size: 2rem;
-    color: var(--secondary);
-    margin-bottom: 16px;
+/* eredita lo stile da .card-style */
+.payment h3 {
+    color: #2a1810;
+    letter-spacing: 0.05em;
+    font-weight: 600;
 }
 
-.payment-wide p {
-    color: #e8e2da;
-    margin-bottom: 30px;
+.payment p {
+    color: #6b5a4a;
 }
 
-.pay-btn.wide {
-    padding: 18px 60px;
-    font-size: 1.1rem;
+/* bottone */
+.pay-btn {
+    align-self: flex-start;
+    padding: 14px 36px;
+    background: var(--secondary);
+    color: #1e1e1e;
+    font-weight: 600;
+    border-radius: 8px;
+    text-decoration: none;
+    transition: 0.3s;
+}
+
+.pay-btn:hover {
+    background: #caa56f;
 }
 /* FOOTER */
 .footer {
