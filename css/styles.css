@@ -184,29 +184,29 @@ h2 {
 }
 
 /* PAGAMENTO */
-.payment {
-    background: #fff;
-    padding: 40px;
-    border-radius: 16px;
-    box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+.payment-wide {
+    margin-top: 80px;
+    padding: 60px 8%;
+    text-align: center;
+    background: rgba(20,10,7,0.85);
 }
 
-.pay-btn {
-    display: inline-block;
-    margin-top: 20px;
-    padding: 14px 24px;
-    background: var(--secondary);
-    color: var(--dark);
-    text-decoration: none;
-    border-radius: 8px;
-    font-weight: 500;
-    transition: 0.3s;
+.payment-wide h3 {
+    font-family: 'Playfair Display', serif;
+    font-size: 2rem;
+    color: var(--secondary);
+    margin-bottom: 16px;
 }
 
-.pay-btn:hover {
-    background: #c9a26e;
+.payment-wide p {
+    color: #e8e2da;
+    margin-bottom: 30px;
 }
 
+.pay-btn.wide {
+    padding: 18px 60px;
+    font-size: 1.1rem;
+}
 /* FOOTER */
 .footer {
     text-align: center;
