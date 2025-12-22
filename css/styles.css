@@ -384,4 +384,11 @@ h2 {
         font-size: 2rem;
     }
 }
+/* =====================================================
+   FIX VISIBILITÀ TESTI SERVIZI (FORZATO)
+   ===================================================== */
 
+#servizi,
+#servizi * {
+    color: #2a1810 !important;
+}
