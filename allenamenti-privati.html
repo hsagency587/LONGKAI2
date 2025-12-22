@@ -1,51 +1,210 @@
 <!DOCTYPE html>
 <html lang="it">
 <head>
-  <meta charset="UTF-8">
-  <title>Wing Chun Tradizionale a Vigevano | Sifu Wing Chun</title>
-  <meta name="description" content="Lezioni di Wing Chun Tradizionale a Vigevano e Mortara. Metodo autentico, difesa personale reale e allenamento strutturato.">
-  <link rel="stylesheet" href="css/styles.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>
+        Wing Chun Tradizionale a Vigevano e Mortara | Lezioni e Difesa Personale
+    </title>
+
+    <meta name="description" content="
+        Scuola di Wing Chun Tradizionale a Vigevano e Mortara.
+        Lezioni individuali, difesa personale, allenamenti personalizzati.
+    ">
+
+    <link rel="stylesheet" href="css/styles.css">
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;700&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
 </head>
 
 <body>
 
-<header class="header">
-  <nav class="nav">
-    <div class="logo">Diego</div>
-    <ul>
-      <li><a href="/#chi-sono">Chi sono</a></li>
-      <li><a href="/#servizi">Servizi</a></li>
-      <li><a href="/#prenota">Prenota</a></li>
-    </ul>
-  </nav>
+<!-- ================= HEADER / HERO ================= -->
+<header class="header hero">
+    <nav class="nav">
+        <div class="logo">Diego</div>
+        <ul>
+            <li><a href="#chi-sono">Chi sono</a></li>
+            <li><a href="#servizi">Servizi</a></li>
+            <li><a href="#prenota">Prenota</a></li>
+        </ul>
+    </nav>
+
+    <section class="hero">
+        <h2>Wing Chun Tradizionale</h2>
+        <p>
+            Disciplina, controllo, condizionamento fisico e difesa personale autentica
+        </p>
+    </section>
 </header>
 
-<section class="section">
-  <div class="content">
+<!-- ================= CHI SONO ================= -->
+<section id="chi-sono" class="section">
+    <div class="content split">
 
-    <h1>Wing Chun Tradizionale</h1>
+        <div class="text">
+            <h2>Chi sono</h2>
 
-    <p>
-      Il Wing Chun Tradizionale è un sistema di combattimento diretto,
-      basato su struttura, sensibilità e controllo della distanza.
-    </p>
+            <p>
+                Sono Sifu certificato di Wing Chun, con anni di pratica e insegnamento.
+                Il mio approccio è diretto, concreto e orientato all’efficacia reale,
+                rispettando la tradizione e adattandola alla persona.
+            </p>
 
-    <p>
-      L’allenamento sviluppa coordinazione, equilibrio e capacità di
-      risposta immediata in situazioni reali.
-    </p>
+            <p>
+                L’allenamento sviluppa consapevolezza, struttura, controllo del corpo
+                e della distanza, elementi fondamentali nella difesa personale.
+            </p>
+        </div>
 
-    <p>
-      Il percorso segue la tradizione, adattandola alla persona e
-      all’efficacia concreta, senza coreografie inutili.
-    </p>
+        <div class="images">
+            <img src="/img/diego1.png" alt="Sifu Wing Chun">
+            <img src="/img/manichino.png" alt="Allenamento Wing Chun">
+        </div>
 
-    <a href="/#prenota" class="pay-btn" style="margin-top:40px;">
-      Prenota una lezione
+    </div>
+</section>
+
+<!-- ================= SERVIZI ================= -->
+<section id="servizi" class="section warm servizi-grid">
+
+    <a href="/wing-chun-tradizionale.html" class="service-link">
+        <article class="service">
+            <h1>Wing Chun Tradizionale</h1>
+            <p>
+                Studio delle forme, struttura, sensibilità e applicazioni reali.
+                Allenamento orientato all’efficacia concreta.
+            </p>
+        </article>
     </a>
 
-  </div>
+    <a href="/forme-libere.html" class="service-link">
+        <article class="service">
+            <h2>Forme libere</h2>
+            <p>
+                Allenamento dinamico per riflessi, adattabilità e timing reale.
+            </p>
+        </article>
+    </a>
+
+    <a href="/bastone-wing-chun.html" class="service-link">
+        <article class="service">
+            <h2>Bastone (Luk Dim Boon Kwun)</h2>
+            <p>
+                Lavoro avanzato su distanza, potenza e gestione dello spazio.
+            </p>
+        </article>
+    </a>
+
+    <a href="/allenamenti-privati.html" class="service-link">
+        <article class="service">
+            <h2>Allenamenti privati</h2>
+            <p>
+                Percorsi personalizzati in base a livello e obiettivi individuali.
+            </p>
+        </article>
+    </a>
+
+    <a href="/preparazione-gare.html" class="service-link">
+        <article class="service">
+            <h2>Preparazione gare</h2>
+            <p>
+                Preparazione tecnica, fisica e mentale mirata alla competizione.
+            </p>
+        </article>
+    </a>
+
 </section>
+
+<!-- ================= PRENOTAZIONE ================= -->
+<section id="prenota" class="section">
+    <div class="content split">
+
+        <!-- FORM -->
+        <div class="text">
+            <h2>Prenota una lezione</h2>
+
+            <p>
+                Puoi richiedere una lezione privata o informazioni compilando il modulo.
+                Riceverai risposta diretta per concordare data e orario.
+            </p>
+
+            <form class="form booking-form">
+                <input type="text" placeholder="Nome" required>
+                <input type="email" placeholder="Email" required>
+
+                <div class="slot">
+                    <label>Disponibilità 1 (preferibilmente mattino)</label>
+                    <input type="date" required>
+                    <input type="time" required>
+                </div>
+
+                <div class="slot">
+                    <label>Disponibilità 2 (alternativa)</label>
+                    <input type="date">
+                    <input type="time">
+                </div>
+
+                <textarea placeholder="Note aggiuntive (facoltative)"></textarea>
+
+                <button type="submit">Invia richiesta</button>
+            </form>
+        </div>
+
+        <!-- BOX DESTRA -->
+        <div class="side-box">
+
+            <div class="contacts card-style">
+                <h3>Contatti</h3>
+
+                <ul class="contact-list">
+                    <li>
+                        <span>Email</span>
+                        <a href="mailto:info@sifuwinchun.it">info@sifuwinchun.it</a>
+                    </li>
+
+                    <li>
+                        <span>Telefono</span>
+                        <a href="tel:+391234567890">+39 123 456 7890</a>
+                    </li>
+
+                    <li>
+                        <span>Instagram</span>
+                        <a href="#" target="_blank">@sifuwinchun</a>
+                    </li>
+
+                    <li>
+                        <span>Facebook</span>
+                        <a href="#" target="_blank">Sifu Wing Chun</a>
+                    </li>
+                </ul>
+            </div>
+
+        </div>
+    </div>
+</section>
+
+<!-- ================= PAGAMENTO ================= -->
+<section class="payment-wide">
+    <h3>Pagamento</h3>
+
+    <p>
+        Inserisci qui il link al pagamento (Stripe, PayPal, ecc.).
+    </p>
+
+    <a href="#" class="pay-btn wide">
+        Vai al pagamento
+    </a>
+</section>
+
+<!-- ================= FOOTER ================= -->
+<footer class="footer">
+    <p>© 2025 – Sifu Wing Chun | Tutti i diritti riservati</p>
+</footer>
 
 </body>
 </html>
