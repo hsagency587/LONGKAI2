@@ -415,7 +415,7 @@ h2 {
         ),
         url("/img/logo.png");
 
-    background-size: clamp(600px, 50vw, 1000px);
+    background-size: 900px;
     background-position: right center;
     background-repeat: no-repeat;
 }
