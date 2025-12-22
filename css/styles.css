@@ -19,11 +19,6 @@ body {
 }
 
 /* HEADER */
-.header {
-    background: radial-gradient(circle at top, #3a1f14, #1b0f0a);
-    color: white;
-}
-
 .nav {
     display: flex;
     justify-content: space-between;
@@ -419,7 +414,7 @@ h2 {
             rgba(30,15,10,0.75)
         ),
         url("/img/logo.png");
-    background-size: cover;
+    background-size: contain;
     background-position: center;
     background-repeat: no-repeat;
 }
