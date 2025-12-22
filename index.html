@@ -120,12 +120,26 @@
                 Riceverai risposta diretta per concordare data e orario.
             </p>
 
-            <form class="form">
-                <input type="text" placeholder="Nome" required>
-                <input type="email" placeholder="Email" required>
-                <textarea placeholder="Messaggio"></textarea>
-                <button type="submit">Invia richiesta</button>
-            </form>
+            <form class="form booking-form">
+    <input type="text" placeholder="Nome" required>
+    <input type="email" placeholder="Email" required>
+
+    <div class="slot">
+        <label>Disponibilità 1 (preferibilmente mattino)</label>
+        <input type="date" required>
+        <input type="time" required>
+    </div>
+
+    <div class="slot">
+        <label>Disponibilità 2 (alternativa)</label>
+        <input type="date">
+        <input type="time">
+    </div>
+
+    <textarea placeholder="Note aggiuntive (facoltative)"></textarea>
+
+    <button type="submit">Invia richiesta</button>
+</form>
         </div>
 
        <div class="side-box">
