@@ -492,3 +492,49 @@ h2 {
 .payment-wide a {
     color: #1e1e1e;
 }
+/* =========================================
+   FIX DEFINITIVO TESTI BOX DESTRA
+   ========================================= */
+
+/* forza colore base nel box */
+.contacts.card-style {
+    color: #1e1e1e;
+}
+
+/* titoli */
+.contacts.card-style h3 {
+    color: #2a1810 !important;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+}
+
+/* label tipo EMAIL / TELEFONO */
+.contacts.card-style span {
+    color: #6b5a4a !important;
+}
+
+/* contenuto vero */
+.contacts.card-style a,
+.contacts.card-style li {
+    color: #1e1e1e !important;
+}
+
+/* =========================================
+   PAGAMENTO FULL WIDTH
+   ========================================= */
+
+.payment-wide {
+    color: #f6f3ef;
+}
+
+.payment-wide h3 {
+    color: var(--secondary);
+}
+
+.payment-wide p {
+    color: #e8e2da;
+}
+
+.payment-wide a {
+    color: #1e1e1e;
+}
