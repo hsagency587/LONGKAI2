@@ -551,37 +551,6 @@ h2 {
    PAGINA SERVIZIO – LAYOUT
    =============================== */
 
-.service-page {
-    padding-top: 120px;
-}
-
-.service-layout {
-    display: grid;
-    grid-template-columns: 1.3fr 1fr;
-    gap: 80px;
-    align-items: start;
-}
-
-/* testo */
-.service-text h1 {
-    font-family: 'Playfair Display', serif;
-    font-size: 2.8rem;
-    margin-bottom: 25px;
-}
-
-.service-text p {
-    font-size: 1.05rem;
-    line-height: 1.8;
-    margin-bottom: 18px;
-    max-width: 640px;
-}
-
-/* box laterale */
-.service-box img {
-    width: 100%;
-    border-radius: 14px;
-    margin-bottom: 25px;
-}
 
 /* info durata/prezzo */
 .service-info {
@@ -595,23 +564,6 @@ h2 {
     font-size: 0.95rem;
     color: #1e1e1e;
 }
-
-/* CTA */
-.service-box .pay-btn {
-    display: block;
-    text-align: center;
-    background: var(--primary);
-    color: #fff;
-    padding: 16px;
-    border-radius: 10px;
-    text-decoration: none;
-    font-weight: 500;
-}
-
-.service-box .pay-btn:hover {
-    background: #6f3a25;
-}
-
 /* RESPONSIVE */
 @media (max-width: 900px) {
     .service-layout {
@@ -634,11 +586,19 @@ h2 {
     border-radius: 14px;
 }
 /* INFO SERVIZIO – DURATA / LIVELLO / PREZZO */
+.service-info {
+    margin-top: 20px;
+}
+
 .service-info li {
-    color: #f3e7d7;           /* più chiaro */
+    color: #f6f3ef;          /* leggibile su sfondo scuro */
     font-size: 1.05rem;
 }
 
+.service-info strong {
+    color: var(--secondary);
+    font-weight: 600;
+}
 .service-info strong {
     color: var(--secondary);  /* evidenzia etichette */
     font-weight: 600;
