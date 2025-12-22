@@ -619,3 +619,17 @@ h2 {
         gap: 50px;
     }
 }
+.service-hero h1 {
+    font-size: 3rem;
+    margin-bottom: 20px;
+}
+
+.service-intro {
+    max-width: 720px;
+    font-size: 1.1rem;
+    opacity: 0.9;
+}
+.service-image img {
+    width: 100%;
+    border-radius: 14px;
+}
