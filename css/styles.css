@@ -285,4 +285,103 @@ h2 {
 .contact-list a:hover::after {
   width: 100%;
 }
+/* =====================================================
+   SERVIZI – STILE TRADIZIONALE WING CHUN
+   ===================================================== */
+
+#servizi {
+    background: linear-gradient(
+        180deg,
+        #f1e2cc 0%,
+        #e7d1ae 100%
+    );
+    padding-top: 140px;
+    padding-bottom: 140px;
+}
+
+/* contenitore rituale del servizio */
+.service {
+    max-width: 880px;
+    margin: 0 auto 110px auto;
+    padding-left: 42px;
+    position: relative;
+}
+
+/* linea verticale (centroline / palo) */
+.service::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 8px;
+    width: 3px;
+    height: 100%;
+    background: linear-gradient(
+        to bottom,
+        #7a3f26,
+        rgba(122, 63, 38, 0.15)
+    );
+}
+
+/* H1 – servizio principale */
+.service h1 {
+    font-family: 'Playfair Display', serif;
+    font-size: 3.2rem;
+    font-weight: 700;
+    color: #2a1810;
+    margin-bottom: 22px;
+    letter-spacing: 0.04em;
+}
+
+/* H2 – servizi successivi */
+.service h2 {
+    font-family: 'Playfair Display', serif;
+    font-size: 2.4rem;
+    font-weight: 600;
+    color: #3b2418;
+    margin-bottom: 18px;
+    letter-spacing: 0.03em;
+}
+
+/* descrizione */
+.service p {
+    font-family: 'Inter', sans-serif;
+    font-size: 1.05rem;
+    line-height: 1.85;
+    color: #4a382f;
+    max-width: 680px;
+}
+
+/* separatore inferiore (rituale) */
+.service::after {
+    content: "";
+    display: block;
+    margin-top: 46px;
+    width: 140px;
+    height: 1px;
+    background: linear-gradient(
+        to right,
+        rgba(122,63,38,0.45),
+        rgba(122,63,38,0.05)
+    );
+}
+
+/* ultimo servizio senza separatore */
+.service:last-child::after {
+    display: none;
+}
+
+/* RESPONSIVE – mantiene solennità */
+@media (max-width: 900px) {
+    .service {
+        padding-left: 28px;
+    }
+
+    .service h1 {
+        font-size: 2.6rem;
+    }
+
+    .service h2 {
+        font-size: 2rem;
+    }
+}
 
