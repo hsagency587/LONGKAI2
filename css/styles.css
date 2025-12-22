@@ -412,3 +412,14 @@ h2 {
         row-gap: 100px;
     }
 }
+.hero-bg {
+    background-image:
+        linear-gradient(
+            rgba(30,15,10,0.75),
+            rgba(30,15,10,0.75)
+        ),
+        url("/img/hero-bg.jpg");
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+}
