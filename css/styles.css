@@ -28,7 +28,12 @@ body {
     background-size: contain;
     background-attachment: fixed;
 }
-
+@media (max-width: 900px) {
+    body {
+        background-attachment: scroll;
+        background-size: 90%;
+    }
+}
 /* HEADER */
 .nav {
     display: flex;
