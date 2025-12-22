@@ -450,3 +450,23 @@ h2 {
     grid-template-columns: 1fr 1fr;
     gap: 12px;
 }
+/* CONTENUTO BOX DESTRA – CONTRASTO */
+.card-style h3,
+.payment h3 {
+    color: #2a1810;
+}
+
+.card-style span,
+.payment p {
+    color: #6b5a4a;
+}
+.card-style a,
+.card-style li,
+.payment a {
+    color: #1e1e1e;
+}
+.card-style h3,
+.payment h3 {
+    letter-spacing: 0.05em;
+    font-weight: 600;
+}
