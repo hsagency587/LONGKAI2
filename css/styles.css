@@ -206,15 +206,6 @@ h2 {
 }
 
 /* RESPONSIVE */
-@media (max-width: 900px) {
-    .split {
-        grid-template-columns: 1fr;
-    }
-
-    .hero h1 {
-        font-size: 2.3rem;
-    }
-}
 .side-box {
     display: flex;
     flex-direction: column;
@@ -385,14 +376,6 @@ h2 {
     }
 }
 /* =====================================================
-   FIX VISIBILITÀ TESTI SERVIZI (FORZATO)
-   ===================================================== */
-
-#servizi,
-#servizi * {
-    color: #2a1810 !important;
-}
-/* =====================================================
    GRIGLIA SERVIZI – 2 COLONNE TRADIZIONALI
    ===================================================== */
 
@@ -422,10 +405,6 @@ h2 {
 /* leggerissimo movimento */
 .service-link:hover .service {
     transform: translateY(-2px);
-}
-
-.service {
-    transition: transform 0.3s ease;
 }
 @media (max-width: 900px) {
     .servizi-grid {
