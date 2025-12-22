@@ -418,3 +418,7 @@ h2 {
         row-gap: 100px;
     }
 }
+.header,
+.section {
+    background: transparent;
+}
