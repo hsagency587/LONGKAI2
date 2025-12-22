@@ -392,3 +392,44 @@ h2 {
 #servizi * {
     color: #2a1810 !important;
 }
+/* =====================================================
+   GRIGLIA SERVIZI – 2 COLONNE TRADIZIONALI
+   ===================================================== */
+
+.servizi-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    column-gap: 90px;
+    row-gap: 120px;
+    align-items: start;
+}
+
+/* link invisibile (rituale, non bottone) */
+.service-link {
+    text-decoration: none;
+    display: block;
+}
+
+/* hover molto sobrio */
+.service-link:hover .service::before {
+    background: linear-gradient(
+        to bottom,
+        #5a2f1c,
+        rgba(90, 47, 28, 0.2)
+    );
+}
+
+/* leggerissimo movimento */
+.service-link:hover .service {
+    transform: translateY(-2px);
+}
+
+.service {
+    transition: transform 0.3s ease;
+}
+@media (max-width: 900px) {
+    .servizi-grid {
+        grid-template-columns: 1fr;
+        row-gap: 100px;
+    }
+}
