@@ -11,13 +11,19 @@
     box-sizing: border-box;
 }
 
-html,
 body {
-    background-color: #e7d1ae; /* colore logo */
-    color: #1e1e1e;
-    overflow-x: hidden;
-}
+background:
+        linear-gradient(
+            rgba(30,15,10,0.78),
+            rgba(30,15,10,0.78)
+        ),
+        url("/img/logo1.png");
 
+    background-repeat: no-repeat;
+    background-position: center 30%;
+    background-size: contain;
+    background-attachment: fixed;
+}
 /* HEADER */
 .nav {
     display: flex;
@@ -54,10 +60,6 @@ body {
 }
 
 .hero {
-    background-image: url("/img/logo1.png");
-    background-repeat: no-repeat;
-    background-position: center;
-    background-size: 380px;
     text-align: center;
     padding: 60px 20px 50px;
 }
