@@ -12,7 +12,8 @@
 }
 
 body {
-background:
+    color: #f6f3ef;
+    background:
         linear-gradient(
             rgba(30,15,10,0.78),
             rgba(30,15,10,0.78)
