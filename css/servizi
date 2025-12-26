@@ -1,0 +1,81 @@
+/* ===============================
+   PAGINE SERVIZIO – STILI DEDICATI
+   =============================== */
+
+/* HERO SERVIZIO */
+.service-hero {
+  padding: 60px 0 40px;
+}
+
+.service-hero h1 {
+  font-size: 3rem;
+  margin-bottom: 16px;
+}
+
+.service-intro {
+  max-width: 720px;
+  font-size: 1.1rem;
+  opacity: 0.9;
+  margin: 0;
+}
+
+/* LAYOUT CONTENUTO SERVIZIO */
+.service-page .content.split {
+  display: grid;
+  grid-template-columns: 1.3fr 1fr;
+  gap: 60px;
+  align-items: start;
+}
+
+/* IMMAGINI SERVIZIO */
+.service-images img {
+  width: 100%;
+  border-radius: 14px;
+}
+
+/* INFO SERVIZIO – DURATA / LIVELLO / PREZZO */
+.service-info {
+  list-style: none;
+  margin-top: 20px;
+  padding: 0;
+}
+
+.service-info li {
+  color: #f6f3ef; /* coerente con sfondo scuro */
+  font-size: 1.05rem;
+  margin-bottom: 8px;
+}
+
+.service-info strong {
+  color: var(--secondary);
+  font-weight: 600;
+}
+
+/* TESTI */
+.service-page .text p {
+  margin-bottom: 14px;
+}
+
+/* SPAZI SEZIONI – SOLO PAGINE SERVIZIO */
+.service-page .section {
+  padding: 60px 8%;
+}
+
+/* ===============================
+   RESPONSIVE – MOBILE
+   =============================== */
+@media (max-width: 900px) {
+
+  .service-page .content.split {
+    grid-template-columns: 1fr;
+    gap: 32px;
+  }
+
+  .service-hero h1 {
+    font-size: 2.2rem;
+  }
+
+  .service-page .section {
+    padding: 40px 6%;
+  }
+}
