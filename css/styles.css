@@ -12,7 +12,10 @@
 }
 
 body {
+    font-family: 'Inter', sans-serif;
     color: #f6f3ef;
+    line-height: 1.6;
+
     background:
         linear-gradient(
             rgba(30,15,10,0.78),
@@ -24,7 +27,7 @@ body {
     background-position: center 30%;
     background-size: contain;
     background-attachment: fixed;
-}
+    }
 /* HEADER */
 .nav {
     display: flex;
