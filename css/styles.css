@@ -644,3 +644,16 @@ body .section {
   }
 
 }
+html, body {
+    background-color: #4f433e;
+    overflow-x: hidden;
+}
+
+@media (max-width: 768px) {
+
+  .content {
+    max-width: 100%;
+    margin: 0;
+  }
+
+}
