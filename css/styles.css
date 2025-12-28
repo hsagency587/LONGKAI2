@@ -78,7 +78,7 @@ body {
     margin-top: 10px;
 }
 .cert-card {
-  margin: 32px 0 0 auto;     /* sposta il blocco a destra */
+  margin: 32px auto 0 0;     /* sposta il blocco a sinistra */
   padding: 22px 26px;
   max-width: 520px;
 
@@ -94,7 +94,7 @@ body {
 }
 
 .cert-card li {
-  text-align: right;
+  text-align: left;
   color: rgba(255,255,255,0.92);
   font-size: 16px;
   line-height: 1.6;
