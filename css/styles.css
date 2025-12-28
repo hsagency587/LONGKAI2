@@ -93,6 +93,22 @@ body {
 }
 
 /* pallino elegante */
+.cert-list {
+  list-style: none;
+  padding: 0;
+  margin: 24px 0 0;
+  color: rgba(255,255,255,0.9);
+}
+
+.cert-list li {
+  position: relative;
+  padding-left: 26px;
+  margin-bottom: 12px;
+  font-size: 16px;
+  line-height: 1.4;
+}
+
+/* pallino elegante */
 .cert-list li::before {
   content: "";
   position: absolute;
