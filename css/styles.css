@@ -77,48 +77,6 @@ body {
     opacity: 0.85;
     margin-top: 10px;
 }
-.cert-list {
-  list-style: none;
-  padding: 0;
-  margin: 24px 0 0;
-  color: rgba(255,255,255,0.9);
-}
-
-.cert-list li {
-  position: relative;
-  padding-left: 26px;
-  margin-bottom: 12px;
-  font-size: 16px;
-  line-height: 1.4;
-}
-
-/* pallino elegante */
-.cert-list {
-  list-style: none;
-  padding: 0;
-  margin: 24px 0 0;
-  color: rgba(255,255,255,0.9);
-}
-
-.cert-list li {
-  position: relative;
-  padding-left: 26px;
-  margin-bottom: 12px;
-  font-size: 16px;
-  line-height: 1.4;
-}
-
-/* pallino elegante */
-.cert-list li::before {
-  content: "";
-  position: absolute;
-  left: 0;
-  top: 8px;
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: rgba(255,255,255,0.75);
-}
 /* SEZIONI */
 .section {
     padding: 70px 8%;
