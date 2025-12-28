@@ -113,10 +113,7 @@ body {
 }
 
 .section.warm {
-     background: linear-gradient(
-    135deg,
-    rgba(243, 231, 215, 0.7),
-    rgba(233, 210, 176, 0.7)
+     background: linear-gradient(135deg, #f3e7d7, #e9d2b0);
 }
 
 .content {
