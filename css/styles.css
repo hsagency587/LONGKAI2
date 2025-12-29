@@ -151,6 +151,7 @@ h2 {
     filter: grayscale(0%);
     transform: scale(1.03);
 }
+
 /* CARDS */
 .cards {
     display: grid;
@@ -158,6 +159,7 @@ h2 {
     gap: 30px;
     margin-top: 40px;
 }
+
 .card {
     background: white;
     padding: 30px;
@@ -165,19 +167,23 @@ h2 {
     box-shadow: 0 15px 30px rgba(0,0,0,0.08);
     transition: 0.3s;
 }
+
 .card:hover {
     transform: translateY(-6px);
 }
+
 .card h3 {
     margin-bottom: 10px;
     color: var(--primary);
 }
+
 /* FORM */
 .form {
     display: flex;
     flex-direction: column;
     gap: 15px;
 }
+
 .form input,
 .form textarea {
     padding: 12px;
@@ -185,6 +191,7 @@ h2 {
     border: 1px solid #ccc;
     font-family: inherit;
 }
+
 .form button {
     padding: 14px;
     background: var(--primary);
@@ -194,24 +201,29 @@ h2 {
     cursor: pointer;
     transition: 0.3s;
 }
+
 .form button:hover {
     background: #6f3a25;
 }
+
 /* PAGAMENTO */
 .payment {
     display: flex;
     flex-direction: column;
     gap: 20px;
 }
+
 /* eredita lo stile da .card-style */
 .payment h3 {
     color: #2a1810;
     letter-spacing: 0.05em;
     font-weight: 600;
 }
+
 .payment p {
     color: #6b5a4a;
 }
+
 /* bottone */
 .pay-btn {
     align-self: flex-start;
@@ -223,9 +235,11 @@ h2 {
     text-decoration: none;
     transition: 0.3s;
 }
+
 .pay-btn:hover {
     background: #caa56f;
 }
+
 /* FOOTER */
 .footer {
     text-align: center;
@@ -234,16 +248,19 @@ h2 {
     color: #aaa;
     font-size: 0.9rem;
 }
+
 /* RESPONSIVE */
 .side-box {
     display: flex;
     flex-direction: column;
     gap: 30px;
 }
+
 /* PAGAMENTO RIDOTTO */
 .payment {
     padding: 30px;
 }
+
 /* CARD RIUTILIZZABILE (coerente col sito) */
 .card-style {
   background: #fff;
@@ -252,10 +269,12 @@ h2 {
   box-shadow: 0 20px 40px rgba(0,0,0,0.08);
   transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
+
 .card-style:hover {
   transform: translateY(-4px);
   box-shadow: 0 25px 50px rgba(0,0,0,0.12);
 }
+
 /* CONTATTI (no pallini, tipografia pulita) */
 .contact-list {
   list-style: none;
@@ -265,17 +284,20 @@ h2 {
   flex-direction: column;
   gap: 16px;
 }
+
 .contact-list li {
   display: flex;
   flex-direction: column;
   gap: 4px;
 }
+
 .contact-list span {
   font-size: 0.85rem;
   letter-spacing: 0.06em;
   text-transform: uppercase;
   color: #777;
 }
+
 .contact-list a {
   font-size: 1.05rem;
   font-weight: 500;
@@ -284,6 +306,7 @@ h2 {
   position: relative;
   width: fit-content;
 }
+
 .contact-list a::after {
   content: "";
   position: absolute;
@@ -294,72 +317,87 @@ h2 {
   background: var(--secondary);
   transition: width 0.3s ease;
 }
+
 .contact-list a:hover::after {
   width: 100%;
 }
+
 /* ===== FOOTER DEFINITIVO ===== */
 .footer {
   background: #1e1612;
   color: #e7d7c3;
 }
+
 /* ================= MAPPE ================= */
 .footer-maps {
   display: grid;
   grid-template-columns: 1fr 1fr;
   width: 100%;
 }
+
 .footer-maps iframe {
   width: 100%;
   height: 220px;
   border: 0;
 }
+
 /* divisore verticale SOLO tra le mappe (desktop) */
 .footer-maps iframe:first-child {
   border-right: 3px solid #0f0b09;
 }
+
 /* ================= FOOTER BOTTOM ================= */
 .footer-bottom {
   border-top: 1px solid rgba(255,255,255,0.12);
   padding: 20px 0;
 }
+
 .footer-inner {
   display: flex;
   align-items: center;
   justify-content: space-between; /* sinistra / destra */
 }
+
 .footer-inner p {
   margin: 0;
   font-size: 14px;
   color: #e7d7c3;
 }
+
 /* link a destra */
 .footer-links {
   display: flex;
   gap: 16px;
 }
+
 .footer-links a {
   color: #e7d7c3;
   font-size: 14px;
   font-weight: 600;
   text-decoration: none;
 }
+
 .footer-links a:visited {
   color: #e7d7c3;
 }
+
 .footer-links a:hover {
   text-decoration: underline;
 }
+
 /* ================= MOBILE ================= */
 @media (max-width: 700px) {
   /* mappe una sotto l’altra */
   .footer-maps {
     grid-template-columns: 1fr;
   }
+    
   /* divisore orizzontale su mobile */
   .footer-maps iframe:first-child {
     border-right: 0;
     border-bottom: 3px solid #0f0b09;
   }
+    
 /* =====================================================
    SERVIZI – STILE TRADIZIONALE WING CHUN
    ===================================================== */
@@ -372,6 +410,7 @@ h2 {
     padding-top: 140px;
     padding-bottom: 140px;
 }
+    
 /* contenitore rituale del servizio */
 .service {
     max-width: 880px;
@@ -379,6 +418,7 @@ h2 {
     padding-left: 42px;
     position: relative;
 }
+    
 /* linea verticale (centroline / palo) */
 .service::before {
     content: "";
@@ -393,6 +433,7 @@ h2 {
         rgba(122, 63, 38, 0.15)
     );
 }
+    
 /* H1 – servizio principale */
 .service h1 {
     font-family: 'Playfair Display', serif;
@@ -402,6 +443,7 @@ h2 {
     margin-bottom: 22px;
     letter-spacing: 0.04em;
 }
+    
 /* H2 – servizi successivi */
 .service h2 {
     font-family: 'Playfair Display', serif;
@@ -411,6 +453,7 @@ h2 {
     margin-bottom: 18px;
     letter-spacing: 0.03em;
 }
+    
 /* descrizione */
 .service p {
     font-family: 'Inter', sans-serif;
@@ -419,6 +462,7 @@ h2 {
     color: #4a382f;
     max-width: 680px;
 }
+    
 /* separatore inferiore (rituale) */
 .service::after {
     content: "";
@@ -432,10 +476,12 @@ h2 {
         rgba(122,63,38,0.05)
     );
 }
+    
 /* ultimo servizio senza separatore */
 .service:last-child::after {
     display: none;
 }
+    
 /* =====================================================
    GRIGLIA SERVIZI – 2 COLONNE TRADIZIONALI
    ===================================================== */
@@ -446,11 +492,13 @@ h2 {
     row-gap: 120px;
     align-items: start;
 }
+    
 /* link invisibile (rituale, non bottone) */
 .service-link {
     text-decoration: none;
     display: block;
 }
+    
 /* hover molto sobrio */
 .service-link:hover .service::before {
     background: linear-gradient(
@@ -459,52 +507,63 @@ h2 {
         rgba(90, 47, 28, 0.2)
     );
 }
+    
 /* leggerissimo movimento */
 .service-link:hover .service {
     transform: translateY(-2px);
 }
+    
 .header,
 .section {
     background: transparent;
 }
+    
 .booking-form input,
 .booking-form textarea {
     background: rgba(20,10,7,0.75);
     color: #f6f3ef;
     border: 1px solid rgba(255,255,255,0.15);
 }
+    
 .booking-form input::placeholder,
 .booking-form textarea::placeholder {
     color: rgba(246,243,239,0.7);
 }
+    
 .booking-form label {
     font-size: 0.85rem;
     color: var(--secondary);
     margin-bottom: 6px;
 }
+    
 .slot {
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 12px;
 }
+    
 /* ===============================
    BOX DESTRA – CONTRASTO DEFINITIVO
    =============================== */
 .card-style {
     color: #1e1e1e;
 }
+    
 .card-style h3 {
     color: #2a1810;
     letter-spacing: 0.05em;
     font-weight: 600;
 }
+    
 .card-style span {
     color: #6b5a4a;
 }
+    
 .card-style a,
 .card-style li {
     color: #1e1e1e;
 }
+    
 /* ===============================
    PAGAMENTO FULL WIDTH
    =============================== */
@@ -512,15 +571,19 @@ h2 {
 .payment-wide {
     color: #f6f3ef;
 }
+    
 .payment-wide h3 {
     color: var(--secondary);
 }
+    
 .payment-wide p {
     color: #e8e2da;
 }
+    
 .payment-wide a {
     color: #1e1e1e;
 }
+    
 /* =========================================
    FIX DEFINITIVO TESTI BOX DESTRA
    ========================================= */
@@ -528,21 +591,25 @@ h2 {
 .contacts.card-style {
     color: #1e1e1e;
 }
+    
 /* titoli */
 .contacts.card-style h3 {
     color: #2a1810 !important;
     font-weight: 600;
     letter-spacing: 0.05em;
 }
+    
 /* label tipo EMAIL / TELEFONO */
 .contacts.card-style span {
     color: #6b5a4a !important;
 }
+    
 /* contenuto vero */
 .contacts.card-style a,
 .contacts.card-style li {
     color: #1e1e1e !important;
 }
+    
 /* =========================================
    PAGAMENTO FULL WIDTH
    ========================================= */
@@ -550,15 +617,19 @@ h2 {
 .payment-wide {
     color: #f6f3ef;
 }
+    
 .payment-wide h3 {
     color: var(--secondary);
 }
+    
 .payment-wide p {
     color: #e8e2da;
 }
+    
 .payment-wide a {
     color: #1e1e1e;
 }
+    
 /* ===============================
    PAGINA SERVIZIO – LAYOUT
    =============================== */
@@ -566,6 +637,7 @@ h2 {
     font-size: 3rem;
     margin-bottom: 16px;
 }
+    
 .service-intro {
     max-width: 720px;
     font-size: 1.1rem;
@@ -573,39 +645,48 @@ h2 {
     margin-top: 0;
     margin-bottom: 0;
 }
+    
 .service-image img {
     width: 100%;
     border-radius: 14px;
 }
+    
 /* INFO SERVIZIO – DURATA / LIVELLO / PREZZO */
 .service-info {
     list-style: none;
     margin-top: 20px;
     padding: 0;
 }
+    
 .service-info li {
     color: #f6f3ef;          /* leggibile su sfondo scuro */
     font-size: 1.05rem;
     margin-bottom: 8px;
 }
+    
 .service-info strong {
     color: var(--secondary);
     font-weight: 600;
 }
+    
 /* HERO SERVIZIO – FIX SPAZI */
 .service-hero {
     padding: 60px 0 40px;
 }
+    
 .service-page .section {
     padding: 60px 8%;
 }
+    
 .service-text p {
     margin-bottom: 14px;
 }
+    
 /* OVERRIDE PAGINA SERVIZIO */
 body .section {
     padding: 60px 8%;
 }
+    
 /* ===============================
    MOBILE LAYOUT FIX
    =============================== */
@@ -617,6 +698,7 @@ body .section {
     grid-template-columns: 1fr !important;
     gap: 40px;
   }
+    
   /* rimuove traslazioni desktop */
   .images,
   .service,
@@ -624,6 +706,7 @@ body .section {
     transform: none !important;
   }
 }
+    
 @media (max-width: 768px) {
 
   .section,
@@ -631,6 +714,7 @@ body .section {
     padding: 40px 6%;
   }
 }
+    
 @media (max-width: 768px) {
   .hero {
     padding: 40px 16px 30px;
@@ -643,11 +727,13 @@ body .section {
     font-size: 1rem;
   }
 }
+    
 @media (max-width: 768px) {
   .images {
     grid-template-columns: 1fr;
   }
 }
+    
 @media (max-width: 768px) {
   .side-box {
     gap: 24px;
@@ -656,3 +742,4 @@ body .section {
     padding: 26px;
   }
 }
+    
