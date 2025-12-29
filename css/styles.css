@@ -319,6 +319,49 @@ h2 {
 .contact-list a:hover::after {
   width: 100%;
 }
+/* ========== Footer Banner Semplice ========== */
+
+.footer {
+  background: #1e1612;           /* marrone scuro caldo */
+  color: #e7d7c3;
+  padding: 28px 0;
+  border-top: 1px solid rgba(255,255,255,0.12);
+}
+
+.footer-inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.footer p {
+  margin: 0;
+  font-size: 14px;
+  letter-spacing: 0.02em;
+}
+
+/* Link del footer */
+.footer-links a {
+  color: #e7d7c3;
+  font-size: 14px;
+  font-weight: 600;
+  padding: 6px 10px;
+  border-radius: 999px;
+}
+
+.footer-links a:hover {
+  background: rgba(255,255,255,0.12);
+  color: #ffffff;
+}
+
+/* Mobile */
+@media (max-width: 700px) {
+  .footer-inner {
+    flex-direction: column;
+    text-align: center;
+  }
+}
 /* =====================================================
    SERVIZI – STILE TRADIZIONALE WING CHUN
    ===================================================== */
