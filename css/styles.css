@@ -16,6 +16,7 @@ body {
     color: #f6f3ef;
     line-height: 1.6;
     background: #ffffff;
+}
 /* HEADER */
 .nav {
     display: flex;
