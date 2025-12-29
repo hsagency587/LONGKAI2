@@ -554,7 +554,87 @@ h2 {
 .payment-wide a {
     color: #1e1e1e;
 }
-    
+    /* =========================
+   FOOTER – ISOLATO E SICURO
+   ========================= */
+
+.site-footer {
+  background: #1e1612;
+  color: #e7d7c3;
+  width: 100%;
+  overflow: hidden; /* evita sbordamenti */
+}
+
+/* ===== MAPPE ===== */
+.site-footer .footer-maps {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  width: 100%;
+}
+
+.site-footer .footer-maps iframe {
+  width: 100%;
+  height: 230px;
+  border: 0;
+  display: block;
+}
+
+/* divisore centrale */
+.site-footer .footer-maps iframe:first-child {
+  border-right: 3px solid #0f0b09;
+}
+
+/* ===== BOTTOM ===== */
+.site-footer .footer-bottom {
+  border-top: 1px solid rgba(255,255,255,0.15);
+  padding: 22px 8%;
+}
+
+.site-footer .footer-inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.site-footer .footer-inner p {
+  margin: 0;
+  font-size: 14px;
+  color: #e7d7c3;
+}
+
+.site-footer .footer-links {
+  display: flex;
+  gap: 18px;
+}
+
+.site-footer .footer-links a {
+  color: #e7d7c3;
+  font-size: 14px;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.site-footer .footer-links a:hover {
+  text-decoration: underline;
+}
+
+/* ===== MOBILE (solo footer) ===== */
+@media (max-width: 768px) {
+  .site-footer .footer-maps {
+    grid-template-columns: 1fr;
+  }
+
+  .site-footer .footer-maps iframe:first-child {
+    border-right: 0;
+    border-bottom: 3px solid #0f0b09;
+  }
+
+  .site-footer .footer-inner {
+    flex-direction: column;
+    gap: 12px;
+    text-align: center;
+  }
+}
 /* ===============================
    PAGINA SERVIZIO – LAYOUT
    =============================== */
