@@ -895,54 +895,44 @@ body .section {
     font-size: 1.4rem;
   }
 }
-/* ===============================
-   DRAGON (serio / professionale)
-   =============================== */
-/* DRAGON – performance + niente scatti */
-#dragon {
-  position: fixed;
-  left: 0;
-  top: 0;
-  width: 140px;     /* regola dimensione */
-  height: 90px;
-  pointer-events: none;
-  z-index: 9999;
-  will-change: transform;
-  transform: translate3d(0,0,0);
-  transition: none !important; /* IMPORTANTISSIMO: evita scatti/ritardi */
-}
 
-#dragon-layer {
+/* ===============================
+   DRAGON – serio, fluido, continuo
+   =============================== */
+#dragon-layer{
   position: fixed;
   inset: 0;
   pointer-events: none;
-  z-index: 6; /* dietro ai contenuti */
+  z-index: 50; /* di base dietro alle cose */
 }
 
-#dragon-layer.is-front {
-  z-index: 1200; /* davanti ai contenuti */
-}
+/* ogni tanto passa davanti (desktop) */
+#dragon-layer.is-front{ z-index: 1200; }
 
-#dragon {
-  width: 150px;
-  height: 95px;
-  transform-origin: 50% 50%;
-  opacity: 0.32;
-  filter: drop-shadow(0 12px 18px rgba(0,0,0,0.35));
+/* il dragone viene mosso solo via transform: NO scatti */
+#dragon{
+  position: absolute;
+  width: 160px;
+  height: auto;
+  opacity: 0.30;
+  filter: drop-shadow(0 14px 20px rgba(0,0,0,0.35));
   will-change: transform;
+  transform: translate3d(0,0,0);
 }
 
-#dragon-layer.is-front #dragon {
-  opacity: 0.45;
-  filter: drop-shadow(0 18px 26px rgba(0,0,0,0.45));
+/* un filo più presente quando è davanti */
+#dragon-layer.is-front #dragon{
+  opacity: 0.42;
+  filter: drop-shadow(0 18px 28px rgba(0,0,0,0.45));
 }
 
-@media (max-width: 768px) {
-  #dragon {
-    width: 120px;
-    height: 75px;
-    opacity: 0.26;
-  }
-  #dragon-layer.is-front #dragon {
-    opacity: 0.32;
-  }
+/* Mobile: semplificato e sempre dietro (più professionale) */
+@media (max-width: 768px){
+  #dragon{ width: 120px; opacity: 0.24; }
+  #dragon-layer.is-front{ z-index: 50; } /* niente “front” aggressivo su mobile */
+}
+
+/* Rispetta impostazione accessibilità */
+@media (prefers-reduced-motion: reduce){
+  #dragon-layer{ display:none; }
+}
