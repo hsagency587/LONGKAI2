@@ -15,19 +15,7 @@ body {
     font-family: 'Inter', sans-serif;
     color: #f6f3ef;
     line-height: 1.6;
-
-    background:
-        linear-gradient(
-            rgba(30,15,10,0.78),
-            rgba(30,15,10,0.78)
-        ),
-        url("/img/logo1.png");
-
-    background-repeat: no-repeat;
-    background-position: center 30%;
-    background-size: contain;
-    background-attachment: fixed;
-    }
+    background: #ffffff;
 /* HEADER */
 .nav {
     display: flex;
@@ -64,10 +52,22 @@ body {
 }
 
 .hero {
-    text-align: center;
-    padding: 60px 20px 50px;
+  position: relative;
+  text-align: center;
+  padding: 60px 20px 50px;
+  overflow: hidden;
 }
-
+.hero::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image: url("../img/logo2.png"); /* <-- QUI SOLO IL PERCORSO */
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: contain;
+  opacity: 0.08;
+  pointer-events: none;
+}
 .hero h1 {
     font-family: 'Playfair Display', serif;
     font-size: 3rem;
