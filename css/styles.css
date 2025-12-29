@@ -321,26 +321,39 @@ h2 {
 }
 /* ========== Footer full width reale ========== */
 
+/* ===== Footer maps full width ===== */
+
 .footer {
-  width: 100vw;
-  margin-left: calc(50% - 50vw); /* forza full width */
   background: #1e1612;
   color: #e7d7c3;
-  padding: 24px 0;
+}
+
+/* MAPPE */
+.footer-maps {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  width: 100%;
+}
+
+.footer-maps iframe {
+  width: 100%;
+  height: 220px;
+  border: 0;
+}
+
+/* TESTI SOTTO */
+.footer-bottom {
   border-top: 1px solid rgba(255,255,255,0.12);
+  padding: 20px 0;
 }
 
 .footer-inner {
-  max-width: 1100px;
-  margin: 0 auto;
-  padding: 0 16px;
-
   display: flex;
   align-items: center;
   justify-content: space-between;
 }
 
-.footer p {
+.footer-inner p {
   margin: 0;
   font-size: 14px;
 }
@@ -361,36 +374,16 @@ h2 {
   text-decoration: underline;
 }
 
-/* mobile */
+/* MOBILE */
 @media (max-width: 700px) {
+  .footer-maps {
+    grid-template-columns: 1fr;
+  }
+
   .footer-inner {
     flex-direction: column;
-    gap: 12px;
+    gap: 10px;
     text-align: center;
-  }
-}
-.footer-locations {
-  display: flex;
-  gap: 16px;
-}
-
-.footer-locations iframe {
-  width: 180px;
-  height: 110px;
-  border: 0;
-  border-radius: 8px;
-  filter: grayscale(0.2) brightness(0.9);
-}
-
-/* mobile */
-@media (max-width: 700px) {
-  .footer-locations {
-    flex-direction: column;
-  }
-
-  .footer-locations iframe {
-    width: 100%;
-    max-width: 320px;
   }
 }
 /* =====================================================
