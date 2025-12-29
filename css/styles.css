@@ -29,39 +29,7 @@ body {
     }
 }
 
-/* ===============================
-   NAV – BOX CLICCABILI (STILE CERTIFICATI)
-   =============================== */
 
-.nav a {
-  padding: 10px 18px;
-  border-radius: 14px;
-
-  background: rgba(255, 255, 255, 0.12);
-  backdrop-filter: blur(6px);
-
-  border: 1px solid rgba(255, 255, 255, 0.18);
-
-  box-shadow: 0 8px 20px rgba(0,0,0,0.25);
-
-  font-weight: 500;
-  transition: 
-    background 0.3s ease,
-    box-shadow 0.3s ease,
-    transform 0.2s ease;
-}
-
-/* hover elegante */
-.nav a:hover {
-  background: rgba(255, 255, 255, 0.18);
-  transform: translateY(-1px);
-  box-shadow: 0 12px 28px rgba(0,0,0,0.35);
-}
-
-/* rimuove underline animata precedente (se presente) */
-.nav a::after {
-  display: none;
-}
 /* HEADER */
 .nav {
     display: flex;
@@ -782,3 +750,36 @@ body .section {
   }
 }
     
+/* ===============================
+   NAV – BOX CLICCABILI (STILE CERTIFICATI)
+   =============================== */
+
+.nav a {
+  padding: 10px 18px;
+  border-radius: 14px;
+
+  background: rgba(255, 255, 255, 0.12);
+  backdrop-filter: blur(6px);
+
+  border: 1px solid rgba(255, 255, 255, 0.18);
+
+  box-shadow: 0 8px 20px rgba(0,0,0,0.25);
+
+  font-weight: 500;
+  transition: 
+    background 0.3s ease,
+    box-shadow 0.3s ease,
+    transform 0.2s ease;
+}
+
+/* hover elegante */
+.nav a:hover {
+  background: rgba(255, 255, 255, 0.18);
+  transform: translateY(-1px);
+  box-shadow: 0 12px 28px rgba(0,0,0,0.35);
+}
+
+/* rimuove underline animata precedente (se presente) */
+.nav a::after {
+  display: none;
+}
