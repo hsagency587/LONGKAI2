@@ -783,3 +783,91 @@ body .section {
 .nav a::after {
   display: none;
 }
+/* ===============================
+   SIFU BADGE – DRAGO RITUALE
+   =============================== */
+
+.sifu-badge {
+  position: fixed;
+  top: 28px;
+  right: 32px;
+  z-index: 20;
+
+  padding: 12px 22px;
+  font-family: 'Playfair Display', serif;
+  font-size: 1.05rem;
+  letter-spacing: 0.06em;
+  color: #f6f3ef;
+
+  background: rgba(255,255,255,0.10);
+  backdrop-filter: blur(8px);
+
+  border: 1px solid rgba(255,255,255,0.25);
+  border-radius: 999px;
+
+  box-shadow:
+    0 10px 30px rgba(0,0,0,0.35),
+    inset 0 0 0 1px rgba(255,255,255,0.05);
+
+  pointer-events: none; /* non interferisce con click */
+}
+
+/* DRAGO – AURA CIRCOLARE */
+.sifu-badge::before {
+  content: "";
+  position: absolute;
+  inset: -10px;
+
+  border-radius: 999px;
+
+  background:
+    conic-gradient(
+      from 0deg,
+      rgba(217,179,130,0.0),
+      rgba(217,179,130,0.55),
+      rgba(217,179,130,0.0)
+    );
+
+  filter: blur(6px);
+  opacity: 0.75;
+  animation: dragon-rotate 18s linear infinite;
+
+  z-index: -1;
+}
+
+/* TESTURA DRAGO (INCISA) */
+.sifu-badge::after {
+  content: "龍";
+  position: absolute;
+  right: -14px;
+  top: 50%;
+  transform: translateY(-50%);
+
+  font-size: 1.6rem;
+  font-family: 'Playfair Display', serif;
+  color: rgba(217,179,130,0.55);
+
+  text-shadow:
+    0 0 12px rgba(217,179,130,0.45),
+    0 0 24px rgba(217,179,130,0.25);
+}
+
+/* ANIMAZIONE DRAGO */
+@keyframes dragon-rotate {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
+/* MOBILE – più discreto */
+@media (max-width: 768px) {
+  .sifu-badge {
+    top: 18px;
+    right: 16px;
+    font-size: 0.9rem;
+    padding: 10px 18px;
+  }
+
+  .sifu-badge::after {
+    display: none;
+  }
+}
