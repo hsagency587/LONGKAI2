@@ -13,9 +13,9 @@
 
 body {
     font-family: 'Inter', sans-serif;
-    color: #f6f3ef;
+    color: #1e1e1e;      /* TESTO SCURO */
     line-height: 1.6;
-    background: #ffffff;
+    background: #ffffff; /* SFONDO BIANCO */
 }
 /* HEADER */
 .nav {
@@ -57,23 +57,25 @@ body {
     text-align: center;
     padding: 60px 20px 50px;
     overflow: hidden;
-    background: transparent; /* IMPORTANTISSIMO */
+    background: #ffffff; /* hero bianca */
 }
 .hero::before {
     content: "";
     position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
+    inset: 0;
 
-    background-image: url("/img/logo2.png"); /* PERCORSO REALE */
+    background-image: url("/img/logo2.png"); /* percorso assoluto */
     background-repeat: no-repeat;
     background-position: center;
     background-size: contain;
 
     opacity: 0.08;
     pointer-events: none;
+    z-index: 0; /* logo sotto */
+}
+.hero > * {
+    position: relative;
+    z-index: 1;
 }
 .hero h1 {
     font-family: 'Playfair Display', serif;
@@ -591,7 +593,6 @@ h2 {
 .service-info strong {
     color: var(--secondary);
     font-weight: 600;
-}
 }
 /* HERO SERVIZIO – FIX SPAZI */
 .service-hero {
