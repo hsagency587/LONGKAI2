@@ -319,48 +319,32 @@ h2 {
 .contact-list a:hover::after {
   width: 100%;
 }
-/* ========== Footer definitivo (solo footer) ========== */
+/* ========== Footer full width reale ========== */
 
 .footer {
-  position: relative;
-  width: 100%;
-  background: #1e1612;           /* scuro caldo */
-  color: #e7d7c3;
-  padding: 32px 0;
-  border-top: 1px solid rgba(255,255,255,0.12);
-  overflow: hidden;
-}
-
-/* riempie visivamente tutto lo spazio sotto e ai lati */
-.footer::after {
-  content: "";
-  position: fixed;
-  inset: 0;
+  width: 100vw;
+  margin-left: calc(50% - 50vw); /* forza full width */
   background: #1e1612;
-  z-index: -1;
+  color: #e7d7c3;
+  padding: 24px 0;
+  border-top: 1px solid rgba(255,255,255,0.12);
 }
 
-/* contenuto allineato come il sito */
-.footer .container {
+.footer-inner {
   max-width: 1100px;
   margin: 0 auto;
   padding: 0 16px;
-}
 
-/* layout sinistra / destra */
-.footer-inner {
   display: flex;
   align-items: center;
   justify-content: space-between;
 }
 
-/* testo */
 .footer p {
   margin: 0;
   font-size: 14px;
 }
 
-/* link */
 .footer-links {
   display: flex;
   gap: 16px;
