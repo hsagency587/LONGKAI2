@@ -67,7 +67,7 @@ body {
     width: 100%;
     height: 100%;
 
-    background-image: url("../img/logo2.png"); /* PERCORSO REALE */
+    background-image: url("/img/logo2.png"); /* PERCORSO REALE */
     background-repeat: no-repeat;
     background-position: center;
     background-size: contain;
