@@ -898,6 +898,20 @@ body .section {
 /* ===============================
    DRAGON (serio / professionale)
    =============================== */
+/* DRAGON – performance + niente scatti */
+#dragon {
+  position: fixed;
+  left: 0;
+  top: 0;
+  width: 140px;     /* regola dimensione */
+  height: 90px;
+  pointer-events: none;
+  z-index: 9999;
+  will-change: transform;
+  transform: translate3d(0,0,0);
+  transition: none !important; /* IMPORTANTISSIMO: evita scatti/ritardi */
+}
+
 #dragon-layer {
   position: fixed;
   inset: 0;
