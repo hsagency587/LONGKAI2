@@ -468,29 +468,44 @@ h2 {
     grid-template-columns: 1fr 1fr;
     gap: 12px;
 }
-    
+
 /* ===============================
-   BOX DESTRA – CONTRASTO DEFINITIVO
+   CONTATTI – STILE OPACO COME CERTIFICATI
    =============================== */
-.card-style {
-    color: #1e1e1e;
+
+.contacts.card-style {
+  background: rgba(255, 255, 255, 0.10);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+
+  border: 1px solid rgba(255,255,255,0.18);
+  border-radius: 18px;
+
+  box-shadow: 0 18px 40px rgba(0,0,0,0.35);
 }
-    
-.card-style h3 {
-    color: #2a1810;
-    letter-spacing: 0.05em;
-    font-weight: 600;
+
+/* titolo */
+.contacts.card-style h3 {
+  color: #f6f3ef;
+  letter-spacing: 0.06em;
 }
-    
-.card-style span {
-    color: #6b5a4a;
+
+/* etichette EMAIL / TELEFONO ecc */
+.contacts.card-style span {
+  color: rgba(246,243,239,0.75);
 }
-    
-.card-style a,
-.card-style li {
-    color: #1e1e1e;
+
+/* valori */
+.contacts.card-style a,
+.contacts.card-style li {
+  color: #f6f3ef;
 }
-    
+
+/* underline elegante al hover */
+.contacts.card-style a::after {
+  background: var(--secondary);
+}
+
 /* ===============================
    PAGAMENTO FULL WIDTH
    =============================== */
@@ -509,32 +524,6 @@ h2 {
     
 .payment-wide a {
     color: #1e1e1e;
-}
-    
-/* =========================================
-   FIX DEFINITIVO TESTI BOX DESTRA
-   ========================================= */
-/* forza colore base nel box */
-.contacts.card-style {
-    color: #1e1e1e;
-}
-    
-/* titoli */
-.contacts.card-style h3 {
-    color: #2a1810 !important;
-    font-weight: 600;
-    letter-spacing: 0.05em;
-}
-    
-/* label tipo EMAIL / TELEFONO */
-.contacts.card-style span {
-    color: #6b5a4a !important;
-}
-    
-/* contenuto vero */
-.contacts.card-style a,
-.contacts.card-style li {
-    color: #1e1e1e !important;
 }
     
 /* =========================================
