@@ -207,25 +207,26 @@ h2 {
 .form button:hover {
     background: #6f3a25;
 }
+/* ===============================
+   PAGAMENTO INLINE (DENTRO CONTATTI)
+   =============================== */
 
-/* PAGAMENTO */
-.payment {
-    display: flex;
-    flex-direction: column;
-    gap: 20px;
+.payment-inline {
+  margin-top: 28px;
+  padding-top: 20px;
+  border-top: 1px solid rgba(255,255,255,0.18);
 }
 
-/* eredita lo stile da .card-style */
-.payment h3 {
-    color: #2a1810;
-    letter-spacing: 0.05em;
-    font-weight: 600;
+.payment-inline h3 {
+  color: #f6f3ef;
+  margin-bottom: 10px;
+  letter-spacing: 0.05em;
 }
 
-.payment p {
-    color: #6b5a4a;
+.payment-inline p {
+  color: rgba(246,243,239,0.75);
+  margin-bottom: 16px;
 }
-
 /* bottone */
 .pay-btn {
     align-self: flex-start;
