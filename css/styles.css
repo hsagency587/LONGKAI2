@@ -373,7 +373,22 @@ h2 {
 .footer-links a:hover {
   text-decoration: underline;
 }
+/* divisore SOLO tra le due mappe */
+.footer-maps {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+}
 
+.footer-maps iframe {
+  width: 100%;
+  height: 220px;
+  border: 0;
+}
+
+/* linea di separazione */
+.footer-maps iframe:first-child {
+  border-right: 3px solid #0f0b09; /* più scuro del footer */
+}
 /* MOBILE */
 @media (max-width: 700px) {
   .footer-maps {
@@ -386,7 +401,11 @@ h2 {
     text-align: center;
   }
 }
-
+ .footer-maps iframe:first-child {
+    border-right: 0;
+    border-bottom: 3px solid #0f0b09;
+  }
+}
 /* =====================================================
    SERVIZI – STILE TRADIZIONALE WING CHUN
    ===================================================== */
