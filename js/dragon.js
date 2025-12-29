@@ -1,52 +1,13 @@
+(() => {
+  "use strict";
 
-  
-  // ====== PARAMETRI (modifica qui) ======
-  const SPEED_PX_PER_SEC = 70;     // velocità costante (più basso = più “serio”)
-  const TURN_RATE = 0.9;           // quanto “serpente” curva (0.6-1.2 consigliato)
-  const DEPTH_MIN = 0.92;          // effetto prospettiva (sobrio)
-  const DEPTH_MAX = 1.05;
-  const SCROLL_INFLUENCE = 0.28;   // reagisce allo scroll (senza mouse)
-  const MARGIN = 14;               // resta sempre in inquadratura
+  const layer = document.getElementById("dragon-layer");
+  const dragonHost = document.getElementById("dragon");
+  if (!layer || !dragonHost) return;
 
-  let dragon, w = 0, h = 0;
-  let x = 0, y = 0;                // posizione
-  let vx = 1, vy = 0;              // direzione normalizzata
-  let t = 0;                       // tempo interno
-  let last = 0;
-  let lastScrollY = window.scrollY;
-
-  function clamp(v, a, b) { return Math.max(a, Math.min(b, v)); }
-  function rand(a, b) { return a + Math.random() * (b - a); }
-  function len(ax, ay) { return Math.hypot(ax, ay) || 1; }
-
-  function updateBounds() {
-    w = window.innerWidth;
-    h = window.innerHeight;
-  }
-
-  function ensureInside() {
-    x = clamp(x, MARGIN, w - MARGIN);
-    y = clamp(y, MARGIN, h - MARGIN);
-  }
-
-  function reflectIfNeeded() {
-    // rimbalzo morbido sui bordi senza fermarsi
-    if (x <= MARGIN) { x = MARGIN; vx = Math.abs(vx); }
-    if (x >= w - MARGIN) { x = w - MARGIN; vx = -Math.abs(vx); }
-    if (y <= MARGIN) { y = MARGIN; vy = Math.abs(vy); }
-    if (y >= h - MARGIN) { y = h - MARGIN; vy = -Math.abs(vy); }
-
-    // rinormalizza direzione
-    const L = len(vx, vy);
-    vx /= L; vy /= L;
-  }
-
-  function createDragon() {
-    dragon = document.createElement("div");
-    dragon.id = "dragon";
-
-    // === INCOLLA QUI IL TUO SVG COMPLETO (quello marrone/giallo) ===
-    dragon.innerHTML = `
+  // ===== SVG (stile serio / tradizionale, non cartoon) =====
+  // Se vuoi ancora più dettagli (artigli/barba lunga), lo faccio dopo: qui è già pulito/pro.
+  dragon.innerHTML = `
 <svg viewBox="0 0 760 420" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
   <defs>
     <!-- Dorso (marrone) -->
@@ -209,78 +170,126 @@
 </svg>
 `;
 
-    document.body.appendChild(dragon);
+  // ===== movimento continuo a velocità costante =====
+  const mqMobile = window.matchMedia("(max-width: 768px)");
+  const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+  const rand = (a, b) => a + Math.random() * (b - a);
+
+  // Parametri “seri”
+  const SPEED = 70;             // px/sec costante (se vuoi più lento: 50)
+  const TURN_RATE = 0.85;       // “serpente” (se vuoi più serpente: 1.1)
+  const SNAKE_AMP = 10;         // ondulazione laterale (se vuoi più sobria: 6)
+  const SCROLL_K = 0.12;        // reazione scroll
+  const MARGIN = 14;
+
+  // stato
+  let vw = window.innerWidth, vh = window.innerHeight;
+  let x = vw * 0.65, y = vh * 0.35;
+  let ang = rand(0, Math.PI * 2);
+  let last = 0;
+  let t = 0;
+
+  // scroll
+  let lastScrollY = window.scrollY;
+  let scrollKick = 0;
+
+  function navSafePx() {
+    const nav = document.querySelector(".nav");
+    if (!nav) return 70;
+    const r = nav.getBoundingClientRect();
+    return Math.max(60, Math.round(r.height + 16));
+  }
+
+  function dragonSize() {
+    const r = dragonHost.getBoundingClientRect();
+    return { w: r.width || 160, h: r.height || 90 };
+  }
+
+  function updateViewport() {
+    vw = window.innerWidth;
+    vh = window.innerHeight;
+  }
+  window.addEventListener("resize", updateViewport, { passive: true });
+
+  window.addEventListener("scroll", () => {
+    const sy = window.scrollY;
+    const d = sy - lastScrollY;
+    lastScrollY = sy;
+    scrollKick += d * SCROLL_K;
+    scrollKick = clamp(scrollKick, -28, 28);
+  }, { passive: true });
+
+  // “davanti” raro e professionale (desktop)
+  let nextDepthAt = performance.now() + 9000;
+  let front = false;
+
+  function depthToggle(now) {
+    if (mqMobile.matches) {
+      if (front) { front = false; layer.classList.remove("is-front"); }
+      return;
+    }
+    if (now < nextDepthAt) return;
+    front = !front;
+    layer.classList.toggle("is-front", front);
+    nextDepthAt = now + 12000; // raramente
   }
 
   function tick(now) {
     if (!last) last = now;
-    // delta-time in secondi (cap per evitare “salti” quando il browser lagga)
     let dt = (now - last) / 1000;
     dt = Math.min(dt, 0.05);
     last = now;
 
-    // tempo interno
+    depthToggle(now);
+
     t += dt;
 
-    // === Curvatura “serpente” (moto continuo, mai fermo) ===
-    // direzione desiderata = direzione attuale + piccolo drift sinusoidale “serio”
-    const drift = Math.sin(t * 0.8) * 0.35 + Math.sin(t * 0.31) * 0.22;
-    // ruota la direzione attuale lentamente (turn rate)
-    const angle = Math.atan2(vy, vx) + drift * TURN_RATE * dt;
+    // curva continua (serpente) senza target/stop
+    const drift =
+      Math.sin(t * 0.85) * 0.55 +
+      Math.sin(t * 0.33) * 0.35;
 
-    vx = Math.cos(angle);
-    vy = Math.sin(angle);
+    ang += drift * TURN_RATE * dt;
 
-    // === Scroll reaction (senza mouse) ===
-    const sy = window.scrollY;
-    const deltaScroll = sy - lastScrollY;
-    lastScrollY = sy;
+    // velocità costante
+    const vx = Math.cos(ang);
+    const vy = Math.sin(ang);
 
-    // applica un “trascinamento” verticale proporzionale allo scroll
-    // (mantiene velocità costante, aggiunge solo un offset morbido)
-    y += deltaScroll * SCROLL_INFLUENCE;
+    x += vx * SPEED * dt;
+    y += vy * SPEED * dt;
 
-    // === Movimento a velocità costante ===
-    x += vx * SPEED_PX_PER_SEC * dt;
-    y += vy * SPEED_PX_PER_SEC * dt;
+    // scroll kick morbido
+    if (Math.abs(scrollKick) > 0.01) {
+      y += scrollKick;
+      scrollKick *= Math.pow(0.001, dt * 6.5);
+    }
 
-    // resta sempre in viewport
-    ensureInside();
-    reflectIfNeeded();
+    // ondulazione laterale (perp)
+    const wave = Math.sin(t * 1.2);
+    x += Math.cos(ang + Math.PI / 2) * wave * SNAKE_AMP * dt * 10;
+    y += Math.sin(ang + Math.PI / 2) * wave * SNAKE_AMP * dt * 10;
 
-    // === Prospettiva sobria (sempre visibile, professionale) ===
-    // profondità legata alla Y (più in basso = leggermente più “vicino”)
-    const depth = DEPTH_MIN + (y / h) * (DEPTH_MAX - DEPTH_MIN);
+    // clamp in viewport + safe area nav
+    const { w, h } = dragonSize();
+    const topSafe = navSafePx() + MARGIN;
 
-    // rotazione leggera verso la direzione di moto (non cartoon)
-    const rot = (Math.atan2(vy, vx) * 180 / Math.PI) * 0.35;
+    // rimbalzo sui bordi senza “fermarsi”
+    if (x < MARGIN) { x = MARGIN; ang = Math.PI - ang; }
+    if (x > vw - w - MARGIN) { x = vw - w - MARGIN; ang = Math.PI - ang; }
+    if (y < topSafe) { y = topSafe; ang = -ang; }
+    if (y > vh - h - MARGIN) { y = vh - h - MARGIN; ang = -ang; }
 
-    // IMPORTANT: solo transform (niente top/left → niente scatti)
-    dragon.style.transform =
-      `translate3d(${x}px, ${y}px, 0) scale(${depth}) rotate(${rot}deg)`;
+    // prospettiva sobria (legata alla y)
+    const depth = front ? 1.06 : (0.94 + (y / vh) * 0.08);
+
+    // rotazione “seria” (poca)
+    const rot = (ang * 180 / Math.PI) * 0.18;
+
+    dragonHost.style.transform =
+      `translate3d(${x}px, ${y}px, 0) rotate(${rot}deg) scale(${depth})`;
 
     requestAnimationFrame(tick);
   }
 
-  // ===== init =====
-  window.addEventListener("DOMContentLoaded", () => {
-    updateBounds();
-    createDragon();
-
-    // posizione iniziale (sempre visibile)
-    x = rand(MARGIN, w - MARGIN);
-    y = rand(MARGIN, h - MARGIN);
-
-    // direzione iniziale
-    const a = rand(0, Math.PI * 2);
-    vx = Math.cos(a);
-    vy = Math.sin(a);
-
-    requestAnimationFrame(tick);
-  });
-
-  window.addEventListener("resize", () => {
-    updateBounds();
-    ensureInside();
-  });
+  requestAnimationFrame(tick);
 })();
