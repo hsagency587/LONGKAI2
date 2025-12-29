@@ -496,7 +496,7 @@ h2 {
 /* link invisibile (rituale, non bottone) */
 .service-link {
     text-decoration: none;
-    display: block;
+    display: contents;
 }
     
 /* hover molto sobrio */
