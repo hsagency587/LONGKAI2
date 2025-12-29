@@ -3,14 +3,14 @@
   const dragon = document.getElementById("dragon");
   if (!layer || !dragon) return;
 
-  // SVG dragone (brown dorsale + belly giallo)
+  // SVG serio (non cartoon). Se vuoi un SVG più dettagliato, lo sostituiamo qui dentro.
   dragon.innerHTML = `
   <svg viewBox="0 0 520 320" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
     <defs>
       <linearGradient id="backGrad" x1="0" y1="0" x2="1" y2="1">
-        <stop offset="0" stop-color="#6a3a22"/>
+        <stop offset="0" stop-color="#5f321f"/>
         <stop offset="0.55" stop-color="#8b4a2f"/>
-        <stop offset="1" stop-color="#4a2416"/>
+        <stop offset="1" stop-color="#3b1c12"/>
       </linearGradient>
       <linearGradient id="bellyGrad" x1="0" y1="0" x2="1" y2="0">
         <stop offset="0" stop-color="#f1d07a"/>
@@ -31,8 +31,7 @@
       </filter>
     </defs>
 
-    <!-- corpo -->
-    <path filter="url(#soft)" fill="url(#backGrad)" stroke="rgba(0,0,0,0.35)" stroke-width="2"
+    <path filter="url(#soft)" fill="url(#backGrad)" stroke="rgba(0,0,0,0.38)" stroke-width="2"
       d="M55,190
          C80,150 120,150 145,175
          C175,210 205,220 240,205
@@ -50,7 +49,6 @@
          C62,116 45,150 55,190
          Z" />
 
-    <!-- pancia -->
     <path fill="url(#bellyGrad)" opacity="0.95" stroke="rgba(0,0,0,0.20)" stroke-width="1.5"
       d="M90,176
          C110,160 130,160 148,176
@@ -67,8 +65,7 @@
          C130,148 108,150 90,176
          Z" />
 
-    <!-- testa -->
-    <path fill="url(#backGrad)" stroke="rgba(0,0,0,0.35)" stroke-width="2"
+    <path fill="url(#backGrad)" stroke="rgba(0,0,0,0.38)" stroke-width="2"
       d="M32,196
          C20,178 22,158 36,146
          C52,132 74,132 92,146
@@ -77,31 +74,21 @@
          C48,208 40,204 32,196
          Z" />
 
-    <!-- occhio -->
     <circle cx="70" cy="168" r="6" fill="#1a0f0a"/>
     <circle cx="72" cy="166" r="2" fill="#f6f3ef"/>
 
-    <!-- corna -->
     <path d="M44,148 C34,134 34,120 48,110 C58,103 68,106 74,118"
           fill="none" stroke="rgba(245,223,170,0.9)" stroke-width="4" stroke-linecap="round"/>
     <path d="M62,142 C58,126 66,112 84,108 C98,106 104,116 102,130"
           fill="none" stroke="rgba(245,223,170,0.9)" stroke-width="4" stroke-linecap="round"/>
 
-    <!-- baffi -->
     <path d="M18,188 C40,182 52,176 60,166"
-          fill="none" stroke="rgba(231,215,195,0.85)" stroke-width="2" stroke-linecap="round"/>
+          fill="none" stroke="rgba(231,215,195,0.80)" stroke-width="2" stroke-linecap="round"/>
     <path d="M20,200 C46,196 62,188 72,178"
-          fill="none" stroke="rgba(231,215,195,0.85)" stroke-width="2" stroke-linecap="round"/>
-
-    <!-- spine -->
-    <path d="M140,150 L150,135 L160,152" fill="none" stroke="rgba(0,0,0,0.35)" stroke-width="2" />
-    <path d="M210,132 L222,118 L235,134" fill="none" stroke="rgba(0,0,0,0.35)" stroke-width="2" />
-    <path d="M300,138 L312,122 L324,140" fill="none" stroke="rgba(0,0,0,0.35)" stroke-width="2" />
-    <path d="M392,150 L404,134 L416,152" fill="none" stroke="rgba(0,0,0,0.35)" stroke-width="2" />
+          fill="none" stroke="rgba(231,215,195,0.80)" stroke-width="2" stroke-linecap="round"/>
   </svg>
   `;
 
-  const rand = (a, b) => a + Math.random() * (b - a);
   const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 
   const isMobile = matchMedia("(max-width: 768px)").matches;
@@ -115,102 +102,119 @@
 
   function sizePx() {
     const r = dragon.getBoundingClientRect();
-    return { w: r.width || 140, h: r.height || 90 };
+    return { w: r.width || 150, h: r.height || 95 };
   }
 
-  const st = {
-    x: 40, y: 140,
-    tx: 240, ty: 160,
-    rot: 0, trot: 0,
-    scale: 1, tScale: 1,
-    front: false,
-    nextTargetAt: 0,
-    nextDepthAt: 0,
-    lastT: performance.now(),
-    scrollY: window.scrollY,
-    scrollKick: 0
-  };
+  // Stato
+  let t0 = performance.now();
+  let last = t0;
 
-  function pickNewTarget(now) {
-    const { w, h } = sizePx();
-    const vw = window.innerWidth;
-    const vh = window.innerHeight;
+  // Posizione base (centro traiettoria)
+  let cx = 0, cy = 0;
 
-    const margin = 14;
-    const topSafe = navSafePx() + margin;
-
-    st.tx = rand(margin, vw - w - margin);
-    st.ty = rand(topSafe, vh - h - margin);
-
-    st.trot = rand(-6, 6);
-    st.tScale = st.front ? rand(1.08, 1.22) : rand(0.92, 1.08);
-
-    st.nextTargetAt = now + rand(isMobile ? 2600 : 2200, isMobile ? 5200 : 6800);
-  }
-
-  function maybeToggleDepth(now) {
-    if (isMobile) {
-      st.front = false;
-      layer.classList.remove("is-front");
-      st.nextDepthAt = now + 9999999;
-      return;
-    }
-
-    if (now < st.nextDepthAt) return;
-
-    st.front = !st.front;
-    layer.classList.toggle("is-front", st.front);
-    st.tScale = st.front ? rand(1.08, 1.22) : rand(0.92, 1.08);
-
-    st.nextDepthAt = now + rand(2600, 5200);
-  }
+  // Scroll influence (smoothed)
+  let scrollKick = 0;
+  let scrollY = window.scrollY;
 
   window.addEventListener("scroll", () => {
     const y = window.scrollY;
-    const d = y - st.scrollY;
-    st.scrollY = y;
+    const d = y - scrollY;
+    scrollY = y;
 
-    st.scrollKick += d * 0.10;
-    st.scrollKick = clamp(st.scrollKick, -24, 24);
+    // influenza verticale dolce
+    scrollKick += d * 0.12;
+    scrollKick = clamp(scrollKick, -28, 28);
   }, { passive: true });
 
+  // Movimento: traiettoria ellittica + drift con wrapping
+  // velocità costante -> usiamo un parametro phase che cresce linearmente col tempo
+  const speed = isMobile ? 0.09 : 0.075; // più basso = più lento
+  const snakeFreq = isMobile ? 1.15 : 1.05; // ondulazione
+  const snakeAmp = isMobile ? 6 : 10; // ampiezza ondulazione px
+  const rotAmp = isMobile ? 2.2 : 3.5; // rotazione lieve
+
+  // profondità: alterna raramente (professionale, non “gioco”)
+  let front = false;
+  let nextDepthAt = t0 + (isMobile ? 9999999 : 9000);
+
+  function maybeDepth(now) {
+    if (isMobile) return;
+    if (now < nextDepthAt) return;
+    front = !front;
+    layer.classList.toggle("is-front", front);
+    nextDepthAt = now + 12000; // cambia raramente
+  }
+
+  // Inizializza centro
+  function initCenter() {
+    cx = window.innerWidth * 0.68;
+    cy = window.innerHeight * 0.32;
+  }
+  initCenter();
+  window.addEventListener("resize", initCenter, { passive: true });
+
   function tick(now) {
-    const dt = Math.min(0.05, (now - st.lastT) / 1000);
-    st.lastT = now;
+    const dt = Math.min(0.05, (now - last) / 1000);
+    last = now;
 
-    if (now > st.nextTargetAt) pickNewTarget(now);
-    maybeToggleDepth(now);
+    maybeDepth(now);
 
-    const ease = isMobile ? 1.2 : 0.9;
-    st.x += (st.tx - st.x) * (1 - Math.pow(0.001, dt * ease));
-    st.y += (st.ty - st.y) * (1 - Math.pow(0.001, dt * ease));
-
-    if (Math.abs(st.scrollKick) > 0.01) {
-      st.y += st.scrollKick;
-      st.scrollKick *= Math.pow(0.001, dt * 6.5);
-    }
+    const elapsed = (now - t0) / 1000;
 
     const { w, h } = sizePx();
     const vw = window.innerWidth;
     const vh = window.innerHeight;
+
     const margin = 14;
     const topSafe = navSafePx() + margin;
 
-    st.x = clamp(st.x, margin, vw - w - margin);
-    st.y = clamp(st.y, topSafe, vh - h - margin);
+    // Traiettoria principale “normale”: ellisse lenta (sempre stessa velocità angolare)
+    const phase = elapsed * (Math.PI * 2) * speed; // lineare => velocità regolare
+    const rx = vw * 0.28;               // raggio x
+    const ry = vh * 0.18;               // raggio y
 
-    st.rot += (st.trot - st.rot) * (1 - Math.pow(0.001, dt * 8));
-    st.scale += (st.tScale - st.scale) * (1 - Math.pow(0.001, dt * 6));
+    // posizione ellisse
+    let x = cx + Math.cos(phase) * rx;
+    let y = cy + Math.sin(phase) * ry;
 
-    const facing = st.tx < st.x ? -1 : 1;
+    // drift lento (molto leggero, per evitare loop troppo evidente)
+    x += Math.sin(phase * 0.17) * (vw * 0.03);
+    y += Math.cos(phase * 0.19) * (vh * 0.02);
 
-    dragon.style.transform =
-      `translate(${st.x}px, ${st.y}px) scale(${st.scale * facing}, ${st.scale}) rotate(${st.rot}deg)`;
+    // Ondulazione serpente: offset laterale lungo direzione di movimento
+    // Derivata approssimata per angolo di direzione
+    const dx = -Math.sin(phase) * rx;
+    const dy =  Math.cos(phase) * ry;
+    const ang = Math.atan2(dy, dx);
+
+    const wave = Math.sin(elapsed * (Math.PI * 2) * snakeFreq);
+    const perpX = Math.cos(ang + Math.PI / 2);
+    const perpY = Math.sin(ang + Math.PI / 2);
+
+    x += perpX * wave * snakeAmp;
+    y += perpY * wave * snakeAmp;
+
+    // Scroll kick smoothed
+    if (Math.abs(scrollKick) > 0.01) {
+      y += scrollKick;
+      scrollKick *= Math.pow(0.001, dt * 6.5);
+    }
+
+    // Mantieni sempre in viewport
+    x = clamp(x, margin, vw - w - margin);
+    y = clamp(y, topSafe, vh - h - margin);
+
+    // Orientamento: guarda la direzione, ma molto sobrio
+    const deg = ang * (180 / Math.PI);
+    const rot = deg * 0.10 + wave * rotAmp; // “serpente” senza esagerare
+
+    // Scala: minima, professionale
+    const s = front ? 1.08 : 0.98;
+
+    dragon.style.transform = `translate(${x}px, ${y}px) rotate(${rot}deg) scale(${s})`;
 
     requestAnimationFrame(tick);
   }
 
-  pickNewTarget(performance.now());
-  st.nextDepthAt = performance.now() + (isMobile ? 999999 : rand(1800, 3200));
   requestAnimationFrame(tick);
 })();
