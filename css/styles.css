@@ -322,11 +322,11 @@ h2 {
 /* ========== Footer full width reale ========== */
 
 .footer {
-  width: 100vw;
-  margin-left: calc(50% - 50vw); /* forza full width */
+  position: relative;
+  width: 100%;
   background: #1e1612;
   color: #e7d7c3;
-  padding: 24px 0;
+  padding: 32px 0;
   border-top: 1px solid rgba(255,255,255,0.12);
 }
 
@@ -370,15 +370,6 @@ h2 {
   }
 }
 
-
-/* mobile */
-@media (max-width: 700px) {
-  .footer-inner {
-    flex-direction: column;
-    gap: 12px;
-    text-align: center;
-  }
-}
 /* =====================================================
    SERVIZI – STILE TRADIZIONALE WING CHUN
    ===================================================== */
