@@ -13,9 +13,20 @@
 
 body {
     font-family: 'Inter', sans-serif;
-    color: #1e1e1e;      /* TESTO SCURO */
+    color: #f6f3ef;     
     line-height: 1.6;
-    background: #ffffff; /* SFONDO BIANCO */
+      background:
+        linear-gradient(
+            rgba(30,15,10,0.78),
+            rgba(30,15,10,0.78)
+        ),
+        url("/img/logo1.png");
+
+    background-repeat: no-repeat;
+    background-position: center 30%;
+    background-size: contain;
+    background-attachment: fixed;
+    }
 }
 /* HEADER */
 .nav {
@@ -53,29 +64,9 @@ body {
 }
 
 .hero {
-    position: relative;
     text-align: center;
     padding: 60px 20px 50px;
-    overflow: hidden;
-    background: #ffffff; /* hero bianca */
 }
-.hero::before {
-    content: "";
-    position: absolute;
-    inset: 0;
-
-    background-image: url("/img/logo2.png"); /* percorso assoluto */
-    background-repeat: no-repeat;
-    background-position: center;
-    background-size: contain;
-
-    opacity: 0.08;
-    pointer-events: none;
-    z-index: 0; /* logo sotto */
-}
-.hero > * {
-    position: relative;
-    z-index: 1;
 }
 .hero h1 {
     font-family: 'Playfair Display', serif;
