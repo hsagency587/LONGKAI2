@@ -896,43 +896,43 @@ body .section {
   }
 }
 
-/* ===============================
-   DRAGON – serio, fluido, continuo
-   =============================== */
+/* ========= DRAGON (NUOVO, da zero) ========= */
 #dragon-layer{
   position: fixed;
   inset: 0;
   pointer-events: none;
-  z-index: 50; /* di base dietro alle cose */
+  z-index: 5; /* dietro ai contenuti di default */
 }
 
-/* ogni tanto passa davanti (desktop) */
-#dragon-layer.is-front{ z-index: 1200; }
+/* quando passa davanti */
+#dragon-layer.is-front{
+  z-index: 1200;
+}
 
-/* il dragone viene mosso solo via transform: NO scatti */
-#dragon{
+/* nav sempre sopra (non cambia layout) */
+.nav{ position: relative; z-index: 2000; }
+
+#dragon-svg{
   position: absolute;
-  width: 160px;
+  width: 520px;     /* media taglia desktop */
   height: auto;
-  opacity: 0.30;
-  filter: drop-shadow(0 14px 20px rgba(0,0,0,0.35));
+  opacity: 0.22;    /* serio e non invadente */
+  filter: drop-shadow(0 18px 26px rgba(0,0,0,0.40));
   will-change: transform;
   transform: translate3d(0,0,0);
 }
 
-/* un filo più presente quando è davanti */
-#dragon-layer.is-front #dragon{
-  opacity: 0.42;
-  filter: drop-shadow(0 18px 28px rgba(0,0,0,0.45));
+#dragon-layer.is-front #dragon-svg{
+  opacity: 0.32;
+  filter: drop-shadow(0 22px 34px rgba(0,0,0,0.50));
 }
 
-/* Mobile: semplificato e sempre dietro (più professionale) */
+/* Mobile: più semplice e meno “front” */
 @media (max-width: 768px){
-  #dragon{ width: 120px; opacity: 0.24; }
-  #dragon-layer.is-front{ z-index: 50; } /* niente “front” aggressivo su mobile */
+  #dragon-svg{ width: 360px; opacity: 0.18; }
+  #dragon-layer.is-front{ z-index: 5; } /* su mobile resta dietro */
 }
 
-/* Rispetta impostazione accessibilità */
 @media (prefers-reduced-motion: reduce){
   #dragon-layer{ display:none; }
 }
