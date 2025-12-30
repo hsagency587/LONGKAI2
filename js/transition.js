@@ -13,12 +13,9 @@
       const v = sessionStorage.getItem(FLAG);
       sessionStorage.removeItem(FLAG);
       return v === "1";
-    } catch {
-      return false;
-    }
+    } catch { return false; }
   };
 
-  // Arrivo: se arriviamo da click “animato”, mostra e poi sfuma via
   document.addEventListener("DOMContentLoaded", () => {
     if (consumeFlag()) {
       show();
@@ -28,30 +25,18 @@
     }
   });
 
-  // Indietro/avanti (bfcache): overlay deve essere spento
   window.addEventListener("pageshow", () => {
     navigating = false;
     hide();
     try { sessionStorage.removeItem(FLAG); } catch {}
   });
 
-  // Fail-safe: non deve restare mai attivo se non stiamo navigando
-  window.addEventListener("load", () => {
-    if (!navigating) setTimeout(hide, 350);
-  });
-
   function isModifiedClick(e) {
     return e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button !== 0;
   }
-
   function isSkippableHref(href) {
     if (!href) return true;
-    return (
-      href.startsWith("#") ||
-      href.startsWith("mailto:") ||
-      href.startsWith("tel:") ||
-      href.startsWith("javascript:")
-    );
+    return href.startsWith("#") || href.startsWith("mailto:") || href.startsWith("tel:") || href.startsWith("javascript:");
   }
 
   document.addEventListener("click", (e) => {
@@ -66,11 +51,8 @@
 
     let url;
     try { url = new URL(a.href, window.location.href); } catch { return; }
-
-    // Esterni: niente transizione
     if (url.origin !== window.location.origin) return;
 
-    // Solo hash-change nella stessa pagina: niente transizione
     const samePath = url.pathname === window.location.pathname;
     const sameSearch = url.search === window.location.search;
     const onlyHashChange = samePath && sameSearch && url.hash;
@@ -84,11 +66,13 @@
 
     try { sessionStorage.setItem(FLAG, "1"); } catch {}
 
+    /* doppio RAF = garantisce il paint dell’overlay */
     requestAnimationFrame(() => {
-      setTimeout(() => {
-        window.location.href = url.toString();
-      }, 240);
+      requestAnimationFrame(() => {
+        setTimeout(() => {
+          window.location.href = url.toString();
+        }, 420); // più lungo: l’overlay si vede sempre
+      });
     });
   });
 })();
-
