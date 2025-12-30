@@ -1,103 +1,94 @@
-/* ===============================
-   PAGE TRANSITION (OVERLAY DRAGO)
-   =============================== */
+(function () {
+  const overlay = document.getElementById("page-transition");
+  if (!overlay) return;
 
-#page-transition{
-  position: fixed;
-  inset: 0;
-  z-index: 99999;
-  pointer-events: none;
+  const FLAG = "pt_pending";
+  let navigating = false;
 
-  opacity: 0;
-  visibility: hidden;
-  transition: opacity 320ms ease, visibility 0s linear 320ms;
+  const show = () => overlay.classList.add("is-active");
+  const hide = () => overlay.classList.remove("is-active");
 
-  /* velo scuro coerente col tuo background */
-  background: rgba(10,7,6,0.90);
-  backdrop-filter: blur(6px);
-  -webkit-backdrop-filter: blur(6px);
-}
+  const consumeFlag = () => {
+    try {
+      const v = sessionStorage.getItem(FLAG);
+      sessionStorage.removeItem(FLAG);
+      return v === "1";
+    } catch {
+      return false;
+    }
+  };
 
-#page-transition.is-active{
-  opacity: 1;
-  visibility: visible;
-  transition: opacity 320ms ease;
-}
+  // Arrivo: se arriviamo da click “animato”, mostra e poi sfuma via
+  document.addEventListener("DOMContentLoaded", () => {
+    if (consumeFlag()) {
+      show();
+      requestAnimationFrame(() => setTimeout(hide, 220));
+    } else {
+      hide();
+    }
+  });
 
-#page-transition .pt-center{
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  transform: translate(-50%,-50%);
-  text-align: center;
-}
+  // Indietro/avanti (bfcache): overlay deve essere spento
+  window.addEventListener("pageshow", () => {
+    navigating = false;
+    hide();
+    try { sessionStorage.removeItem(FLAG); } catch {}
+  });
 
-#page-transition .pt-dragon{
-  position: relative;
-  font-family: 'Playfair Display', serif;
-  font-size: 64px;
-  line-height: 1;
-  color: rgba(217,179,130,0.92); /* secondary */
-  text-shadow: 0 0 18px rgba(217,179,130,0.35), 0 0 40px rgba(217,179,130,0.18);
+  // Fail-safe: non deve restare mai attivo se non stiamo navigando
+  window.addEventListener("load", () => {
+    if (!navigating) setTimeout(hide, 350);
+  });
 
-  padding: 18px 44px;
-  border-radius: 999px;
-
-  background: rgba(255,255,255,0.08);
-  border: 1px solid rgba(255,255,255,0.20);
-  box-shadow: 0 18px 50px rgba(0,0,0,0.45);
-}
-
-/* Aura con conic-gradient, ruota lentamente */
-#page-transition .pt-dragon::before{
-  content: "";
-  position: absolute;
-  inset: -36px;
-  border-radius: 999px;
-
-  background: conic-gradient(
-    from 0deg,
-    rgba(217,179,130,0.00),
-    rgba(217,179,130,0.55),
-    rgba(217,179,130,0.00)
-  );
-
-  filter: blur(10px);
-  opacity: 0.80;
-
-  animation: pt-rotate 1.05s linear infinite;
-  z-index: -1;
-}
-
-#page-transition .pt-label{
-  margin-top: 16px;
-  font-family: 'Inter', sans-serif;
-  font-size: 14px;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: rgba(246,243,239,0.78);
-}
-
-/* Riduce animazioni se l’utente lo richiede */
-@media (prefers-reduced-motion: reduce){
-  #page-transition,
-  #page-transition .pt-dragon::before{
-    transition: none !important;
-    animation: none !important;
+  function isModifiedClick(e) {
+    return e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button !== 0;
   }
-}
 
-@keyframes pt-rotate{
-  from { transform: rotate(0deg); }
-  to   { transform: rotate(360deg); }
-}
-.section .text .pay-btn {
-  display: inline-block;         /* necessario per far “sentire” i margini */
-  margin-top: 8px;               /* ulteriore aria sopra il bottone */
-}
-html.pt-pending #page-transition{
-  opacity: 1;
-  visibility: visible;
-  transition: none;
-}
+  function isSkippableHref(href) {
+    if (!href) return true;
+    return (
+      href.startsWith("#") ||
+      href.startsWith("mailto:") ||
+      href.startsWith("tel:") ||
+      href.startsWith("javascript:")
+    );
+  }
+
+  document.addEventListener("click", (e) => {
+    const a = e.target.closest("a");
+    if (!a) return;
+
+    const href = a.getAttribute("href");
+    if (isSkippableHref(href)) return;
+    if (a.hasAttribute("download")) return;
+    if (a.target && a.target !== "_self") return;
+    if (isModifiedClick(e)) return;
+
+    let url;
+    try { url = new URL(a.href, window.location.href); } catch { return; }
+
+    // Esterni: niente transizione
+    if (url.origin !== window.location.origin) return;
+
+    // Solo hash-change nella stessa pagina: niente transizione
+    const samePath = url.pathname === window.location.pathname;
+    const sameSearch = url.search === window.location.search;
+    const onlyHashChange = samePath && sameSearch && url.hash;
+    if (onlyHashChange) return;
+
+    if (navigating) { e.preventDefault(); return; }
+    navigating = true;
+
+    e.preventDefault();
+    show();
+
+    try { sessionStorage.setItem(FLAG, "1"); } catch {}
+
+    requestAnimationFrame(() => {
+      setTimeout(() => {
+        window.location.href = url.toString();
+      }, 240);
+    });
+  });
+})();
 
