@@ -917,12 +917,8 @@ body .section {
   top: 50%;
   transform: translate(-50%,-50%);
   text-align: center;
-
-  /* fondamentale: rende stabile il posizionamento dell’aura */
-  position: absolute;
 }
 
-/* Aura stile badge */
 #page-transition .pt-aura{
   position: absolute;
   inset: -52px;
@@ -941,32 +937,6 @@ body .section {
   z-index: 0;
 }
 
-/* LOGO tintato */
-#page-transition .pt-logoMask{
-  width: 170px;
-  height: 170px;
-  margin: 0 auto;
-  position: relative;
-  z-index: 1;
-
-  background: var(--secondary);
-
-  -webkit-mask-image: url("/img/logo1.png");
-  -webkit-mask-repeat: no-repeat;
-  -webkit-mask-position: center;
-  -webkit-mask-size: contain;
-
-  mask-image: url("/img/logo1.png");
-  mask-repeat: no-repeat;
-  mask-position: center;
-  mask-size: contain;
-
-  filter:
-    drop-shadow(0 0 18px rgba(217,179,130,0.35))
-    drop-shadow(0 0 42px rgba(217,179,130,0.18));
-}
-
-/* Fallback: PNG normale (così il logo non “sparisce” mai) */
 #page-transition .pt-logoImg{
   width: 170px;
   height: auto;
@@ -979,11 +949,6 @@ body .section {
   filter:
     drop-shadow(0 0 18px rgba(217,179,130,0.25))
     drop-shadow(0 0 42px rgba(217,179,130,0.15));
-}
-
-/* Se la mask è supportata, nascondo il fallback */
-@supports (-webkit-mask-image: url("/img/logo1.png")) {
-  #page-transition .pt-logoImg{ display: none; }
 }
 
 #page-transition .pt-label{
