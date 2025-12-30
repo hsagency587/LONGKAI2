@@ -976,15 +976,15 @@ body .section {
   background:
     radial-gradient(circle at 50% 55%,
       var(--gold2) 0%,
-      rgba(217,179,130,0.14) 34%,
+      rgba(217,179,130,0.18) 34%,
       var(--gold0) 62%),
     radial-gradient(circle at 50% 50%,
       var(--gold0) 56%,
-      rgba(217,179,130,0.22) 58%,
+      rgba(217,179,130,0.28) 58%,
       var(--gold0) 66%);
 
-  filter: blur(10px);
-  opacity: 0.92;
+  filter: blur(8px);
+  opacity: 0.98;
 
   animation: sigil-breathe 1.35s ease-in-out infinite;
   transform-origin: 50% 55%;
@@ -1009,8 +1009,8 @@ body .section {
     rgba(217,179,130,0.00) 360deg
   );
 
-  filter: blur(12px);
-  opacity: 0.78;
+  filter: blur(10px);
+  opacity: 0.86;
   mix-blend-mode: screen;
   animation: sigil-drift 2.6s linear infinite;
 }
