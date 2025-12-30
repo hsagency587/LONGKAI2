@@ -63,15 +63,12 @@
 
     e.preventDefault();
     show();
-
     try { sessionStorage.setItem(FLAG, "1"); } catch {}
 
-    /* doppio RAF = garantisce il paint dell’overlay */
+    // doppio RAF = garantisce che l’overlay venga disegnato prima del redirect
     requestAnimationFrame(() => {
       requestAnimationFrame(() => {
-        setTimeout(() => {
-          window.location.href = url.toString();
-        }, 420); // più lungo: l’overlay si vede sempre
+        setTimeout(() => window.location.href = url.toString(), 420);
       });
     });
   });
