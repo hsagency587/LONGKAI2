@@ -992,3 +992,61 @@ body .section {
     animation: none !important;
   }
 }
+/* ===============================
+   MOBILE – FIX SPAZIATURE + NAV TOP
+   (incolla in fondo al CSS)
+   =============================== */
+@media (max-width: 768px){
+
+  /* meno aria generale */
+  .section,
+  body .section{
+    padding: 28px 6% !important;
+  }
+
+  /* HERO più compatto (prima era troppo alto) */
+  .hero{
+    padding: 68px 14px 18px !important; /* top | sides | bottom */
+    text-align: center;
+  }
+
+  /* NAV: centrata, senza sovrapposizioni */
+  .nav{
+    padding: 12px 6% !important;
+    justify-content: center !important;
+  }
+
+  .nav ul{
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;            /* fondamentale: niente overlap */
+    gap: 10px;                  /* meno spazio tra i 3 */
+    margin: 0;
+    padding: 0;
+  }
+
+  /* pillole più piccole */
+  .nav a{
+    padding: 8px 12px !important;
+    font-size: 13px !important;
+    border-radius: 12px !important;
+    line-height: 1.1;
+  }
+
+  /* Badge in alto a destra più compatto */
+  .sifu-badge{
+    top: 12px !important;
+    right: 12px !important;
+    padding: 8px 12px !important;
+    font-size: 13px !important;
+  }
+
+  /* layout a colonna + meno gap */
+  .split,
+  .content.split,
+  .servizi-grid{
+    grid-template-columns: 1fr !important;
+    gap: 28px !important;
+  }
+}
