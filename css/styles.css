@@ -528,26 +528,6 @@ h2 {
 .payment-wide a {
     color: #1e1e1e;
 }
-    
-/* =========================================
-   PAGAMENTO FULL WIDTH
-   ========================================= */
-
-.payment-wide {
-    color: #f6f3ef;
-}
-    
-.payment-wide h3 {
-    color: var(--secondary);
-}
-    
-.payment-wide p {
-    color: #e8e2da;
-}
-    
-.payment-wide a {
-    color: #1e1e1e;
-}
     /* =========================
    FOOTER – ISOLATO E SICURO
    ========================= */
@@ -680,7 +660,15 @@ h2 {
 .service-text p {
     margin-bottom: 14px;
 }
-    
+/* SPAZIO TRA TESTO (ULTIMO PARAGRAFO) E CTA "PRENOTA" */
+.service-page .service-text p:last-of-type {
+  margin-bottom: 32px; /* aumenta/diminuisci qui */
+}
+
+/* SPAZIO TRA LISTA INFO (durata/livello/prezzo) E CTA "PRENOTA" */
+.service-page .service-info {
+  margin-bottom: 22px; /* aumenta/diminuisci qui */
+}    
 /* OVERRIDE PAGINA SERVIZIO */
 body .section {
     padding: 60px 8%;
