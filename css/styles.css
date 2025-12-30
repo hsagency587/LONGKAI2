@@ -898,7 +898,7 @@ body .section {
 
   opacity: 0;
   visibility: hidden;
-  transition: opacity 320ms ease, visibility 0s linear 320ms;
+  transition: opacity 650ms ease, visibility 0s linear 650ms;
 
   background: rgba(10,7,6,0.90);
   backdrop-filter: blur(6px);
@@ -908,7 +908,7 @@ body .section {
 #page-transition.is-active{
   opacity: 1;
   visibility: visible;
-  transition: opacity 320ms ease;
+  transition: opacity 650ms ease;
 }
 
 #page-transition .pt-wrap{
