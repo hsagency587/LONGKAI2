@@ -15,36 +15,37 @@
     overlay.classList.add("is-active");
   }
 
-  // 1) Spegnimento garantito in ARRIVO (anche se pageshow non viene intercettato)
-  (function arrivalKick() {
+  // Spegni SEMPRE quando la pagina è pronta (evita blocchi)
+  document.addEventListener("DOMContentLoaded", () => {
+    // se era pending, lascia 160ms di “effetto” e poi spegni
     const pending =
       document.documentElement.classList.contains("pt-pending") ||
-      (function () {
-        try { return sessionStorage.getItem(FLAG) === "1"; } catch (e) { return false; }
-      })();
+      (function(){ try { return sessionStorage.getItem(FLAG) === "1"; } catch(e){ return false; } })();
 
     if (pending) {
       showOverlay();
-      // togli subito il flag: evita loop/blocchi
       try { sessionStorage.removeItem(FLAG); } catch (e) {}
-      // lascia comparire l’overlay e poi spegni
-      requestAnimationFrame(() => setTimeout(hideOverlayHard, 180));
+      requestAnimationFrame(() => setTimeout(() => { isNavigating = false; hideOverlayHard(); }, 180));
     } else {
       hideOverlayHard();
     }
-  })();
+  });
 
-  // 2) bfcache: indietro/avanti
+  // bfcache (indietro/avanti)
   window.addEventListener("pageshow", () => {
-    // quando torno indietro, garantisco overlay spento
-    // (se invece era un arrivo animato, arrivalKick lo gestisce già)
-    requestAnimationFrame(() => setTimeout(hideOverlayHard, 0));
+    // quando torno indietro, l’overlay deve essere OFF
+    setTimeout(() => { isNavigating = false; hideOverlayHard(); }, 0);
   });
 
-  // 3) ulteriore cintura di sicurezza: al load, overlay deve essere spento
+  // ulteriore cintura: a load deve essere OFF
   window.addEventListener("load", () => {
-    setTimeout(hideOverlayHard, 0);
+    setTimeout(() => { if (!isNavigating) hideOverlayHard(); }, 0);
   });
+
+  // FAILSAFE: se resta attivo, spegni comunque
+  setTimeout(() => {
+    if (!isNavigating) hideOverlayHard();
+  }, 2200);
 
   function isModifiedClick(e) {
     return e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button !== 0;
@@ -88,12 +89,14 @@
     isNavigating = true;
 
     e.preventDefault();
-
     showOverlay();
+
     try { sessionStorage.setItem(FLAG, "1"); } catch (e) {}
 
     requestAnimationFrame(() => {
-      setTimeout(() => { window.location.href = url.toString(); }, 240);
+      setTimeout(() => {
+        window.location.href = url.toString();
+      }, 240);
     });
   });
 })();
