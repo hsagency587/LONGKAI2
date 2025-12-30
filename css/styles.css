@@ -978,8 +978,3 @@ body .section {
   display: inline-block;         /* necessario per far “sentire” i margini */
   margin-top: 8px;               /* ulteriore aria sopra il bottone */
 }
-html.pt-pending #page-transition{
-  opacity: 1;
-  visibility: visible;
-  transition: none;
-}
