@@ -939,8 +939,8 @@ body .section {
   z-index: 0;
 }
 
-/* Logo tintato con colore secondary (richiede PNG trasparente per resa perfetta) */
-.pt-logo{
+/* LOGO: maschera (tinta var(--secondary)) */
+.pt-logoMask{
   width: 170px;
   height: 170px;
   margin: 0 auto;
@@ -949,25 +949,40 @@ body .section {
 
   background: var(--secondary);
 
-  -webkit-mask: url("/img/logo1.png") center / contain no-repeat;
-  mask: url("/img/logo1.png") center / contain no-repeat;
+  -webkit-mask-image: url("/img/logo1.png");
+  -webkit-mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+  -webkit-mask-size: contain;
+
+  mask-image: url("/img/logo1.png");
+  mask-repeat: no-repeat;
+  mask-position: center;
+  mask-size: contain;
 
   filter:
     drop-shadow(0 0 18px rgba(217,179,130,0.35))
     drop-shadow(0 0 42px rgba(217,179,130,0.18));
 }
 
-.pt-label{
-  margin-top: 18px;
-  font-family: 'Inter', sans-serif;
-  font-size: 14px;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: rgba(246,243,239,0.78);
+/* Fallback: mostra PNG normale (se la maschera non funziona) */
+.pt-logoImg{
+  width: 170px;
+  height: auto;
+  display: block;
+  margin: 0 auto;
   position: relative;
   z-index: 1;
+
+  opacity: 0.92;
+  filter:
+    drop-shadow(0 0 18px rgba(217,179,130,0.25))
+    drop-shadow(0 0 42px rgba(217,179,130,0.15));
 }
 
+/* Se il browser supporta la mask, nascondi il fallback */
+@supports (-webkit-mask-image: url("/img/logo1.png")) {
+  .pt-logoImg{ display: none; }
+}
 @keyframes pt-rotate{
   from { transform: rotate(0deg); }
   to   { transform: rotate(360deg); }
