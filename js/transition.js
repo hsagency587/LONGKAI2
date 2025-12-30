@@ -3,23 +3,41 @@
   if (!overlay) return;
 
   const FLAG = "dragon_transition_pending";
+  let isNavigating = false;
 
-  // Se arrivo da una navigazione "animata", mostro overlay e lo chiudo subito dopo il load
-  if (sessionStorage.getItem(FLAG) === "1") {
-    overlay.classList.add("is-active");
-    sessionStorage.removeItem(FLAG);
-
-    window.addEventListener("load", () => {
-      // lascia un attimo che la pagina “attacchi”, poi sfuma via
-      setTimeout(() => overlay.classList.remove("is-active"), 120);
-    });
+  function hideOverlay() {
+    overlay.classList.remove("is-active");
+    document.documentElement.classList.remove("pt-pending");
   }
+
+  function showOverlay() {
+    overlay.classList.add("is-active");
+  }
+
+  // IMPORTANTISSIMO: gestisce anche il tasto indietro/avanti (bfcache)
+  window.addEventListener("pageshow", () => {
+    const pending = sessionStorage.getItem(FLAG) === "1";
+
+    // Se arriviamo da una navigazione animata: overlay visibile subito e poi sfuma via
+    if (pending || document.documentElement.classList.contains("pt-pending")) {
+      showOverlay();
+      sessionStorage.removeItem(FLAG);
+
+      requestAnimationFrame(() => {
+        setTimeout(hideOverlay, 160);
+      });
+      return;
+    }
+
+    // Se torno indietro e la pagina è ripristinata: assicura overlay spento
+    hideOverlay();
+  });
 
   function isModifiedClick(e) {
     return e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button !== 0;
   }
 
-  function isExternalLink(a) {
+  function isExternal(a) {
     return a.origin !== window.location.origin;
   }
 
@@ -43,7 +61,6 @@
     if (a.target && a.target !== "_self") return;
     if (isModifiedClick(e)) return;
 
-    // costruisci URL assoluto
     let url;
     try {
       url = new URL(a.href, window.location.href);
@@ -51,21 +68,36 @@
       return;
     }
 
-    if (isExternalLink(a)) return;
+    if (isExternal(a)) return;
 
-    // Se è solo un cambio hash nella stessa pagina, non animare
+    // Se è solo hash-change nella stessa pagina, non animare
     const samePath = url.pathname === window.location.pathname;
-    const onlyHashChange = samePath && url.search === window.location.search && url.hash;
+    const sameSearch = url.search === window.location.search;
+    const onlyHashChange = samePath && sameSearch && url.hash;
     if (onlyHashChange) return;
 
-    // OK: anima e naviga
+    if (isNavigating) {
+      e.preventDefault();
+      return;
+    }
+    isNavigating = true;
+
     e.preventDefault();
 
-    overlay.classList.add("is-active");
+    // Overlay in uscita
+    showOverlay();
+
+    // Prepara overlay in entrata (pagina di arrivo)
     sessionStorage.setItem(FLAG, "1");
 
-    // tempo breve per far comparire l'overlay prima del cambio pagina
-    setTimeout(() => {
+    // Forza un frame di paint, poi naviga
+    requestAnimationFrame(() => {
+      setTimeout(() => {
+        window.location.href = url.toString();
+      }, 240);
+    });
+  });
+})();
       window.location.href = url.toString();
     }, 220);
   });
