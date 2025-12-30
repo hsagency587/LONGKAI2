@@ -5,32 +5,45 @@
   const FLAG = "dragon_transition_pending";
   let isNavigating = false;
 
-  function hideOverlay() {
+  function hideOverlayHard() {
     overlay.classList.remove("is-active");
     document.documentElement.classList.remove("pt-pending");
+    try { sessionStorage.removeItem(FLAG); } catch (e) {}
   }
 
   function showOverlay() {
     overlay.classList.add("is-active");
   }
 
-  // IMPORTANTISSIMO: gestisce anche il tasto indietro/avanti (bfcache)
-  window.addEventListener("pageshow", () => {
-    const pending = sessionStorage.getItem(FLAG) === "1";
+  // 1) Spegnimento garantito in ARRIVO (anche se pageshow non viene intercettato)
+  (function arrivalKick() {
+    const pending =
+      document.documentElement.classList.contains("pt-pending") ||
+      (function () {
+        try { return sessionStorage.getItem(FLAG) === "1"; } catch (e) { return false; }
+      })();
 
-    // Se arriviamo da una navigazione animata: overlay visibile subito e poi sfuma via
-    if (pending || document.documentElement.classList.contains("pt-pending")) {
+    if (pending) {
       showOverlay();
-      sessionStorage.removeItem(FLAG);
-
-      requestAnimationFrame(() => {
-        setTimeout(hideOverlay, 160);
-      });
-      return;
+      // togli subito il flag: evita loop/blocchi
+      try { sessionStorage.removeItem(FLAG); } catch (e) {}
+      // lascia comparire l’overlay e poi spegni
+      requestAnimationFrame(() => setTimeout(hideOverlayHard, 180));
+    } else {
+      hideOverlayHard();
     }
+  })();
 
-    // Se torno indietro e la pagina è ripristinata: assicura overlay spento
-    hideOverlay();
+  // 2) bfcache: indietro/avanti
+  window.addEventListener("pageshow", () => {
+    // quando torno indietro, garantisco overlay spento
+    // (se invece era un arrivo animato, arrivalKick lo gestisce già)
+    requestAnimationFrame(() => setTimeout(hideOverlayHard, 0));
+  });
+
+  // 3) ulteriore cintura di sicurezza: al load, overlay deve essere spento
+  window.addEventListener("load", () => {
+    setTimeout(hideOverlayHard, 0);
   });
 
   function isModifiedClick(e) {
@@ -62,43 +75,25 @@
     if (isModifiedClick(e)) return;
 
     let url;
-    try {
-      url = new URL(a.href, window.location.href);
-    } catch {
-      return;
-    }
-
+    try { url = new URL(a.href, window.location.href); } catch { return; }
     if (isExternal(a)) return;
 
-    // Se è solo hash-change nella stessa pagina, non animare
+    // solo hash-change stessa pagina => no transizione
     const samePath = url.pathname === window.location.pathname;
     const sameSearch = url.search === window.location.search;
     const onlyHashChange = samePath && sameSearch && url.hash;
     if (onlyHashChange) return;
 
-    if (isNavigating) {
-      e.preventDefault();
-      return;
-    }
+    if (isNavigating) { e.preventDefault(); return; }
     isNavigating = true;
 
     e.preventDefault();
 
-    // Overlay in uscita
     showOverlay();
+    try { sessionStorage.setItem(FLAG, "1"); } catch (e) {}
 
-    // Prepara overlay in entrata (pagina di arrivo)
-    sessionStorage.setItem(FLAG, "1");
-
-    // Forza un frame di paint, poi naviga
     requestAnimationFrame(() => {
-      setTimeout(() => {
-        window.location.href = url.toString();
-      }, 240);
+      setTimeout(() => { window.location.href = url.toString(); }, 240);
     });
-  });
-})();
-      window.location.href = url.toString();
-    }, 220);
   });
 })();
