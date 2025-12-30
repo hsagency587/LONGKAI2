@@ -65,7 +65,6 @@
     show();
     try { sessionStorage.setItem(FLAG, "1"); } catch {}
 
-    // doppio RAF = garantisce che l’overlay venga disegnato prima del redirect
     requestAnimationFrame(() => {
       requestAnimationFrame(() => {
         setTimeout(() => window.location.href = url.toString(), 420);
