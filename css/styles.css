@@ -890,7 +890,7 @@ body .section {
    PAGE TRANSITION – LOGO + AURA
    =============================== */
 
-.pt{
+#page-transition{
   position: fixed;
   inset: 0;
   z-index: 99999;
@@ -905,22 +905,25 @@ body .section {
   -webkit-backdrop-filter: blur(6px);
 }
 
-.pt.is-active{
+#page-transition.is-active{
   opacity: 1;
   visibility: visible;
   transition: opacity 320ms ease;
 }
 
-.pt-wrap{
+#page-transition .pt-wrap{
   position: absolute;
   left: 50%;
   top: 50%;
   transform: translate(-50%,-50%);
   text-align: center;
+
+  /* fondamentale: rende stabile il posizionamento dell’aura */
+  position: absolute;
 }
 
 /* Aura stile badge */
-.pt-aura{
+#page-transition .pt-aura{
   position: absolute;
   inset: -52px;
   border-radius: 999px;
@@ -934,13 +937,12 @@ body .section {
 
   filter: blur(12px);
   opacity: 0.85;
-
   animation: pt-rotate 1.05s linear infinite;
   z-index: 0;
 }
 
-/* LOGO: maschera (tinta var(--secondary)) */
-.pt-logoMask{
+/* LOGO tintato */
+#page-transition .pt-logoMask{
   width: 170px;
   height: 170px;
   margin: 0 auto;
@@ -964,8 +966,8 @@ body .section {
     drop-shadow(0 0 42px rgba(217,179,130,0.18));
 }
 
-/* Fallback: mostra PNG normale (se la maschera non funziona) */
-.pt-logoImg{
+/* Fallback: PNG normale (così il logo non “sparisce” mai) */
+#page-transition .pt-logoImg{
   width: 170px;
   height: auto;
   display: block;
@@ -973,23 +975,35 @@ body .section {
   position: relative;
   z-index: 1;
 
-  opacity: 0.92;
+  opacity: 0.95;
   filter:
     drop-shadow(0 0 18px rgba(217,179,130,0.25))
     drop-shadow(0 0 42px rgba(217,179,130,0.15));
 }
 
-/* Se il browser supporta la mask, nascondi il fallback */
+/* Se la mask è supportata, nascondo il fallback */
 @supports (-webkit-mask-image: url("/img/logo1.png")) {
-  .pt-logoImg{ display: none; }
+  #page-transition .pt-logoImg{ display: none; }
 }
+
+#page-transition .pt-label{
+  margin-top: 18px;
+  font-family: 'Inter', sans-serif;
+  font-size: 14px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(246,243,239,0.78);
+  position: relative;
+  z-index: 1;
+}
+
 @keyframes pt-rotate{
   from { transform: rotate(0deg); }
   to   { transform: rotate(360deg); }
 }
 
 @media (prefers-reduced-motion: reduce){
-  .pt, .pt-aura{
+  #page-transition, #page-transition .pt-aura{
     transition: none !important;
     animation: none !important;
   }
