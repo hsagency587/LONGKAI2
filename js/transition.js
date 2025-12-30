@@ -2,8 +2,9 @@
   const overlay = document.getElementById("page-transition");
   if (!overlay) return;
 
-  const OUT_DELAY = 700; // overlay visibile prima del cambio pagina
-  const IN_DELAY  = 380; // overlay visibile dopo l'arrivo
+  // === TEMPI (aumenta ancora se vuoi) ===
+  const OUT_DELAY = 1000; // prima del cambio pagina (andata)
+  const IN_DELAY  = 850;  // dopo l'arrivo (quanto resta visibile)
 
   const FLAG = "pt_pending";
   let navigating = false;
@@ -21,25 +22,28 @@
     }
   };
 
+  // ARRIVO: mostra e poi spegni dopo IN_DELAY
   document.addEventListener("DOMContentLoaded", () => {
     if (consumeFlag()) {
       show();
-      requestAnimationFrame(() => setTimeout(hide, IN_DELAY));
+      setTimeout(hide, IN_DELAY);
     } else {
       hide();
     }
   });
 
-  window.addEventListener("pageshow", () => {
-    navigating = false;
-    hide();
-    try { sessionStorage.removeItem(FLAG); } catch {}
+  // IMPORTANTISSIMO: pageshow deve spegnere SOLO se è bfcache (indietro/avanti)
+  window.addEventListener("pageshow", (e) => {
+    if (e.persisted) {
+      navigating = false;
+      hide();
+      try { sessionStorage.removeItem(FLAG); } catch {}
+    }
   });
 
   function isModifiedClick(e) {
     return e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button !== 0;
   }
-
   function isSkippableHref(href) {
     if (!href) return true;
     return (
@@ -64,7 +68,7 @@
     try { url = new URL(a.href, window.location.href); } catch { return; }
     if (url.origin !== window.location.origin) return;
 
-    // solo hash-change stessa pagina => no transizione
+    // solo hash-change nella stessa pagina => niente transizione
     const samePath = url.pathname === window.location.pathname;
     const sameSearch = url.search === window.location.search;
     const onlyHashChange = samePath && sameSearch && url.hash;
@@ -77,15 +81,13 @@
     }
     navigating = true;
 
-    // IMPORTANTISSIMO: blocca subito la navigazione e gli altri handler
     e.preventDefault();
     e.stopImmediatePropagation();
 
     show();
-
     try { sessionStorage.setItem(FLAG, "1"); } catch {}
 
-    // forza paint prima del redirect
+    // forza paint e poi aspetta OUT_DELAY
     requestAnimationFrame(() => {
       requestAnimationFrame(() => {
         setTimeout(() => {
@@ -95,6 +97,6 @@
     });
   }
 
-  // capture=true: gira prima di eventuali onclick/altri listener
+  // capture: prende il click prima di altri script
   document.addEventListener("click", handler, true);
 })();
