@@ -905,7 +905,7 @@ body .section {
   margin-top: 8px;               /* ulteriore aria sopra il bottone */
 }
 /* ===============================
-   PAGE TRANSITION – LOGO + AURA
+   PAGE TRANSITION – LOGO + AURA (PULITO)
    =============================== */
 
 #page-transition{
@@ -935,24 +935,44 @@ body .section {
   top: 50%;
   transform: translate(-50%,-50%);
   text-align: center;
+
+  /* IMPORTANTISSIMO: ancora l’aura al wrap */
+  position: absolute;
+  --pt-logo: 150px; /* dimensione logo desktop */
 }
 
-/* ===============================
-   AURA – SIGILLO TRADIZIONALE (COMPATTA, FORZA)
-   =============================== */
+/* Logo: dimensione controllata SEMPRE */
+#page-transition .pt-logoImg{
+  width: var(--pt-logo);
+  height: auto;
+  display: block;
+  margin: 0 auto;
+  position: relative;
+  z-index: 2;
 
+  opacity: 0.95;
+  filter:
+    drop-shadow(0 0 16px rgba(217,179,130,0.28))
+    drop-shadow(0 0 44px rgba(217,179,130,0.18))
+    drop-shadow(0 0 80px rgba(217,179,130,0.10));
+}
+
+/* Aura: dimensione fissa in funzione del logo (non può “gigantire”) */
 #page-transition .pt-aura{
   position: absolute;
-  inset: -22px;                 /* <<< compatta (prima era enorme) */
-  border-radius: 999px;
-  z-index: 0;
+  left: 50%;
+  top: calc(var(--pt-logo) * 0.50);
 
-  /* stesso colore del sito */
-  --gold1: rgba(217,179,130,0.62);
+  width: calc(var(--pt-logo) + 90px);
+  height: calc(var(--pt-logo) + 90px);
+
+  transform: translate(-50%,-50%);
+  border-radius: 999px;
+  z-index: 1;
+
   --gold2: rgba(217,179,130,0.22);
   --gold0: rgba(217,179,130,0.00);
 
-  /* Glow centrale + bordo sigillo */
   background:
     radial-gradient(circle at 50% 55%,
       var(--gold2) 0%,
@@ -970,35 +990,31 @@ body .section {
   transform-origin: 50% 55%;
 }
 
-/* Pennellate “rituali” (energia), molto sobrie */
 #page-transition .pt-aura::before{
   content: "";
   position: absolute;
   inset: 0;
   border-radius: inherit;
 
-  background:
-    conic-gradient(
-      from 0deg,
-      rgba(217,179,130,0.00) 0deg,
-      rgba(217,179,130,0.26) 18deg,
-      rgba(217,179,130,0.00) 44deg,
-      rgba(217,179,130,0.30) 76deg,
-      rgba(217,179,130,0.00) 108deg,
-      rgba(217,179,130,0.24) 150deg,
-      rgba(217,179,130,0.00) 210deg,
-      rgba(217,179,130,0.28) 248deg,
-      rgba(217,179,130,0.00) 360deg
-    );
+  background: conic-gradient(
+    from 0deg,
+    rgba(217,179,130,0.00) 0deg,
+    rgba(217,179,130,0.26) 18deg,
+    rgba(217,179,130,0.00) 44deg,
+    rgba(217,179,130,0.30) 76deg,
+    rgba(217,179,130,0.00) 108deg,
+    rgba(217,179,130,0.24) 150deg,
+    rgba(217,179,130,0.00) 210deg,
+    rgba(217,179,130,0.28) 248deg,
+    rgba(217,179,130,0.00) 360deg
+  );
 
   filter: blur(12px);
   opacity: 0.78;
   mix-blend-mode: screen;
-
   animation: sigil-drift 2.6s linear infinite;
 }
 
-/* Bordo inciso (forza/rigore), più “stabile” */
 #page-transition .pt-aura::after{
   content: "";
   position: absolute;
@@ -1012,14 +1028,25 @@ body .section {
 
   filter: blur(6px);
   opacity: 0.72;
-
   animation: sigil-tighten 1.35s ease-in-out infinite;
 }
 
+#page-transition .pt-label{
+  margin-top: 18px;
+  font-family: 'Inter', sans-serif;
+  font-weight: 600;
+  font-size: 14px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(246,243,239,0.78);
+  position: relative;
+  z-index: 2;
+}
+
 @keyframes sigil-breathe{
-  0%   { transform: scale(1);    opacity: 0.88; }
-  50%  { transform: scale(1.06); opacity: 0.98; }
-  100% { transform: scale(1);    opacity: 0.90; }
+  0%   { transform: translate(-50%,-50%) scale(1);    opacity: 0.88; }
+  50%  { transform: translate(-50%,-50%) scale(1.06); opacity: 0.98; }
+  100% { transform: translate(-50%,-50%) scale(1);    opacity: 0.90; }
 }
 
 @keyframes sigil-drift{
@@ -1033,49 +1060,9 @@ body .section {
   100% { transform: scale(1);    opacity: 0.70; }
 }
 
-  background: conic-gradient(
-    from 0deg,
-    rgba(217,179,130,0.00),
-    rgba(217,179,130,0.55),
-    rgba(217,179,130,0.00)
-  );
-
-  filter: blur(12px);
-  opacity: 0.85;
-  animation: pt-rotate 1.05s linear infinite;
-  z-index: 0;
-}
-
-#page-transition .pt-logoImg{
-  width: 170px;
-  height: auto;
-  display: block;
-  margin: 0 auto;
-  position: relative;
-  z-index: 1;
-
-  opacity: 0.95;
-  filter:
-    drop-shadow(0 0 16px rgba(217,179,130,0.28))
-    drop-shadow(0 0 44px rgba(217,179,130,0.18))
-    drop-shadow(0 0 80px rgba(217,179,130,0.10));
-}
-
-#page-transition .pt-label{
-  margin-top: 18px;
-  font-family: "Cinzel", serif;
-  font-weight: 600;
-  font-size: 14px;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: rgba(246,243,239,0.78);
-  position: relative;
-  z-index: 1;
-}
-
-@keyframes pt-rotate{
-  from { transform: rotate(0deg); }
-  to   { transform: rotate(360deg); }
+/* mobile: logo più piccolo */
+@media (max-width: 768px){
+  #page-transition .pt-wrap{ --pt-logo: 120px; }
 }
 
 @media (prefers-reduced-motion: reduce){
@@ -1084,7 +1071,6 @@ body .section {
     animation: none !important;
   }
 }
-
 /* ===============================
    MOBILE – SUPER COMPACT + NAV IN LINEA
    (incolla in fondo al CSS)
