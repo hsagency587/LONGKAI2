@@ -2,9 +2,8 @@
   const overlay = document.getElementById("page-transition");
   if (!overlay) return;
 
-  // === TEMPI (modifica qui se vuoi) ===
-  const OUT_DELAY = 700; // quanto resta visibile PRIMA di cambiare pagina
-  const IN_DELAY  = 380; // quanto resta visibile DOPO l'arrivo
+  const OUT_DELAY = 700; // overlay visibile prima del cambio pagina
+  const IN_DELAY  = 380; // overlay visibile dopo l'arrivo
 
   const FLAG = "pt_pending";
   let navigating = false;
@@ -22,7 +21,6 @@
     }
   };
 
-  // ARRIVO: se proveniamo da una navigazione animata, mostra e poi sfuma via
   document.addEventListener("DOMContentLoaded", () => {
     if (consumeFlag()) {
       show();
@@ -32,7 +30,6 @@
     }
   });
 
-  // Back/forward cache: overlay sempre spento
   window.addEventListener("pageshow", () => {
     navigating = false;
     hide();
@@ -53,8 +50,8 @@
     );
   }
 
-  document.addEventListener("click", (e) => {
-    const a = e.target.closest("a");
+  function handler(e) {
+    const a = e.target.closest && e.target.closest("a");
     if (!a) return;
 
     const href = a.getAttribute("href");
@@ -64,16 +61,10 @@
     if (isModifiedClick(e)) return;
 
     let url;
-    try {
-      url = new URL(a.href, window.location.href);
-    } catch {
-      return;
-    }
-
-    // Esterni: niente transizione
+    try { url = new URL(a.href, window.location.href); } catch { return; }
     if (url.origin !== window.location.origin) return;
 
-    // Solo hash-change stessa pagina: niente transizione
+    // solo hash-change stessa pagina => no transizione
     const samePath = url.pathname === window.location.pathname;
     const sameSearch = url.search === window.location.search;
     const onlyHashChange = samePath && sameSearch && url.hash;
@@ -81,16 +72,20 @@
 
     if (navigating) {
       e.preventDefault();
+      e.stopImmediatePropagation();
       return;
     }
     navigating = true;
 
+    // IMPORTANTISSIMO: blocca subito la navigazione e gli altri handler
     e.preventDefault();
+    e.stopImmediatePropagation();
+
     show();
 
     try { sessionStorage.setItem(FLAG, "1"); } catch {}
 
-    // Doppio RAF = garantisce che l’overlay venga disegnato prima del redirect
+    // forza paint prima del redirect
     requestAnimationFrame(() => {
       requestAnimationFrame(() => {
         setTimeout(() => {
@@ -98,5 +93,8 @@
         }, OUT_DELAY);
       });
     });
-  });
+  }
+
+  // capture=true: gira prima di eventuali onclick/altri listener
+  document.addEventListener("click", handler, true);
 })();
