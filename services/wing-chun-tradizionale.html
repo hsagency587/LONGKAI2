@@ -10,7 +10,15 @@
         Lezioni di Wing Chun Tradizionale.
         Allenamento pratico, struttura, sensibilità e difesa personale reale.
     ">
-
+  <script>
+  (function () {
+    try {
+      if (sessionStorage.getItem("dragon_transition_pending") === "1") {
+        document.documentElement.classList.add("pt-pending");
+      }
+    } catch (e) {}
+  })();
+  </script>
     <link rel="stylesheet" href="/css/styles.css">
     
     <!-- TRANSIZIONE PAGINE -->
