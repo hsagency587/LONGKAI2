@@ -961,7 +961,7 @@ body .section {
 #page-transition .pt-aura{
   position: absolute;
   left: 50%;
-  top: calc(var(--pt-logo) * 0.56);
+  top: calc(var(--pt-logo) * 0.70);
 
   width: calc(var(--pt-logo) + 90px);
   height: calc(var(--pt-logo) + 90px);
