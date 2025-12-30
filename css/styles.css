@@ -992,8 +992,9 @@ body .section {
     animation: none !important;
   }
 }
+
 /* ===============================
-   MOBILE – FIX SPAZIATURE + NAV TOP
+   MOBILE – SUPER COMPACT + NAV IN LINEA
    (incolla in fondo al CSS)
    =============================== */
 @media (max-width: 768px){
@@ -1001,52 +1002,66 @@ body .section {
   /* meno aria generale */
   .section,
   body .section{
-    padding: 28px 6% !important;
+    padding: 22px 6% !important;
   }
 
-  /* HERO più compatto (prima era troppo alto) */
+  /* hero più stretto */
   .hero{
-    padding: 68px 14px 18px !important; /* top | sides | bottom */
+    padding: 62px 12px 14px !important;
     text-align: center;
   }
 
-  /* NAV: centrata, senza sovrapposizioni */
+  /* NAV: una riga, compatta */
   .nav{
-    padding: 12px 6% !important;
+    padding: 10px 6% !important;
     justify-content: center !important;
   }
 
   .nav ul{
-    width: 100%;
-    display: flex;
-    justify-content: center;
-    flex-wrap: wrap;            /* fondamentale: niente overlap */
-    gap: 10px;                  /* meno spazio tra i 3 */
-    margin: 0;
-    padding: 0;
+    display: flex !important;
+    flex-wrap: nowrap !important;         /* BLOCCA la seconda riga */
+    justify-content: center !important;
+    gap: 10px !important;
+    width: auto !important;
+
+    /* evita che vada a capo per default */
+    white-space: nowrap;
+    overflow: hidden;                      /* niente wrap, niente overlap */
   }
 
-  /* pillole più piccole */
+  /* pillole più piccole, stessa altezza */
   .nav a{
-    padding: 8px 12px !important;
-    font-size: 13px !important;
+    padding: 7px 10px !important;
+    font-size: 12px !important;
     border-radius: 12px !important;
-    line-height: 1.1;
+    line-height: 1 !important;
   }
 
-  /* Badge in alto a destra più compatto */
+  /* badge più piccolo */
   .sifu-badge{
-    top: 12px !important;
-    right: 12px !important;
-    padding: 8px 12px !important;
-    font-size: 13px !important;
+    top: 10px !important;
+    right: 10px !important;
+    padding: 7px 10px !important;
+    font-size: 12px !important;
   }
 
-  /* layout a colonna + meno gap */
+  /* stringe anche i titoli e riduce spazio dopo */
+  .hero h1{
+    font-size: 1.85rem !important;
+    line-height: 1.15 !important;
+    margin-bottom: 10px !important;
+  }
+
+  .hero p{
+    margin-top: 6px !important;
+    font-size: 0.95rem !important;
+  }
+
+  /* layout a colonna più serrato */
   .split,
   .content.split,
   .servizi-grid{
     grid-template-columns: 1fr !important;
-    gap: 28px !important;
+    gap: 22px !important;
   }
 }
