@@ -27,7 +27,6 @@ body {
     background-size: contain;
     background-attachment: fixed;
     }
-}
 
 
 /* HEADER */
@@ -70,7 +69,6 @@ body {
 .hero {
     text-align: center;
     padding: 30px 20px 25px; 
-}
 }
 .hero h1 {
     font-family: 'Playfair Display', serif;
@@ -647,7 +645,17 @@ h2 {
     color: var(--secondary);
     font-weight: 600;
 }
-    
+/* SPAZIO GARANTITO TRA TESTO E CTA "PRENOTA" */
+.service-page .service-intro {
+  margin-bottom: 32px; /* aumenta/diminuisci */
+}
+
+/* il CTA spesso è un <a>: gli diamo display e margine */
+.service-page .service-text > a,
+.service-page .service-text > button {
+  display: inline-block;
+  margin-top: 18px; /* aumenta/diminuisci */
+}    
 /* HERO SERVIZIO – FIX SPAZI */
 .service-hero {
     padding: 60px 0 40px;
@@ -660,15 +668,6 @@ h2 {
 .service-text p {
     margin-bottom: 14px;
 }
-/* SPAZIO TRA TESTO (ULTIMO PARAGRAFO) E CTA "PRENOTA" */
-.service-page .service-text p:last-of-type {
-  margin-bottom: 32px; /* aumenta/diminuisci qui */
-}
-
-/* SPAZIO TRA LISTA INFO (durata/livello/prezzo) E CTA "PRENOTA" */
-.service-page .service-info {
-  margin-bottom: 22px; /* aumenta/diminuisci qui */
-}    
 /* OVERRIDE PAGINA SERVIZIO */
 body .section {
     padding: 60px 8%;
