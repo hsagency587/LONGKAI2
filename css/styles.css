@@ -943,7 +943,7 @@ body .section {
 
 #page-transition .pt-aura{
   position: absolute;
-  inset: -16px;                 /* <<< compatta (prima era enorme) */
+  inset: -22px;                 /* <<< compatta (prima era enorme) */
   border-radius: 999px;
   z-index: 0;
 
