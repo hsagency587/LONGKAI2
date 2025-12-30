@@ -645,17 +645,6 @@ h2 {
     color: var(--secondary);
     font-weight: 600;
 }
-/* SPAZIO GARANTITO TRA TESTO E CTA "PRENOTA" */
-.service-page .service-intro {
-  margin-bottom: 32px; /* aumenta/diminuisci */
-}
-
-/* il CTA spesso è un <a>: gli diamo display e margine */
-.service-page .service-text > a,
-.service-page .service-text > button {
-  display: inline-block;
-  margin-top: 18px; /* aumenta/diminuisci */
-}    
 /* HERO SERVIZIO – FIX SPAZI */
 .service-hero {
     padding: 60px 0 40px;
@@ -882,4 +871,18 @@ body .section {
     font-size: 1.4rem;
   }
 }
+/* SERVIZIO – SPAZIATURA CTA "Prenota una lezione" (con HTML attuale) */
+.section .text p {
+  margin-bottom: 18px;           /* spazio tra paragrafo e lista */
+}
 
+.section .text .service-info {
+  margin: 22px 0 30px;           /* sopra e sotto la lista */
+  padding: 0;
+  list-style: none;
+}
+
+.section .text .pay-btn {
+  display: inline-block;         /* necessario per far “sentire” i margini */
+  margin-top: 8px;               /* ulteriore aria sopra il bottone */
+}
