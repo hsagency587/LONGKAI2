@@ -886,3 +886,96 @@ body .section {
   display: inline-block;         /* necessario per far “sentire” i margini */
   margin-top: 8px;               /* ulteriore aria sopra il bottone */
 }
+/* ===============================
+   PAGE TRANSITION – LOGO + AURA
+   =============================== */
+
+.pt{
+  position: fixed;
+  inset: 0;
+  z-index: 99999;
+  pointer-events: none;
+
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 320ms ease, visibility 0s linear 320ms;
+
+  background: rgba(10,7,6,0.90);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+}
+
+.pt.is-active{
+  opacity: 1;
+  visibility: visible;
+  transition: opacity 320ms ease;
+}
+
+.pt-wrap{
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%,-50%);
+  text-align: center;
+}
+
+/* Aura stile badge */
+.pt-aura{
+  position: absolute;
+  inset: -52px;
+  border-radius: 999px;
+
+  background: conic-gradient(
+    from 0deg,
+    rgba(217,179,130,0.00),
+    rgba(217,179,130,0.55),
+    rgba(217,179,130,0.00)
+  );
+
+  filter: blur(12px);
+  opacity: 0.85;
+
+  animation: pt-rotate 1.05s linear infinite;
+  z-index: 0;
+}
+
+/* Logo tintato con colore secondary (richiede PNG trasparente per resa perfetta) */
+.pt-logo{
+  width: 170px;
+  height: 170px;
+  margin: 0 auto;
+  position: relative;
+  z-index: 1;
+
+  background: var(--secondary);
+
+  -webkit-mask: url("/img/logo1.png") center / contain no-repeat;
+  mask: url("/img/logo1.png") center / contain no-repeat;
+
+  filter:
+    drop-shadow(0 0 18px rgba(217,179,130,0.35))
+    drop-shadow(0 0 42px rgba(217,179,130,0.18));
+}
+
+.pt-label{
+  margin-top: 18px;
+  font-family: 'Inter', sans-serif;
+  font-size: 14px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(246,243,239,0.78);
+  position: relative;
+  z-index: 1;
+}
+
+@keyframes pt-rotate{
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
+@media (prefers-reduced-motion: reduce){
+  .pt, .pt-aura{
+    transition: none !important;
+    animation: none !important;
+  }
+}
