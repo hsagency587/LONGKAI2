@@ -138,25 +138,27 @@
             <h2>Prenota una lezione</h2>
             <p>Puoi richiedere una lezione privata o informazioni compilando il modulo.</p>
             <p>riceverai una risposta in 24/48H</p>
-            <form class="form booking-form">
-    <input type="text" placeholder="Nome" required>
-    <input type="email" placeholder="Email" required>
+           <form id="bookingForm" class="form booking-form">
+  <input type="text" name="nome" placeholder="Nome" required>
+  <input type="email" name="email" placeholder="Email" required>
 
-    <div class="slot">
-        <label>Disponibilità 1 (preferibilmente mattino)</label>
-        <input type="date" required>
-        <input type="time" required>
-    </div>
+  <div class="slot">
+    <label>Disponibilità 1 (preferibilmente mattino)</label>
+    <input type="date" name="disp1_data" required>
+    <input type="time" name="disp1_ora" required>
+  </div>
 
-    <div class="slot">
-        <label>Disponibilità 2 (alternativa)</label>
-        <input type="date">
-        <input type="time">
-    </div>
+  <div class="slot">
+    <label>Disponibilità 2 (alternativa)</label>
+    <input type="date" name="disp2_data">
+    <input type="time" name="disp2_ora">
+  </div>
 
-    <textarea placeholder="Note aggiuntive (facoltative)"></textarea>
+  <textarea name="note" placeholder="Note aggiuntive (facoltative)"></textarea>
 
-    <button type="submit">Invia richiesta</button>
+  <button type="submit">Invia richiesta</button>
+
+  <p id="formStatus" style="margin-top:12px;"></p>
 </form>
         </div>
 
@@ -228,6 +230,37 @@
   </div>
 
 </footer>
+<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+<script>
+  (function () {
+    emailjs.init("YQWEfCbwwU7Y7Oo72");
+  })();
+
+  const form = document.getElementById("bookingForm");
+  const status = document.getElementById("formStatus");
+
+  if (form) {
+    form.addEventListener("submit", function (e) {
+      e.preventDefault();
+
+      status.textContent = "Invio in corso...";
+      status.style.color = "";
+
+      emailjs.sendForm(
+        "service_yc9dtio",
+        "template_q1nq6xj",
+        this
+      ).then(() => {
+        status.textContent = "Richiesta inviata correttamente.";
+        status.style.color = "green";
+        form.reset();
+      }, () => {
+        status.textContent = "Errore nell'invio. Riprova.";
+        status.style.color = "red";
+      });
+    });
+  }
+</script>           
 </body>
 </html>
 
