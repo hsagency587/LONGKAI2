@@ -21,11 +21,13 @@
   "@context": "https://schema.org",
   "@graph": [
     {
-      "@type": "SportsActivityLocation",
+      "@type": ["SportsActivityLocation", "LocalBusiness"],
       "@id": "https://longkai-it.com/#wingchun-longkai",
       "name": "WING CHUN - Lòngkai",
       "url": "https://longkai-it.com/",
       "telephone": "+393337469173",
+      "description": "Scuola di Wing Chun a Mortara. Allenamenti tradizionali, preparazione gare, percorsi per bambini e lezioni private.",
+      "priceRange": "€€",
       "address": {
         "@type": "PostalAddress",
         "streetAddress": "Via Eugenio Baroni, 23",
@@ -34,11 +36,35 @@
         "addressRegion": "PV",
         "addressCountry": "IT"
       },
-      "areaServed": {
-        "@type": "AdministrativeArea",
-        "name": "Provincia di Pavia"
+      "geo": {
+        "@type": "GeoCoordinates",
+        "latitude": 45.253265,
+        "longitude": 8.863033
       },
-      "description": "Scuola di Wing Chun a Mortara. Corsi di arti marziali e difesa personale per adulti e ragazzi.",
+      "areaServed": [
+        {
+          "@type": "AdministrativeArea",
+          "name": "Mortara (PV) e dintorni"
+        },
+        {
+          "@type": "AdministrativeArea",
+          "name": "Provincia di Pavia"
+        }
+      ],
+      "openingHoursSpecification": [
+        {
+          "@type": "OpeningHoursSpecification",
+          "dayOfWeek": ["Monday","Tuesday","Wednesday","Thursday","Friday"],
+          "opens": "08:00",
+          "closes": "22:00"
+        }
+      ],
+      "hasMap": "https://maps.app.goo.gl/9PBBWurqhzZ82cZo6",
+      "sameAs": [
+        "https://maps.app.goo.gl/9PBBWurqhzZ82cZo6",
+        "https://www.instagram.com/longkai_wingchun",
+        "https://www.facebook.com/people/L%C3%B2ngkai/61585876657291/"
+      ],
       "additionalType": [
         "https://schema.org/MartialArtsSchool"
       ],
@@ -46,14 +72,64 @@
         "wing chun",
         "wing chun mortara",
         "arti marziali",
-        "scuola di wing chun",
         "difesa personale",
+        "martial arts",
         "pavia"
       ],
-      "hasMap": "https://maps.app.goo.gl/9PBBWurqhzZ82cZo6",
-      "sameAs": [
-        "https://maps.app.goo.gl/9PBBWurqhzZ82cZo6"
-      ]
+      "hasOfferCatalog": {
+        "@type": "OfferCatalog",
+        "name": "Corsi e allenamenti",
+        "itemListElement": [
+          {
+            "@type": "Offer",
+            "itemOffered": {
+              "@type": "Service",
+              "name": "Wing Chun Tradizionale",
+              "description": "Studio di forme, struttura, sensibilità e applicazioni reali."
+            }
+          },
+          {
+            "@type": "Offer",
+            "itemOffered": {
+              "@type": "Service",
+              "name": "Preparazione Gare",
+              "description": "Preparazione tecnica, mentale e fisica mirata alla competizione."
+            }
+          },
+          {
+            "@type": "Offer",
+            "itemOffered": {
+              "@type": "Service",
+              "name": "Allenamenti Privati",
+              "description": "Percorsi personalizzati in base a livello, obiettivi e necessità individuali."
+            }
+          },
+          {
+            "@type": "Offer",
+            "itemOffered": {
+              "@type": "Service",
+              "name": "Corso Bambini (7+)",
+              "description": "Preparazione coordinativa, percorsi motori e attività in gruppo."
+            }
+          },
+          {
+            "@type": "Offer",
+            "itemOffered": {
+              "@type": "Service",
+              "name": "Forme Libere",
+              "description": "Lavoro dinamico su riflessi, adattabilità e timing in situazioni non predefinite."
+            }
+          },
+          {
+            "@type": "Offer",
+            "itemOffered": {
+              "@type": "Service",
+              "name": "Bastone (Lok Dim Boon Kwan)",
+              "description": "Allenamento avanzato su distanza, potenza, coordinazione e gestione del bastone."
+            }
+          }
+        ]
+      }
     },
     {
       "@type": "WebSite",
