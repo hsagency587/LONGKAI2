@@ -21,7 +21,7 @@
   "@context": "https://schema.org",
   "@graph": [
     {
-      "@type": ["SportsActivityLocation", "LocalBusiness"],
+      "@type": "SportsActivityLocation",
       "@id": "https://longkai-it.com/#wingchun-longkai",
       "name": "WING CHUN - Lòngkai",
       "url": "https://longkai-it.com/",
@@ -42,14 +42,8 @@
         "longitude": 8.863033
       },
       "areaServed": [
-        {
-          "@type": "AdministrativeArea",
-          "name": "Mortara (PV) e dintorni"
-        },
-        {
-          "@type": "AdministrativeArea",
-          "name": "Provincia di Pavia"
-        }
+        { "@type": "AdministrativeArea", "name": "Mortara (PV) e dintorni" },
+        { "@type": "AdministrativeArea", "name": "Provincia di Pavia" }
       ],
       "openingHoursSpecification": [
         {
@@ -65,9 +59,7 @@
         "https://www.instagram.com/longkai_wingchun",
         "https://www.facebook.com/people/L%C3%B2ngkai/61585876657291/"
       ],
-      "additionalType": [
-        "https://schema.org/MartialArtsSchool"
-      ],
+      "additionalType": "https://schema.org/MartialArtsSchool",
       "keywords": [
         "wing chun",
         "wing chun mortara",
@@ -80,6 +72,24 @@
         "@type": "OfferCatalog",
         "name": "Corsi e allenamenti",
         "itemListElement": [
+          {
+            "@type": "Offer",
+            "url": "https://longkai-it.com/#prenota",
+            "availability": "https://schema.org/InStock",
+            "price": "0",
+            "priceCurrency": "EUR",
+            "description": "Lezione di prova gratuita (prenotazione richiesta).",
+            "itemOffered": {
+              "@type": "Service",
+              "name": "Lezione di prova gratuita",
+              "description": "Lezione di prova gratuita di Wing Chun su prenotazione tramite modulo online.",
+              "provider": { "@id": "https://longkai-it.com/#wingchun-longkai" },
+              "areaServed": [
+                { "@type": "AdministrativeArea", "name": "Mortara (PV) e dintorni" },
+                { "@type": "AdministrativeArea", "name": "Provincia di Pavia" }
+              ]
+            }
+          },
           {
             "@type": "Offer",
             "itemOffered": {
