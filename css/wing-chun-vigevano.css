@@ -207,12 +207,48 @@
 }
 
 /* ===============================
+   FAQ
+   =============================== */
+
+.faq-list {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 24px;
+}
+
+.faq-item {
+  padding: 26px 22px;
+  border-radius: 20px;
+  background: rgba(255,255,255,0.08);
+  border: 1px solid rgba(255,255,255,0.12);
+  box-shadow: 0 14px 34px rgba(0,0,0,0.18);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+.faq-item h3 {
+  font-family: "Cinzel", serif;
+  color: #f6f3ef;
+  font-size: 1.12rem;
+  margin-bottom: 10px;
+}
+
+.faq-item p {
+  color: rgba(246,243,239,0.80);
+  margin: 0;
+}
+
+/* ===============================
    RESPONSIVE
    =============================== */
 
 @media (max-width: 1024px) {
   .service-page-vigevano .hero h1 {
     font-size: 2.55rem;
+  }
+
+  .faq-list {
+    grid-template-columns: 1fr;
   }
 }
 
