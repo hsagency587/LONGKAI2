@@ -1148,23 +1148,23 @@ body .section {
    =============================== */
 
 .vigevano-teaser-wrap {
-  padding-top: 20px;
-  padding-bottom: 30px;
+  padding-top: 18px;
+  padding-bottom: 28px;
 }
 
 .vigevano-teaser {
   position: relative;
   display: grid;
-  grid-template-columns: 1.25fr 0.75fr;
-  gap: 30px;
+  grid-template-columns: 1.2fr 0.8fr;
+  gap: 28px;
   align-items: center;
-  padding: 34px 36px;
+  padding: 32px 34px;
   border-radius: 24px;
   overflow: hidden;
   text-decoration: none;
 
   background:
-    linear-gradient(135deg, rgba(255,255,255,0.11), rgba(255,255,255,0.06)),
+    linear-gradient(135deg, rgba(255,255,255,0.11), rgba(255,255,255,0.05)),
     rgba(20,10,7,0.62);
 
   border: 1px solid rgba(255,255,255,0.16);
@@ -1190,8 +1190,8 @@ body .section {
   position: absolute;
   inset: -15%;
   background:
-    radial-gradient(circle at 15% 20%, rgba(217,179,130,0.18), transparent 28%),
-    radial-gradient(circle at 85% 75%, rgba(217,179,130,0.14), transparent 26%);
+    radial-gradient(circle at 20% 25%, rgba(217,179,130,0.18), transparent 28%),
+    radial-gradient(circle at 82% 72%, rgba(217,179,130,0.12), transparent 24%);
   filter: blur(18px);
   opacity: 0.95;
   pointer-events: none;
@@ -1218,21 +1218,21 @@ body .section {
 }
 
 .vigevano-teaser h2 {
-  margin-bottom: 14px;
+  margin-bottom: 12px;
   color: #f6f3ef;
 }
 
 .vigevano-teaser p {
   margin: 0;
   color: rgba(246,243,239,0.82);
-  max-width: 700px;
+  max-width: 660px;
 }
 
 .vigevano-teaser__right {
   display: flex;
   flex-direction: column;
   align-items: flex-end;
-  gap: 18px;
+  gap: 16px;
 }
 
 .vigevano-teaser__badge {
