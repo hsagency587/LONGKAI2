@@ -5,12 +5,12 @@
    =============================== */
 
 .service-page-vigevano .service-hero {
-  padding-bottom: 30px;
+  padding-bottom: 24px;
 }
 
 .service-page-vigevano .hero {
-  padding-top: 40px;
-  padding-bottom: 34px;
+  padding-top: 36px;
+  padding-bottom: 24px;
 }
 
 .service-page-vigevano .service-kicker {
@@ -29,13 +29,13 @@
 }
 
 .service-page-vigevano .hero h1 {
-  max-width: 920px;
+  max-width: 860px;
   margin: 0 auto;
-  font-size: 3.25rem;
+  font-size: 3rem;
 }
 
 .service-page-vigevano .service-intro {
-  max-width: 760px;
+  max-width: 700px;
   margin: 18px auto 0;
   color: rgba(246,243,239,0.88);
 }
@@ -50,7 +50,7 @@
 
 .vigevano-panel {
   position: relative;
-  min-height: 430px;
+  min-height: 380px;
   border-radius: 24px;
   overflow: hidden;
   isolation: isolate;
@@ -87,12 +87,12 @@
 .vigevano-panel__inner {
   position: relative;
   z-index: 1;
-  padding: 36px 34px;
+  padding: 34px 30px;
 }
 
 .vigevano-panel__label {
   display: inline-block;
-  margin-bottom: 18px;
+  margin-bottom: 16px;
   padding: 7px 12px;
   border-radius: 999px;
   font-family: "Cinzel", serif;
@@ -106,24 +106,24 @@
 
 .vigevano-panel h3 {
   font-family: "Cinzel", serif;
-  font-size: 2rem;
-  line-height: 1.25;
+  font-size: 2.1rem;
+  line-height: 1.2;
   color: #f6f3ef;
-  margin-bottom: 18px;
+  margin-bottom: 12px;
 }
 
 .vigevano-panel p {
   color: rgba(246,243,239,0.84);
-  margin-bottom: 30px;
+  margin-bottom: 24px;
 }
 
 .vigevano-panel__items {
   display: grid;
-  gap: 14px;
+  gap: 12px;
 }
 
 .vigevano-mini {
-  padding: 18px 18px;
+  padding: 16px 18px;
   border-radius: 18px;
   background: rgba(255,255,255,0.08);
   border: 1px solid rgba(255,255,255,0.12);
@@ -157,38 +157,12 @@
 }
 
 /* ===============================
-   SEZIONE BENEFIT
-   =============================== */
-
-.vigevano-benefits .service {
-  margin-bottom: 60px;
-}
-
-.vigevano-cards {
-  margin-top: 0;
-}
-
-.vigevano-card {
-  background: rgba(255,255,255,0.82);
-  border: 1px solid rgba(122,63,38,0.10);
-  box-shadow: 0 16px 34px rgba(58,32,20,0.10);
-}
-
-.vigevano-card h3 {
-  font-family: "Cinzel", serif;
-  color: #2a1810;
-  margin-bottom: 12px;
-}
-
-.vigevano-card p {
-  color: #4a382f;
-}
-
-/* ===============================
    CARD CONTATTI
    =============================== */
 
 .vigevano-contact-card {
+  max-width: 760px;
+  margin: 0 auto;
   background: rgba(255,255,255,0.10) !important;
   border: 1px solid rgba(255,255,255,0.18);
   box-shadow: 0 18px 40px rgba(0,0,0,0.35);
@@ -215,39 +189,21 @@
 }
 
 /* ===============================
-   FAQ
+   MAPPA
    =============================== */
 
-.faq-section .service {
-  margin-bottom: 48px;
+.vigevano-map-box {
+  overflow: hidden;
+  border-radius: 22px;
+  border: 1px solid rgba(255,255,255,0.14);
+  box-shadow: 0 20px 44px rgba(0,0,0,0.28);
 }
 
-.faq-list {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 24px;
-}
-
-.faq-item {
-  padding: 28px 24px;
-  border-radius: 20px;
-  background: rgba(255,255,255,0.08);
-  border: 1px solid rgba(255,255,255,0.12);
-  box-shadow: 0 14px 34px rgba(0,0,0,0.18);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-}
-
-.faq-item h3 {
-  font-family: "Cinzel", serif;
-  color: #f6f3ef;
-  font-size: 1.18rem;
-  margin-bottom: 12px;
-}
-
-.faq-item p {
-  color: rgba(246,243,239,0.80);
-  margin: 0;
+.vigevano-map-box iframe {
+  display: block;
+  width: 100%;
+  height: 360px;
+  border: 0;
 }
 
 /* ===============================
@@ -255,12 +211,8 @@
    =============================== */
 
 @media (max-width: 1024px) {
-  .faq-list {
-    grid-template-columns: 1fr;
-  }
-
   .service-page-vigevano .hero h1 {
-    font-size: 2.7rem;
+    font-size: 2.55rem;
   }
 }
 
@@ -270,7 +222,7 @@
   }
 
   .service-page-vigevano .hero h1 {
-    font-size: 2.05rem;
+    font-size: 2rem;
     line-height: 1.18;
   }
 
@@ -283,14 +235,14 @@
   }
 
   .vigevano-panel__inner {
-    padding: 26px 22px;
+    padding: 24px 20px;
   }
 
   .vigevano-panel h3 {
-    font-size: 1.55rem;
+    font-size: 1.6rem;
   }
 
-  .vigevano-panel__items {
-    gap: 12px;
+  .vigevano-map-box iframe {
+    height: 300px;
   }
 }
