@@ -29,15 +29,17 @@
 }
 
 .service-page-vigevano .hero h1 {
-  max-width: 860px;
+  max-width: 980px;
   margin: 0 auto;
   font-size: 3rem;
 }
 
 .service-page-vigevano .service-intro {
-  max-width: 700px;
+  max-width: 900px;
   margin: 18px auto 0;
   color: rgba(246,243,239,0.88);
+  font-size: 1.08rem;
+  line-height: 1.8;
 }
 
 .service-page-vigevano .service-main-grid {
@@ -157,6 +159,65 @@
 }
 
 /* ===============================
+   HOOK LOCALE
+   =============================== */
+
+.vigevano-local-hook {
+  padding-top: 10px;
+  padding-bottom: 40px;
+}
+
+.vigevano-local-hook__box {
+  max-width: 980px;
+  margin: 0 auto;
+  padding: 34px 36px;
+  border-radius: 24px;
+  background:
+    linear-gradient(135deg, rgba(255,255,255,0.11), rgba(255,255,255,0.05)),
+    rgba(20,10,7,0.62);
+  border: 1px solid rgba(255,255,255,0.16);
+  box-shadow:
+    0 24px 50px rgba(0,0,0,0.26),
+    inset 0 1px 0 rgba(255,255,255,0.05);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+.vigevano-local-hook__box h2 {
+  font-family: "Cinzel", serif;
+  font-size: 2rem;
+  font-weight: 600;
+  color: #f6f3ef;
+  margin-bottom: 18px;
+}
+
+.vigevano-local-hook__box p {
+  margin: 0 0 16px;
+  color: rgba(246,243,239,0.86);
+  font-size: 1.05rem;
+  line-height: 1.8;
+}
+
+.vigevano-local-hook__box p:last-child {
+  margin-bottom: 0;
+}
+
+.vigevano-local-hook__box a {
+  color: var(--secondary);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.vigevano-local-hook__box a:hover {
+  text-decoration: underline;
+}
+
+.vigevano-local-hook__box p strong {
+  color: #f6f3ef;
+  font-weight: 600;
+}
+
+/* ===============================
    CARD CONTATTI
    =============================== */
 
@@ -239,49 +300,9 @@
 }
 
 /* ===============================
-   RESPONSIVE
+   FOOTER
    =============================== */
 
-@media (max-width: 1024px) {
-  .service-page-vigevano .hero h1 {
-    font-size: 2.55rem;
-  }
-
-  .faq-list {
-    grid-template-columns: 1fr;
-  }
-}
-
-@media (max-width: 768px) {
-  .service-page-vigevano .hero {
-    padding-top: 88px !important;
-  }
-
-  .service-page-vigevano .hero h1 {
-    font-size: 2rem;
-    line-height: 1.18;
-  }
-
-  .service-page-vigevano .service-intro {
-    font-size: 0.98rem;
-  }
-
-  .vigevano-panel {
-    min-height: auto;
-  }
-
-  .vigevano-panel__inner {
-    padding: 24px 20px;
-  }
-
-  .vigevano-panel h3 {
-    font-size: 1.6rem;
-  }
-
-  .vigevano-map-box iframe {
-    height: 300px;
-  }
-}
 .site-footer {
   background: #1e1612;
   color: #e7d7c3;
@@ -349,7 +370,64 @@
   text-decoration: none;
 }
 
+/* ===============================
+   RESPONSIVE
+   =============================== */
+
+@media (max-width: 1024px) {
+  .service-page-vigevano .hero h1 {
+    font-size: 2.55rem;
+  }
+
+  .faq-list {
+    grid-template-columns: 1fr;
+  }
+}
+
 @media (max-width: 768px) {
+  .service-page-vigevano .hero {
+    padding-top: 88px !important;
+  }
+
+  .service-page-vigevano .hero h1 {
+    font-size: 2rem;
+    line-height: 1.18;
+  }
+
+  .service-page-vigevano .service-intro {
+    font-size: 0.98rem;
+    line-height: 1.7;
+  }
+
+  .vigevano-panel {
+    min-height: auto;
+  }
+
+  .vigevano-panel__inner {
+    padding: 24px 20px;
+  }
+
+  .vigevano-panel h3 {
+    font-size: 1.6rem;
+  }
+
+  .vigevano-local-hook__box {
+    padding: 24px 20px;
+  }
+
+  .vigevano-local-hook__box h2 {
+    font-size: 1.5rem;
+  }
+
+  .vigevano-local-hook__box p {
+    font-size: 0.98rem;
+    line-height: 1.7;
+  }
+
+  .vigevano-map-box iframe {
+    height: 300px;
+  }
+
   .site-footer .footer-inner {
     flex-direction: column;
     gap: 16px;
