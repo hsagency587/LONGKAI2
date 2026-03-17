@@ -1071,6 +1071,175 @@ body .section {
   }
 }
 /* ===============================
+   SEDE VIGEVANO IN HOME
+   coerente con area servizi
+   =============================== */
+
+.sede-vigevano{
+  padding-top: 0;
+  padding-bottom: 110px;
+  background: linear-gradient(
+    135deg,
+    rgba(243, 231, 215, 0.7),
+    rgba(233, 210, 176, 0.7)
+  );
+}
+
+.sede-vigevano .content{
+  max-width: 1200px;
+}
+
+.sede-vigevano__link{
+  text-decoration: none;
+  display: block;
+}
+
+.sede-vigevano__service{
+  max-width: 100%;
+  margin: 0;
+  padding-left: 42px;
+  position: relative;
+}
+
+.sede-vigevano__service::before{
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 8px;
+  width: 3px;
+  height: 100%;
+  background: linear-gradient(
+    to bottom,
+    #7a3f26,
+    rgba(122, 63, 38, 0.15)
+  );
+}
+
+.sede-vigevano__service::after{
+  content: "";
+  display: block;
+  margin-top: 38px;
+  width: 180px;
+  height: 1px;
+  background: linear-gradient(
+    to right,
+    rgba(122,63,38,0.45),
+    rgba(122,63,38,0.05)
+  );
+}
+
+.sede-vigevano__overline{
+  display: inline-block;
+  margin-bottom: 14px;
+  font-family: "Cinzel", serif;
+  font-size: 0.88rem;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgba(90, 47, 28, 0.75);
+}
+
+.sede-vigevano__service h2{
+  font-family: "Cinzel", serif;
+  font-size: 2.6rem;
+  font-weight: 600;
+  color: #2a1810;
+  margin-bottom: 18px;
+  letter-spacing: 0.03em;
+  transition: color 0.28s ease;
+}
+
+.sede-vigevano__service p{
+  font-family: "Noto Serif", serif;
+  font-size: 1.05rem;
+  line-height: 1.9;
+  color: #4a382f;
+  max-width: 860px;
+  margin: 0;
+}
+
+.sede-vigevano__meta{
+  margin-top: 26px;
+  display: flex;
+  gap: 22px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.sede-vigevano__meta span{
+  font-family: "Cinzel", serif;
+  font-size: 0.92rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  color: #6c412a;
+}
+
+.sede-vigevano__meta span:last-child{
+  position: relative;
+  padding-right: 20px;
+}
+
+.sede-vigevano__meta span:last-child::after{
+  content: "→";
+  position: absolute;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  transition: transform 0.28s ease;
+}
+
+.sede-vigevano__link:hover .sede-vigevano__service{
+  transform: translateY(-2px);
+}
+
+.sede-vigevano__link:hover .sede-vigevano__service::before{
+  background: linear-gradient(
+    to bottom,
+    #5a2f1c,
+    rgba(90, 47, 28, 0.2)
+  );
+}
+
+.sede-vigevano__link:hover .sede-vigevano__service h2{
+  color: #5a2f1c;
+}
+
+.sede-vigevano__link:hover .sede-vigevano__meta span:last-child::after{
+  transform: translateY(-50%) translateX(4px);
+}
+
+/* MOBILE */
+@media (max-width: 768px){
+  .sede-vigevano{
+    padding-bottom: 70px;
+  }
+
+  .sede-vigevano__service{
+    padding-left: 24px;
+  }
+
+  .sede-vigevano__service h2{
+    font-size: 2rem;
+    line-height: 1.2;
+  }
+
+  .sede-vigevano__service p{
+    font-size: 0.98rem;
+    line-height: 1.8;
+  }
+
+  .sede-vigevano__meta{
+    gap: 10px;
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .sede-vigevano__service::after{
+    width: 120px;
+    margin-top: 28px;
+  }
+}
+/* ===============================
    MOBILE – SUPER COMPACT + NAV IN LINEA
    (incolla in fondo al CSS)
    =============================== */
