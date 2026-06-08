@@ -1533,66 +1533,85 @@ body .section {
 }
 
 /* ===== MOBILE ===== */
+/* ===== MOBILE ===== */
 @media (max-width: 768px) {
   .kwoon-areas {
-   padding: 40px 12px 44px !important;
-  background: transparent !important;
+    padding: 40px 12px 44px !important;
+    background: transparent !important;
   }
 
   .kwoon-scroll {
+    position: relative;
+    width: 100%;
+    max-width: none;
     min-height: 1180px;
-    max-width: 560px;
     margin: 0 auto;
     overflow: hidden;
+  }
+
+  .kwoon-scroll__bg {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 50%;
+    right: auto;
+    z-index: 0;
+
+    width: calc(100% + 110px);
+    transform: translateX(-50%);
   }
 
   .kwoon-scroll__bg img {
     width: 100%;
     height: 100%;
+    display: block;
     object-fit: fill;
   }
 
-  .kwoon-scroll__content {
-    min-height: 1180px;
-    padding: 108px 34px 92px;
+  .kwoon-scroll__symbol {
+    position: absolute;
+    top: 170px;
+    bottom: 120px;
+    left: 50%;
+    z-index: 1;
+
+    transform: translateX(-50%);
+
+    width: auto;
+    height: auto;
+    margin: 0;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    writing-mode: vertical-rl;
+    text-orientation: mixed;
+    white-space: nowrap;
+    line-height: 1;
+    letter-spacing: 0.08em;
+
+    font-size: 5.2rem;
+    text-align: center;
+
+    color: rgba(95,54,34,0.18);
+    text-shadow:
+      0 1px 0 rgba(255,238,199,0.14),
+      0 0 22px rgba(255,214,145,0.10),
+      0 0 48px rgba(122,71,42,0.10);
+
+    pointer-events: none;
+    user-select: none;
   }
 
-  .kwoon-scroll__symbol {
-  position: sticky;
-  top: 140px;
-  left: auto;
-  right: auto;
-  transform: none;
+  .kwoon-scroll__content {
+    position: relative;
+    z-index: 2;
 
-  width: fit-content;
-  margin: 0 auto;
+    min-height: 1180px;
+    padding: 108px 28px 92px;
+  }
 
-  writing-mode: vertical-rl;
-  text-orientation: mixed;
-  white-space: nowrap;
-  line-height: 1;
-  letter-spacing: 0.08em;
-
-  font-size: 4.2rem;
-  text-align: center;
-
-  color: rgba(95,54,34,0.22);
-  text-shadow:
-    0 1px 0 rgba(255,238,199,0.18),
-    0 0 18px rgba(255,214,145,0.10),
-    0 0 40px rgba(122,71,42,0.10);
-
-  z-index: 1;
-  pointer-events: none;
-}
-.kwoon-scroll {
-  overflow: visible;
-}
-
-.kwoon-scroll__content {
-  position: relative;
-  z-index: 2;
-}
   .kwoon-areas__head {
     margin-bottom: 24px;
   }
