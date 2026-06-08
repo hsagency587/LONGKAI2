@@ -1183,11 +1183,7 @@ body .section {
   overflow: hidden;
   isolation: isolate;
 
-  background:
-    linear-gradient(
-      rgba(18, 9, 6, 0.68),
-      rgba(18, 9, 6, 0.72)
-    );
+  background: transparent !important;
 }
 .kwoon-areas::before {
   content: "";
@@ -1195,9 +1191,7 @@ body .section {
   inset: 0;
   z-index: 0;
 
-  background:
-    radial-gradient(circle at 50% 48%, rgba(217,179,130,0.12), transparent 38%),
-    linear-gradient(to bottom, rgba(8,4,3,0.20), rgba(8,4,3,0.34));
+  background: transparent !important;
 
   pointer-events: none;
 }
@@ -1541,7 +1535,8 @@ body .section {
 /* ===== MOBILE ===== */
 @media (max-width: 768px) {
   .kwoon-areas {
-    padding: 40px 12px 44px !important;
+   padding: 40px 12px 44px !important;
+  background: transparent !important;
   }
 
   .kwoon-scroll {
@@ -1653,7 +1648,7 @@ body .section {
   .kwoon-scroll__bg {
     left: 50%;
     right: auto;
-    width: calc(100% + 110px);
+    width: calc(100% + 160px);
     transform: translateX(-50%);
   }
 
