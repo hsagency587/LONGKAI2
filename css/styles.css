@@ -1175,54 +1175,143 @@ body .section {
 }
 /* ===============================
    AREE SERVITE – PROVINCE DEL KWOON
+   PERGAMENA TRADIZIONALE
    =============================== */
 
 .kwoon-areas {
   position: relative;
-  padding-top: 58px;
-  padding-bottom: 62px;
+  padding-top: 62px;
+  padding-bottom: 68px;
   overflow: hidden;
 
   background:
-    radial-gradient(circle at 50% 42%, rgba(217,179,130,0.13), transparent 34%),
-    linear-gradient(135deg, rgba(20,10,7,0.86), rgba(45,25,17,0.76));
+    radial-gradient(circle at 50% 45%, rgba(217,179,130,0.10), transparent 34%),
+    linear-gradient(135deg, rgba(20,10,7,0.94), rgba(52,30,22,0.90));
 }
 
+/* nasconde visivamente il logo/drago di sfondo del body sotto questa sezione */
 .kwoon-areas::before {
   content: "";
   position: absolute;
   inset: 0;
   background:
-    linear-gradient(to right, rgba(139,74,47,0.18), transparent 18%, transparent 82%, rgba(139,74,47,0.18)),
-    linear-gradient(to bottom, rgba(217,179,130,0.10), transparent 22%, transparent 78%, rgba(217,179,130,0.08));
+    radial-gradient(circle at 50% 50%, rgba(217,179,130,0.08), transparent 36%),
+    linear-gradient(to bottom, rgba(12,7,5,0.42), rgba(12,7,5,0.36));
   pointer-events: none;
 }
 
 .kwoon-areas__inner {
   position: relative;
   z-index: 1;
-  max-width: 1240px;
+  max-width: 1280px;
   margin: 0 auto;
+  padding: 46px 82px 52px;
+  overflow: hidden;
+
+  border-radius: 34px;
+
+  background:
+    radial-gradient(circle at 22% 28%, rgba(255,238,199,0.20), transparent 24%),
+    radial-gradient(circle at 76% 68%, rgba(91,45,26,0.18), transparent 28%),
+    linear-gradient(90deg,
+      rgba(104,57,32,0.70) 0%,
+      rgba(185,143,96,0.96) 7%,
+      rgba(213,180,132,0.97) 18%,
+      rgba(199,162,113,0.96) 50%,
+      rgba(213,180,132,0.97) 82%,
+      rgba(185,143,96,0.96) 93%,
+      rgba(104,57,32,0.72) 100%
+    );
+
+  box-shadow:
+    0 34px 80px rgba(0,0,0,0.48),
+    inset 0 0 42px rgba(74,37,20,0.32),
+    inset 0 0 0 1px rgba(255,238,199,0.16);
 }
 
+/* lato sinistro pergamena arrotolata */
+.kwoon-areas__inner::before {
+  content: "";
+  position: absolute;
+  left: 18px;
+  top: 24px;
+  bottom: 24px;
+  width: 54px;
+  border-radius: 999px;
+
+  background:
+    radial-gradient(ellipse at 34% 50%, rgba(255,230,184,0.32), transparent 42%),
+    linear-gradient(90deg,
+      rgba(58,29,17,0.78),
+      rgba(143,88,51,0.92) 34%,
+      rgba(211,168,111,0.84) 62%,
+      rgba(83,41,24,0.72)
+    );
+
+  box-shadow:
+    14px 0 24px rgba(53,25,13,0.34),
+    inset -10px 0 18px rgba(45,20,11,0.42),
+    inset 8px 0 18px rgba(255,226,174,0.18);
+
+  pointer-events: none;
+}
+
+/* lato destro pergamena arrotolata */
+.kwoon-areas__inner::after {
+  content: "";
+  position: absolute;
+  right: 18px;
+  top: 24px;
+  bottom: 24px;
+  width: 54px;
+  border-radius: 999px;
+
+  background:
+    radial-gradient(ellipse at 66% 50%, rgba(255,230,184,0.32), transparent 42%),
+    linear-gradient(90deg,
+      rgba(83,41,24,0.72),
+      rgba(211,168,111,0.84) 38%,
+      rgba(143,88,51,0.92) 66%,
+      rgba(58,29,17,0.78)
+    );
+
+  box-shadow:
+    -14px 0 24px rgba(53,25,13,0.34),
+    inset 10px 0 18px rgba(45,20,11,0.42),
+    inset -8px 0 18px rgba(255,226,174,0.18);
+
+  pointer-events: none;
+}
+
+/* ideogramma del logo inciso nella carta */
 .kwoon-areas__symbol {
   position: absolute;
   left: 50%;
-  top: 52%;
+  top: 58%;
+  z-index: 0;
   transform: translate(-50%, -50%);
+
   font-family: "Noto Serif", serif;
-  font-size: clamp(8rem, 17vw, 18rem);
-  font-weight: 600;
+  font-size: clamp(9rem, 18vw, 19rem);
+  font-weight: 700;
   line-height: 1;
-  color: rgba(217,179,130,0.075);
-  text-shadow: 0 0 42px rgba(217,179,130,0.10);
-  pointer-events: none;
-  user-select: none;
   white-space: nowrap;
+  user-select: none;
+  pointer-events: none;
+
+  color: rgba(78,38,22,0.22);
+  text-shadow:
+    0 1px 0 rgba(255,230,184,0.20),
+    0 0 34px rgba(255,226,174,0.16);
+}
+
+.kwoon-areas__head,
+.kwoon-areas__grid {
+  position: relative;
+  z-index: 2;
 }
 
 .kwoon-areas__head {
-  position: relative;
   max-width: 760px;
   margin: 0 auto 34px;
   text-align: center;
@@ -1231,7 +1320,7 @@ body .section {
 .kwoon-areas__eyebrow {
   display: inline-block;
   margin-bottom: 10px;
-  padding: 6px 14px;
+  padding: 6px 15px;
   border-radius: 999px;
 
   font-family: "Cinzel", serif;
@@ -1240,95 +1329,175 @@ body .section {
   letter-spacing: 0.16em;
   text-transform: uppercase;
 
-  color: var(--secondary);
-  background: rgba(255,255,255,0.07);
-  border: 1px solid rgba(217,179,130,0.18);
+  color: #3b2014;
+  background: rgba(255,238,199,0.28);
+  border: 1px solid rgba(88,44,25,0.24);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.16),
+    0 8px 18px rgba(72,34,18,0.16);
 }
 
 .kwoon-areas__head h2 {
   margin-bottom: 12px;
-  color: #f6f3ef;
-  text-shadow: 0 4px 18px rgba(0,0,0,0.42);
+  color: #2a1810;
+  text-shadow:
+    0 1px 0 rgba(255,232,190,0.22),
+    0 4px 16px rgba(59,31,18,0.22);
 }
 
 .kwoon-areas__intro {
-  max-width: 680px;
+  max-width: 690px;
   margin: 0 auto;
-  color: rgba(246,243,239,0.78);
+  color: rgba(48,31,23,0.82);
   font-size: 1rem;
   line-height: 1.7;
+  font-weight: 600;
 }
 
+/* corpo scritto nella pergamena */
 .kwoon-areas__grid {
-  position: relative;
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 0;
-  border-top: 1px solid rgba(217,179,130,0.18);
-  border-bottom: 1px solid rgba(217,179,130,0.14);
+  margin-top: 26px;
+
+  border-radius: 18px;
+  overflow: hidden;
+
+  background:
+    linear-gradient(90deg,
+      rgba(255,232,188,0.10),
+      rgba(92,47,27,0.08) 33%,
+      rgba(255,232,188,0.10) 50%,
+      rgba(92,47,27,0.08) 66%,
+      rgba(255,232,188,0.10)
+    );
+
+  box-shadow:
+    inset 0 1px 0 rgba(255,244,214,0.18),
+    inset 0 -1px 0 rgba(85,43,24,0.18);
+}
+
+/* pieghe leggere della pergamena, non barre divisorie */
+.kwoon-areas__grid::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(90deg,
+      transparent 32.7%,
+      rgba(72,35,19,0.16) 33.2%,
+      rgba(255,232,190,0.10) 33.7%,
+      transparent 34.5%,
+      transparent 65.5%,
+      rgba(72,35,19,0.16) 66.2%,
+      rgba(255,232,190,0.10) 66.8%,
+      transparent 67.6%
+    );
+  pointer-events: none;
 }
 
 .kwoon-area {
   position: relative;
   display: block;
-  padding: 22px 26px 24px;
+  min-height: 292px;
+  padding: 24px 28px 28px;
   text-decoration: none;
   overflow: hidden;
 }
 
-.kwoon-area + .kwoon-area {
-  border-left: 1px solid rgba(217,179,130,0.20);
-}
-
+/* sfumatura singola area, effetto carta non card */
 .kwoon-area::before {
   content: "";
   position: absolute;
-  left: 0;
-  top: 24px;
-  bottom: 24px;
-  width: 3px;
-  background: linear-gradient(
-    to bottom,
-    rgba(217,179,130,0.78),
-    rgba(139,74,47,0.18)
-  );
-  opacity: 0.55;
-  transition: opacity 0.3s ease, background 0.3s ease;
+  inset: 0;
+  background:
+    radial-gradient(circle at 50% 0%, rgba(255,236,196,0.15), transparent 34%),
+    radial-gradient(circle at 50% 100%, rgba(81,40,23,0.10), transparent 42%);
+  opacity: 0.68;
+  transition: opacity 0.3s ease;
+  pointer-events: none;
 }
 
+/* ombra/piega interna laterale, non barra verticale */
+.kwoon-area::after {
+  content: "";
+  position: absolute;
+  top: 22px;
+  right: 0;
+  bottom: 22px;
+  width: 18px;
+  background:
+    linear-gradient(90deg,
+      transparent,
+      rgba(63,30,17,0.12),
+      rgba(255,232,190,0.08),
+      transparent
+    );
+  opacity: 0.72;
+  pointer-events: none;
+}
+
+.kwoon-area:last-child::after {
+  display: none;
+}
+
+/* sigillo rosso con logo */
 .kwoon-area__seal {
   position: absolute;
   right: 22px;
-  top: 18px;
-  width: 42px;
-  height: 42px;
+  top: 22px;
+  z-index: 3;
+
+  width: 46px;
+  height: 46px;
+  padding: 7px;
+
   display: flex;
   align-items: center;
   justify-content: center;
 
-  font-family: "Noto Serif", serif;
-  font-size: 1.05rem;
-  font-weight: 700;
-  color: rgba(246,243,239,0.70);
+  background:
+    radial-gradient(circle at 35% 28%, rgba(255,143,103,0.18), transparent 28%),
+    linear-gradient(135deg, rgba(101,24,17,0.96), rgba(132,39,25,0.92));
 
-  background: rgba(105,28,20,0.62);
-  border: 1px solid rgba(217,179,130,0.28);
+  border: 1px solid rgba(222,169,104,0.44);
   box-shadow:
-    0 10px 28px rgba(0,0,0,0.28),
-    inset 0 0 0 1px rgba(255,255,255,0.04);
+    0 12px 26px rgba(48,18,10,0.28),
+    inset 0 0 0 1px rgba(255,230,184,0.09),
+    inset 0 -8px 16px rgba(47,13,8,0.24);
 
-  transform: rotate(-4deg);
-  transition: transform 0.3s ease, border-color 0.3s ease;
+  transform: rotate(-5deg);
+  transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
+}
+
+.kwoon-area__seal img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
+
+  opacity: 0.92;
+  filter:
+    sepia(30%)
+    saturate(1.12)
+    contrast(1.08)
+    drop-shadow(0 2px 4px rgba(0,0,0,0.36));
 }
 
 .kwoon-area__image {
   position: relative;
-  height: 118px;
-  margin-bottom: 18px;
+  height: 108px;
+  margin-bottom: 20px;
   border-radius: 12px;
   overflow: hidden;
-  background: rgba(0,0,0,0.25);
-  border: 1px solid rgba(217,179,130,0.16);
+
+  background: rgba(64,32,18,0.25);
+  border: 1px solid rgba(89,45,26,0.20);
+
+  box-shadow:
+    inset 0 0 24px rgba(43,20,11,0.30),
+    0 8px 20px rgba(65,31,17,0.14);
 }
 
 .kwoon-area__image::after {
@@ -1336,8 +1505,8 @@ body .section {
   position: absolute;
   inset: 0;
   background:
-    linear-gradient(to bottom, rgba(20,10,7,0.05), rgba(20,10,7,0.44)),
-    radial-gradient(circle at 50% 30%, transparent, rgba(20,10,7,0.25));
+    linear-gradient(to bottom, rgba(189,139,83,0.10), rgba(74,34,18,0.34)),
+    radial-gradient(circle at 50% 30%, transparent, rgba(62,29,16,0.22));
   pointer-events: none;
 }
 
@@ -1346,72 +1515,124 @@ body .section {
   height: 100%;
   display: block;
   object-fit: cover;
-  filter: grayscale(24%) sepia(12%) brightness(0.78);
+
+  filter:
+    grayscale(18%)
+    sepia(28%)
+    saturate(0.82)
+    brightness(0.78)
+    contrast(0.98);
+
   transform: scale(1.01);
   transition: filter 0.35s ease, transform 0.35s ease;
 }
 
 .kwoon-area__content {
   position: relative;
-  z-index: 1;
+  z-index: 2;
+  text-align: center;
 }
 
 .kwoon-area__content h3 {
-  margin-bottom: 8px;
-  padding-right: 42px;
+  margin-bottom: 10px;
+  padding: 0 38px;
 
   font-family: "Cinzel", serif;
-  font-size: 1.35rem;
+  font-size: 1.34rem;
   font-weight: 700;
-  letter-spacing: 0.04em;
-  color: #f6f3ef;
-  text-shadow: 0 3px 14px rgba(0,0,0,0.42);
+  letter-spacing: 0.045em;
+  color: #28160f;
+
+  text-shadow:
+    0 1px 0 rgba(255,236,197,0.24),
+    0 4px 12px rgba(78,38,22,0.18);
 
   transition: color 0.3s ease, transform 0.3s ease;
 }
 
 .kwoon-area__content p {
-  max-width: 340px;
-  color: rgba(246,243,239,0.72);
+  max-width: 350px;
+  margin: 0 auto;
+  color: rgba(45,29,21,0.78);
   font-size: 0.94rem;
   line-height: 1.68;
+  font-weight: 600;
 }
 
 .kwoon-area:hover::before {
   opacity: 1;
-  background: linear-gradient(
-    to bottom,
-    rgba(217,179,130,0.95),
-    rgba(139,74,47,0.32)
-  );
 }
 
 .kwoon-area:hover .kwoon-area__image img {
-  filter: grayscale(8%) sepia(8%) brightness(0.92);
+  filter:
+    grayscale(6%)
+    sepia(18%)
+    saturate(0.92)
+    brightness(0.92)
+    contrast(1.02);
+
   transform: scale(1.045);
 }
 
 .kwoon-area:hover .kwoon-area__content h3 {
-  color: var(--secondary);
-  transform: translateX(3px);
+  color: #5d2f1d;
+  transform: translateY(-1px);
 }
 
 .kwoon-area:hover .kwoon-area__seal {
-  transform: rotate(0deg) scale(1.04);
-  border-color: rgba(217,179,130,0.44);
+  transform: rotate(-1deg) scale(1.045);
+  border-color: rgba(240,193,121,0.62);
+  box-shadow:
+    0 14px 30px rgba(48,18,10,0.34),
+    inset 0 0 0 1px rgba(255,230,184,0.12),
+    inset 0 -8px 16px rgba(47,13,8,0.24);
 }
 
-/* ===== MOBILE AREE SERVITE ===== */
+/* ===== MOBILE AREE SERVITE – PERGAMENA VERTICALE ===== */
 @media (max-width: 768px) {
   .kwoon-areas {
     padding-top: 42px;
     padding-bottom: 46px;
   }
 
+  .kwoon-areas__inner {
+    padding: 38px 22px 42px;
+    border-radius: 26px;
+  }
+
+  .kwoon-areas__inner::before,
+  .kwoon-areas__inner::after {
+    left: 22px;
+    right: 22px;
+    width: auto;
+    height: 34px;
+    border-radius: 999px;
+  }
+
+  .kwoon-areas__inner::before {
+    top: 14px;
+    bottom: auto;
+    background:
+      linear-gradient(to bottom, rgba(58,29,17,0.78), rgba(210,166,108,0.86), rgba(83,41,24,0.72));
+    box-shadow:
+      0 12px 18px rgba(53,25,13,0.24),
+      inset 0 -8px 14px rgba(45,20,11,0.34);
+  }
+
+  .kwoon-areas__inner::after {
+    top: auto;
+    bottom: 14px;
+    background:
+      linear-gradient(to bottom, rgba(83,41,24,0.72), rgba(210,166,108,0.86), rgba(58,29,17,0.78));
+    box-shadow:
+      0 -12px 18px rgba(53,25,13,0.24),
+      inset 0 8px 14px rgba(45,20,11,0.34);
+  }
+
   .kwoon-areas__symbol {
-    top: 48%;
-    font-size: 8rem;
-    opacity: 0.8;
+    top: 52%;
+    font-size: 8.4rem;
+    opacity: 0.68;
   }
 
   .kwoon-areas__head {
@@ -1428,25 +1649,58 @@ body .section {
 
   .kwoon-areas__grid {
     grid-template-columns: 1fr;
-    border-top: 1px solid rgba(217,179,130,0.16);
-    border-bottom: 1px solid rgba(217,179,130,0.16);
+    border-radius: 16px;
+  }
+
+  .kwoon-areas__grid::before {
+    background:
+      linear-gradient(to bottom,
+        transparent 32.7%,
+        rgba(72,35,19,0.15) 33.2%,
+        rgba(255,232,190,0.10) 33.7%,
+        transparent 34.5%,
+        transparent 65.5%,
+        rgba(72,35,19,0.15) 66.2%,
+        rgba(255,232,190,0.10) 66.8%,
+        transparent 67.6%
+      );
   }
 
   .kwoon-area {
+    min-height: auto;
     padding: 22px 18px 24px;
   }
 
-  .kwoon-area + .kwoon-area {
-    border-left: 0;
-    border-top: 1px solid rgba(217,179,130,0.16);
+  .kwoon-area::after {
+    top: auto;
+    left: 18px;
+    right: 18px;
+    bottom: 0;
+    width: auto;
+    height: 16px;
+    background:
+      linear-gradient(to bottom,
+        transparent,
+        rgba(63,30,17,0.12),
+        rgba(255,232,190,0.08),
+        transparent
+      );
+  }
+
+  .kwoon-area__seal {
+    width: 42px;
+    height: 42px;
+    right: 18px;
+    top: 20px;
   }
 
   .kwoon-area__image {
-    height: 120px;
+    height: 118px;
   }
 
   .kwoon-area__content h3 {
-    font-size: 1.25rem;
+    font-size: 1.24rem;
+    padding: 0 36px;
   }
 
   .kwoon-area__content p {
