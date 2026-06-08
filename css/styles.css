@@ -1180,7 +1180,7 @@ body .section {
 
 .kwoon-areas {
   position: relative;
-  padding: 58px 0 66px;
+  padding: 58px clamp(14px, 2vw, 28px) 66px !important;
   overflow: hidden;
 
   background:
@@ -1198,127 +1198,139 @@ body .section {
   pointer-events: none;
 }
 
-/* pergamena larga quasi tutta la pagina */
+/* pergamena larga, senza uscire dalla pagina */
 .kwoon-areas__inner {
   position: relative;
   z-index: 1;
-  width: calc(100vw - 42px);
-  max-width: 1760px;
+  width: 100%;
+  max-width: none;
   margin: 0 auto;
-  padding: 56px 132px 62px;
+  padding: 56px clamp(96px, 8vw, 150px) 62px;
   overflow: hidden;
+  box-sizing: border-box;
 
-  border-radius: 38px 36px 42px 40px;
+  border-radius: 34px;
 
   background:
-    radial-gradient(ellipse at 18% 18%, rgba(255,241,204,0.28), transparent 22%),
-    radial-gradient(ellipse at 82% 78%, rgba(95,45,24,0.18), transparent 30%),
-    radial-gradient(ellipse at 48% 48%, rgba(255,229,178,0.14), transparent 44%),
+    radial-gradient(ellipse at 18% 20%, rgba(255,241,204,0.26), transparent 24%),
+    radial-gradient(ellipse at 82% 78%, rgba(92,45,24,0.20), transparent 30%),
+    radial-gradient(ellipse at 50% 48%, rgba(255,229,178,0.15), transparent 46%),
     linear-gradient(180deg,
-      rgba(238,202,145,0.96) 0%,
-      rgba(224,181,119,0.98) 16%,
-      rgba(214,169,108,0.98) 50%,
+      rgba(239,205,151,0.98) 0%,
+      rgba(226,184,124,0.98) 18%,
+      rgba(214,169,108,0.98) 52%,
       rgba(226,184,123,0.98) 82%,
-      rgba(168,98,55,0.92) 100%
+      rgba(154,86,48,0.94) 100%
     );
 
   box-shadow:
     0 38px 96px rgba(0,0,0,0.52),
-    inset 0 22px 36px rgba(255,238,198,0.26),
-    inset 0 -28px 44px rgba(77,38,20,0.30),
-    inset 38px 0 46px rgba(82,39,21,0.24),
-    inset -38px 0 46px rgba(82,39,21,0.24),
+    inset 0 20px 34px rgba(255,238,198,0.26),
+    inset 0 -30px 46px rgba(76,38,20,0.34),
+    inset 42px 0 52px rgba(84,40,21,0.26),
+    inset -42px 0 52px rgba(84,40,21,0.26),
     inset 0 0 0 1px rgba(255,239,202,0.18);
 }
 
-/* texture carta: macchie, usura, fibre simulate solo CSS */
-.kwoon-areas__inner > * {
-  position: relative;
-}
-
-.kwoon-areas__inner::marker {
-  display: none;
-}
-
-/* rotolo sinistro realistico */
+/* rotolo sinistro */
 .kwoon-areas__inner::before {
   content: "";
   position: absolute;
-  left: 28px;
-  top: 30px;
-  bottom: 30px;
-  width: 82px;
-  z-index: 1;
+  left: clamp(18px, 2.1vw, 36px);
+  top: 34px;
+  bottom: 34px;
+  width: 78px;
+  z-index: 2;
 
-  border-radius: 48% 52% 49% 51% / 7% 11% 89% 93%;
+  border-radius: 999px;
 
   background:
-    radial-gradient(circle at 50% 16px, rgba(58,28,14,0.98) 0 8px, rgba(116,65,35,0.96) 9px 16px, transparent 17px),
-    radial-gradient(circle at 50% calc(100% - 16px), rgba(58,28,14,0.98) 0 8px, rgba(116,65,35,0.96) 9px 16px, transparent 17px),
-    radial-gradient(ellipse at 42% 7%, rgba(255,225,163,0.48), transparent 24%),
-    radial-gradient(ellipse at 42% 93%, rgba(55,22,10,0.46), transparent 26%),
-    radial-gradient(ellipse at 38% 50%, rgba(255,232,171,0.38), transparent 31%),
+    radial-gradient(circle at 50% 16px,
+      rgba(45,20,10,0.98) 0 8px,
+      rgba(91,48,25,0.98) 9px 15px,
+      rgba(182,121,66,0.86) 16px 23px,
+      transparent 24px
+    ),
+    radial-gradient(circle at 50% calc(100% - 16px),
+      rgba(45,20,10,0.98) 0 8px,
+      rgba(91,48,25,0.98) 9px 15px,
+      rgba(182,121,66,0.86) 16px 23px,
+      transparent 24px
+    ),
+    radial-gradient(ellipse at 42% 8%, rgba(255,229,170,0.45), transparent 22%),
+    radial-gradient(ellipse at 42% 92%, rgba(48,20,9,0.46), transparent 24%),
     linear-gradient(90deg,
-      rgba(42,19,9,0.96) 0%,
-      rgba(75,39,20,0.98) 13%,
-      rgba(133,78,43,0.98) 31%,
-      rgba(221,164,92,0.98) 48%,
-      rgba(248,205,126,0.96) 58%,
-      rgba(154,91,49,0.98) 75%,
-      rgba(75,36,18,0.96) 100%
+      rgba(39,17,8,0.98) 0%,
+      rgba(72,36,18,0.98) 12%,
+      rgba(126,72,38,0.98) 28%,
+      rgba(217,158,89,0.98) 45%,
+      rgba(255,213,135,0.96) 54%,
+      rgba(172,103,55,0.98) 68%,
+      rgba(82,40,19,0.98) 84%,
+      rgba(39,17,8,0.96) 100%
     );
 
   box-shadow:
-    24px 0 30px rgba(55,25,12,0.36),
-    9px 0 16px rgba(78,37,18,0.24),
-    inset -22px 0 28px rgba(33,13,6,0.52),
-    inset 14px 0 24px rgba(255,227,166,0.26),
-    inset 0 22px 24px rgba(255,225,164,0.12),
-    inset 0 -26px 28px rgba(43,17,8,0.36);
+    26px 0 30px rgba(54,24,11,0.38),
+    10px 0 16px rgba(79,38,18,0.26),
+    inset -22px 0 28px rgba(30,12,5,0.54),
+    inset 14px 0 24px rgba(255,228,166,0.25),
+    inset 0 20px 24px rgba(255,225,164,0.12),
+    inset 0 -24px 28px rgba(43,17,8,0.36);
 
   pointer-events: none;
 }
 
-/* rotolo destro realistico */
+/* rotolo destro */
 .kwoon-areas__inner::after {
   content: "";
   position: absolute;
-  right: 28px;
-  top: 30px;
-  bottom: 30px;
-  width: 82px;
-  z-index: 1;
+  right: clamp(18px, 2.1vw, 36px);
+  top: 34px;
+  bottom: 34px;
+  width: 78px;
+  z-index: 2;
 
-  border-radius: 52% 48% 51% 49% / 11% 7% 93% 89%;
+  border-radius: 999px;
 
   background:
-    radial-gradient(circle at 50% 16px, rgba(58,28,14,0.98) 0 8px, rgba(116,65,35,0.96) 9px 16px, transparent 17px),
-    radial-gradient(circle at 50% calc(100% - 16px), rgba(58,28,14,0.98) 0 8px, rgba(116,65,35,0.96) 9px 16px, transparent 17px),
-    radial-gradient(ellipse at 58% 7%, rgba(255,225,163,0.48), transparent 24%),
-    radial-gradient(ellipse at 58% 93%, rgba(55,22,10,0.46), transparent 26%),
-    radial-gradient(ellipse at 62% 50%, rgba(255,232,171,0.38), transparent 31%),
+    radial-gradient(circle at 50% 16px,
+      rgba(45,20,10,0.98) 0 8px,
+      rgba(91,48,25,0.98) 9px 15px,
+      rgba(182,121,66,0.86) 16px 23px,
+      transparent 24px
+    ),
+    radial-gradient(circle at 50% calc(100% - 16px),
+      rgba(45,20,10,0.98) 0 8px,
+      rgba(91,48,25,0.98) 9px 15px,
+      rgba(182,121,66,0.86) 16px 23px,
+      transparent 24px
+    ),
+    radial-gradient(ellipse at 58% 8%, rgba(255,229,170,0.45), transparent 22%),
+    radial-gradient(ellipse at 58% 92%, rgba(48,20,9,0.46), transparent 24%),
     linear-gradient(90deg,
-      rgba(75,36,18,0.96) 0%,
-      rgba(154,91,49,0.98) 25%,
-      rgba(248,205,126,0.96) 42%,
-      rgba(221,164,92,0.98) 52%,
-      rgba(133,78,43,0.98) 69%,
-      rgba(75,39,20,0.98) 87%,
-      rgba(42,19,9,0.96) 100%
+      rgba(39,17,8,0.96) 0%,
+      rgba(82,40,19,0.98) 16%,
+      rgba(172,103,55,0.98) 32%,
+      rgba(255,213,135,0.96) 46%,
+      rgba(217,158,89,0.98) 55%,
+      rgba(126,72,38,0.98) 72%,
+      rgba(72,36,18,0.98) 88%,
+      rgba(39,17,8,0.98) 100%
     );
 
   box-shadow:
-    -24px 0 30px rgba(55,25,12,0.36),
-    -9px 0 16px rgba(78,37,18,0.24),
-    inset 22px 0 28px rgba(33,13,6,0.52),
-    inset -14px 0 24px rgba(255,227,166,0.26),
-    inset 0 22px 24px rgba(255,225,164,0.12),
-    inset 0 -26px 28px rgba(43,17,8,0.36);
+    -26px 0 30px rgba(54,24,11,0.38),
+    -10px 0 16px rgba(79,38,18,0.26),
+    inset 22px 0 28px rgba(30,12,5,0.54),
+    inset -14px 0 24px rgba(255,228,166,0.25),
+    inset 0 20px 24px rgba(255,225,164,0.12),
+    inset 0 -24px 28px rgba(43,17,8,0.36);
 
   pointer-events: none;
 }
 
-/* ideogrammi stampati nella pergamena */
+/* scritta cinese di sfondo più grande e luminosa */
 .kwoon-areas__symbol {
   position: absolute;
   left: 50%;
@@ -1326,11 +1338,11 @@ body .section {
   z-index: 0;
   transform: translate(-50%, -50%);
 
-  width: 92%;
+  width: 96%;
   text-align: center;
 
   font-family: "Noto Serif", serif;
-  font-size: clamp(5.8rem, 10.2vw, 10.8rem);
+  font-size: clamp(6.4rem, 10.8vw, 11.8rem);
   font-weight: 700;
   line-height: 1.05;
   letter-spacing: 0.04em;
@@ -1338,10 +1350,11 @@ body .section {
   user-select: none;
   pointer-events: none;
 
-  color: rgba(94,51,30,0.24);
+  color: rgba(112,61,35,0.34);
   text-shadow:
-    0 1px 0 rgba(255,235,194,0.20),
-    0 0 24px rgba(111,64,38,0.12);
+    0 1px 0 rgba(255,238,199,0.32),
+    0 0 26px rgba(255,214,145,0.18),
+    0 0 54px rgba(122,71,42,0.16);
 }
 
 .kwoon-areas__head,
@@ -1393,7 +1406,7 @@ body .section {
   font-weight: 600;
 }
 
-/* parte centrale dove sono scritte le province */
+/* parte centrale della pergamena */
 .kwoon-areas__grid {
   position: relative;
   display: grid;
@@ -1458,7 +1471,7 @@ body .section {
   pointer-events: none;
 }
 
-/* piega interna laterale, non divisorio moderno */
+/* piega interna laterale */
 .kwoon-area::after {
   content: "";
   position: absolute;
@@ -1477,7 +1490,7 @@ body .section {
   display: none;
 }
 
-/* sigillo rosso */
+/* sigillo rosso: stesso box, drago più grande */
 .kwoon-area__seal {
   position: absolute;
   right: 22px;
@@ -1486,7 +1499,8 @@ body .section {
 
   width: 46px;
   height: 46px;
-  padding: 2px;
+  padding: 0;
+  overflow: hidden;
 
   display: flex;
   align-items: center;
@@ -1507,15 +1521,17 @@ body .section {
 }
 
 .kwoon-area__seal img {
-  width: 94%;
-  height: 94%;
+  width: 100%;
+  height: 100%;
   object-fit: contain;
   display: block;
-  opacity: 0.98;
+  opacity: 0.99;
+  transform: scale(1.22);
+  transform-origin: center;
   filter:
     sepia(32%)
-    saturate(1.14)
-    contrast(1.08)
+    saturate(1.18)
+    contrast(1.10)
     drop-shadow(0 2px 4px rgba(0,0,0,0.34));
 }
 
@@ -1623,13 +1639,12 @@ body .section {
 /* ===== MOBILE ===== */
 @media (max-width: 768px) {
   .kwoon-areas {
-    padding-top: 40px;
-    padding-bottom: 44px;
+    padding: 40px 12px 44px !important;
   }
 
   .kwoon-areas__inner {
-    width: calc(100vw - 24px);
-    padding: 42px 18px 44px;
+    width: 100%;
+    padding: 46px 18px 46px;
     border-radius: 24px;
   }
 
@@ -1646,9 +1661,13 @@ body .section {
     top: 14px;
     bottom: auto;
     background:
-      radial-gradient(circle at 10% 50%, rgba(58,28,14,0.86) 0 8px, transparent 9px),
-      radial-gradient(circle at 90% 50%, rgba(58,28,14,0.86) 0 8px, transparent 9px),
-      linear-gradient(to bottom, rgba(61,31,17,0.82), rgba(212,166,106,0.88), rgba(84,43,23,0.78));
+      radial-gradient(circle at 12% 50%, rgba(45,20,10,0.92) 0 8px, transparent 9px),
+      radial-gradient(circle at 88% 50%, rgba(45,20,10,0.92) 0 8px, transparent 9px),
+      linear-gradient(to bottom,
+        rgba(61,31,17,0.86),
+        rgba(214,166,104,0.90),
+        rgba(84,43,23,0.80)
+      );
     box-shadow:
       0 10px 16px rgba(53,25,13,0.22),
       inset 0 -8px 14px rgba(45,20,11,0.30);
@@ -1659,9 +1678,13 @@ body .section {
     top: auto;
     bottom: 14px;
     background:
-      radial-gradient(circle at 10% 50%, rgba(58,28,14,0.86) 0 8px, transparent 9px),
-      radial-gradient(circle at 90% 50%, rgba(58,28,14,0.86) 0 8px, transparent 9px),
-      linear-gradient(to bottom, rgba(84,43,23,0.78), rgba(212,166,106,0.88), rgba(61,31,17,0.82));
+      radial-gradient(circle at 12% 50%, rgba(45,20,10,0.92) 0 8px, transparent 9px),
+      radial-gradient(circle at 88% 50%, rgba(45,20,10,0.92) 0 8px, transparent 9px),
+      linear-gradient(to bottom,
+        rgba(84,43,23,0.80),
+        rgba(214,166,104,0.90),
+        rgba(61,31,17,0.86)
+      );
     box-shadow:
       0 -10px 16px rgba(53,25,13,0.22),
       inset 0 8px 14px rgba(45,20,11,0.30);
@@ -1670,10 +1693,11 @@ body .section {
 
   .kwoon-areas__symbol {
     top: 54%;
-    width: 88%;
-    font-size: 4.4rem;
+    width: 92%;
+    font-size: 4.8rem;
     white-space: normal;
     line-height: 1.16;
+    color: rgba(112,61,35,0.34);
   }
 
   .kwoon-areas__head {
@@ -1728,12 +1752,14 @@ body .section {
     height: 42px;
     right: 16px;
     top: 18px;
-    padding: 2px;
+    padding: 0;
+    overflow: hidden;
   }
 
   .kwoon-area__seal img {
-    width: 95%;
-    height: 95%;
+    width: 100%;
+    height: 100%;
+    transform: scale(1.22);
   }
 
   .kwoon-area__image {
