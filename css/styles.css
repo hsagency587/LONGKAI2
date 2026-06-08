@@ -84,7 +84,7 @@ body {
     margin-top: 10px;
 }
 .cert-card {
-  margin: 32px auto 0 0;     /* sposta il blocco a sinistra */
+  margin: 32px auto 0 0;
   padding: 22px 26px;
   max-width: 520px;
 
@@ -345,14 +345,14 @@ h2{
     rgba(243, 231, 215, 0.7),
     rgba(233, 210, 176, 0.7)
   );
-    padding-top: 140px;
-    padding-bottom: 140px;
+    padding: 42px 4% !important;
 }
     
 /* contenitore rituale del servizio */
 .service {
-    max-width: 880px;
-    margin: 0 auto 110px auto;
+    width: 100%;
+    max-width: none;
+    margin: 0;
     padding-left: 42px;
     position: relative;
 }
@@ -380,16 +380,7 @@ h2{
     margin-bottom: 18px;
     letter-spacing: 0.03em;
 }
-/* servizio largo su tutta la riga */
-.service-link--wide {
-    grid-column: 1 / -1;
-}
-
-.service-link--wide .service {
-    max-width: 880px;
-    margin-left: auto;
-    margin-right: auto;
-}    
+    
 /* descrizione */
 .service p {
    font-family: "Noto Serif", serif;
@@ -403,7 +394,7 @@ h2{
 .service::after {
     content: "";
     display: block;
-    margin-top: 46px;
+    margin-top: 22px;
     width: 140px;
     height: 1px;
     background: linear-gradient(
@@ -425,14 +416,40 @@ h2{
     display: grid;
     grid-template-columns: 1fr 1fr;
     column-gap: 90px;
-    row-gap: 120px;
+    row-gap: 38px;
     align-items: start;
 }
-    
+
 /* link invisibile (rituale, non bottone) */
 .service-link {
     text-decoration: none;
     display: block;
+}
+
+/* servizio centrale largo su tutta la riga */
+.service-link--wide {
+    grid-column: 1 / -1;
+    width: 100%;
+}
+
+.service-link--wide .service {
+    width: 100%;
+    max-width: none;
+    margin: 0;
+    text-align: center;
+}
+
+.service-link--wide .service h2 {
+    white-space: nowrap;
+    font-size: clamp(1.45rem, 2vw, 2.35rem);
+    line-height: 1.15;
+    letter-spacing: 0.02em;
+}
+
+.service-link--wide .service p {
+    max-width: none;
+    margin-left: auto;
+    margin-right: auto;
 }
     
 /* hover molto sobrio */
@@ -544,7 +561,7 @@ h2{
   background: #1e1612;
   color: #e7d7c3;
   width: 100%;
-  overflow: hidden; /* evita sbordamenti */
+  overflow: hidden;
 }
 
 /* ===== MAPPE ===== */
@@ -646,7 +663,7 @@ h2{
 }
     
 .service-info li {
-    color: #f6f3ef;          /* leggibile su sfondo scuro */
+    color: #f6f3ef;
     font-size: 1.05rem;
     margin-bottom: 8px;
 }
@@ -689,6 +706,23 @@ body .section {
   .service,
   .card-style {
     transform: none !important;
+  }
+
+  #servizi {
+    padding: 32px 6% !important;
+  }
+
+  .service-link--wide {
+    grid-column: auto;
+  }
+
+  .service-link--wide .service {
+    text-align: left;
+  }
+
+  .service-link--wide .service h2 {
+    white-space: normal;
+    font-size: 1.9rem;
   }
 }
     
@@ -793,7 +827,7 @@ body .section {
     0 10px 30px rgba(0,0,0,0.35),
     inset 0 0 0 1px rgba(255,255,255,0.05);
 
-  pointer-events: none; /* non interferisce con click */
+  pointer-events: none;
 }
 
 /* DRAGO – AURA CIRCOLARE */
@@ -889,18 +923,18 @@ body .section {
 }
 /* SERVIZIO – SPAZIATURA CTA "Prenota una lezione" (con HTML attuale) */
 .section .text p {
-  margin-bottom: 18px;           /* spazio tra paragrafo e lista */
+  margin-bottom: 18px;
 }
 
 .section .text .service-info {
-  margin: 22px 0 30px;           /* sopra e sotto la lista */
+  margin: 22px 0 30px;
   padding: 0;
   list-style: none;
 }
 
 .section .text .pay-btn {
-  display: inline-block;         /* necessario per far “sentire” i margini */
-  margin-top: 8px;               /* ulteriore aria sopra il bottone */
+  display: inline-block;
+  margin-top: 8px;
 }
 /* ===============================
    PAGE TRANSITION – LOGO + AURA (PULITO)
@@ -934,9 +968,8 @@ body .section {
   transform: translate(-50%,-50%);
   text-align: center;
 
-  /* IMPORTANTISSIMO: ancora l’aura al wrap */
   position: absolute;
-  --pt-logo: 150px; /* dimensione logo desktop */
+  --pt-logo: 150px;
 }
 
 /* Logo: dimensione controllata SEMPRE */
@@ -955,7 +988,7 @@ body .section {
     drop-shadow(0 0 80px rgba(217,179,130,0.10));
 }
 
-/* Aura: dimensione fissa in funzione del logo (non può “gigantire”) */
+/* Aura: dimensione fissa in funzione del logo */
 #page-transition .pt-aura{
   position: absolute;
   left: 50%;
@@ -1072,7 +1105,6 @@ body .section {
 
 /* ===============================
    MOBILE – SUPER COMPACT + NAV IN LINEA
-   (incolla in fondo al CSS)
    =============================== */
 @media (max-width: 768px){
 
@@ -1096,14 +1128,13 @@ body .section {
 
   .nav ul{
     display: flex !important;
-    flex-wrap: nowrap !important;         /* BLOCCA la seconda riga */
+    flex-wrap: nowrap !important;
     justify-content: center !important;
     gap: 10px !important;
     width: auto !important;
 
-    /* evita che vada a capo per default */
     white-space: nowrap;
-    overflow: hidden;                      /* niente wrap, niente overlap */
+    overflow: hidden;
   }
 
   /* pillole più piccole, stessa altezza */
