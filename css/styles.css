@@ -1642,3 +1642,29 @@ body .section {
     max-width: none;
   }
 }
+/* ===== FIX MOBILE: PERGAMENA PIÙ LARGA ===== */
+@media (max-width: 768px) {
+  .kwoon-scroll {
+    max-width: none;
+    width: 100%;
+    overflow: hidden;
+  }
+
+  .kwoon-scroll__bg {
+    left: 50%;
+    right: auto;
+    width: calc(100% + 110px);
+    transform: translateX(-50%);
+  }
+
+  .kwoon-scroll__bg img {
+    width: 100%;
+    height: 100%;
+    object-fit: fill;
+  }
+
+  .kwoon-scroll__content {
+    padding-left: 28px;
+    padding-right: 28px;
+  }
+}
