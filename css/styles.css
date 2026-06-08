@@ -1558,13 +1558,41 @@ body .section {
   }
 
   .kwoon-scroll__symbol {
-    top: 40%;
-    width: 82%;
-    font-size: 4rem;
-    white-space: normal;
-    line-height: 1.14;
-  }
+  position: sticky;
+  top: 140px;
+  left: auto;
+  right: auto;
+  transform: none;
 
+  width: fit-content;
+  margin: 0 auto;
+
+  writing-mode: vertical-rl;
+  text-orientation: mixed;
+  white-space: nowrap;
+  line-height: 1;
+  letter-spacing: 0.08em;
+
+  font-size: 4.2rem;
+  text-align: center;
+
+  color: rgba(95,54,34,0.22);
+  text-shadow:
+    0 1px 0 rgba(255,238,199,0.18),
+    0 0 18px rgba(255,214,145,0.10),
+    0 0 40px rgba(122,71,42,0.10);
+
+  z-index: 1;
+  pointer-events: none;
+}
+.kwoon-scroll {
+  overflow: visible;
+}
+
+.kwoon-scroll__content {
+  position: relative;
+  z-index: 2;
+}
   .kwoon-areas__head {
     margin-bottom: 24px;
   }
