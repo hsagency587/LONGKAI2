@@ -1183,20 +1183,18 @@ body .section {
   padding-top: 62px;
   padding-bottom: 68px;
   overflow: hidden;
-
   background:
     radial-gradient(circle at 50% 45%, rgba(217,179,130,0.10), transparent 34%),
     linear-gradient(135deg, rgba(20,10,7,0.94), rgba(52,30,22,0.90));
 }
 
-/* nasconde visivamente il logo/drago di sfondo del body sotto questa sezione */
 .kwoon-areas::before {
   content: "";
   position: absolute;
   inset: 0;
   background:
     radial-gradient(circle at 50% 50%, rgba(217,179,130,0.08), transparent 36%),
-    linear-gradient(to bottom, rgba(12,7,5,0.42), rgba(12,7,5,0.36));
+    linear-gradient(to bottom, rgba(12,7,5,0.44), rgba(12,7,5,0.38));
   pointer-events: none;
 }
 
@@ -1205,92 +1203,99 @@ body .section {
   z-index: 1;
   max-width: 1280px;
   margin: 0 auto;
-  padding: 46px 82px 52px;
+  padding: 48px 92px 54px;
   overflow: hidden;
-
-  border-radius: 34px;
-
+  border-radius: 42px 38px 46px 40px;
   background:
-    radial-gradient(circle at 22% 28%, rgba(255,238,199,0.20), transparent 24%),
-    radial-gradient(circle at 76% 68%, rgba(91,45,26,0.18), transparent 28%),
+    radial-gradient(ellipse at 18% 24%, rgba(255,235,190,0.26), transparent 25%),
+    radial-gradient(ellipse at 82% 72%, rgba(86,42,23,0.20), transparent 30%),
+    radial-gradient(ellipse at 48% 50%, rgba(255,229,178,0.18), transparent 46%),
     linear-gradient(90deg,
-      rgba(104,57,32,0.70) 0%,
-      rgba(185,143,96,0.96) 7%,
-      rgba(213,180,132,0.97) 18%,
-      rgba(199,162,113,0.96) 50%,
-      rgba(213,180,132,0.97) 82%,
-      rgba(185,143,96,0.96) 93%,
-      rgba(104,57,32,0.72) 100%
+      rgba(89,45,25,0.72) 0%,
+      rgba(151,91,50,0.88) 4%,
+      rgba(207,160,100,0.97) 10%,
+      rgba(222,184,125,0.98) 22%,
+      rgba(202,158,102,0.97) 50%,
+      rgba(222,184,125,0.98) 78%,
+      rgba(207,160,100,0.97) 90%,
+      rgba(151,91,50,0.88) 96%,
+      rgba(89,45,25,0.72) 100%
     );
-
   box-shadow:
-    0 34px 80px rgba(0,0,0,0.48),
-    inset 0 0 42px rgba(74,37,20,0.32),
-    inset 0 0 0 1px rgba(255,238,199,0.16);
+    0 38px 88px rgba(0,0,0,0.52),
+    inset 28px 0 38px rgba(70,34,18,0.28),
+    inset -28px 0 38px rgba(70,34,18,0.28),
+    inset 0 18px 34px rgba(255,232,184,0.20),
+    inset 0 -22px 42px rgba(72,35,19,0.30),
+    inset 0 0 0 1px rgba(255,238,199,0.18);
 }
 
-/* lato sinistro pergamena arrotolata */
 .kwoon-areas__inner::before {
   content: "";
   position: absolute;
   left: 18px;
-  top: 24px;
-  bottom: 24px;
-  width: 54px;
-  border-radius: 999px;
-
+  top: 22px;
+  bottom: 22px;
+  width: 68px;
+  border-radius: 54% 46% 48% 52% / 9% 13% 87% 91%;
+  transform: rotate(-0.8deg);
   background:
-    radial-gradient(ellipse at 34% 50%, rgba(255,230,184,0.32), transparent 42%),
+    radial-gradient(ellipse at 42% 8%, rgba(255,231,181,0.52), transparent 26%),
+    radial-gradient(ellipse at 44% 92%, rgba(74,31,15,0.44), transparent 30%),
     linear-gradient(90deg,
-      rgba(58,29,17,0.78),
-      rgba(143,88,51,0.92) 34%,
-      rgba(211,168,111,0.84) 62%,
-      rgba(83,41,24,0.72)
+      rgba(50,23,12,0.88) 0%,
+      rgba(104,58,31,0.96) 18%,
+      rgba(193,133,72,0.96) 42%,
+      rgba(230,184,112,0.88) 56%,
+      rgba(126,69,36,0.94) 78%,
+      rgba(48,22,12,0.86) 100%
     );
-
   box-shadow:
-    14px 0 24px rgba(53,25,13,0.34),
-    inset -10px 0 18px rgba(45,20,11,0.42),
-    inset 8px 0 18px rgba(255,226,174,0.18);
-
+    18px 0 26px rgba(57,27,14,0.36),
+    8px 0 12px rgba(87,42,22,0.22),
+    inset -18px 0 24px rgba(38,16,8,0.48),
+    inset 12px 0 22px rgba(255,224,165,0.22),
+    inset 0 18px 28px rgba(255,224,165,0.16),
+    inset 0 -24px 30px rgba(42,17,8,0.36);
   pointer-events: none;
 }
 
-/* lato destro pergamena arrotolata */
 .kwoon-areas__inner::after {
   content: "";
   position: absolute;
   right: 18px;
-  top: 24px;
-  bottom: 24px;
-  width: 54px;
-  border-radius: 999px;
-
+  top: 22px;
+  bottom: 22px;
+  width: 68px;
+  border-radius: 46% 54% 52% 48% / 13% 9% 91% 87%;
+  transform: rotate(0.8deg);
   background:
-    radial-gradient(ellipse at 66% 50%, rgba(255,230,184,0.32), transparent 42%),
+    radial-gradient(ellipse at 58% 8%, rgba(255,231,181,0.52), transparent 26%),
+    radial-gradient(ellipse at 56% 92%, rgba(74,31,15,0.44), transparent 30%),
     linear-gradient(90deg,
-      rgba(83,41,24,0.72),
-      rgba(211,168,111,0.84) 38%,
-      rgba(143,88,51,0.92) 66%,
-      rgba(58,29,17,0.78)
+      rgba(48,22,12,0.86) 0%,
+      rgba(126,69,36,0.94) 22%,
+      rgba(230,184,112,0.88) 44%,
+      rgba(193,133,72,0.96) 58%,
+      rgba(104,58,31,0.96) 82%,
+      rgba(50,23,12,0.88) 100%
     );
-
   box-shadow:
-    -14px 0 24px rgba(53,25,13,0.34),
-    inset 10px 0 18px rgba(45,20,11,0.42),
-    inset -8px 0 18px rgba(255,226,174,0.18);
-
+    -18px 0 26px rgba(57,27,14,0.36),
+    -8px 0 12px rgba(87,42,22,0.22),
+    inset 18px 0 24px rgba(38,16,8,0.48),
+    inset -12px 0 22px rgba(255,224,165,0.22),
+    inset 0 18px 28px rgba(255,224,165,0.16),
+    inset 0 -24px 30px rgba(42,17,8,0.36);
   pointer-events: none;
 }
 
-/* ideogramma del logo inciso nella carta */
 .kwoon-areas__symbol {
   position: absolute;
   left: 50%;
   top: 58%;
   z-index: 0;
   transform: translate(-50%, -50%);
-
   font-family: "Noto Serif", serif;
   font-size: clamp(9rem, 18vw, 19rem);
   font-weight: 700;
@@ -1298,11 +1303,10 @@ body .section {
   white-space: nowrap;
   user-select: none;
   pointer-events: none;
-
-  color: rgba(78,38,22,0.22);
+  color: rgba(78,38,22,0.24);
   text-shadow:
-    0 1px 0 rgba(255,230,184,0.20),
-    0 0 34px rgba(255,226,174,0.16);
+    0 1px 0 rgba(255,230,184,0.24),
+    0 0 34px rgba(255,226,174,0.18);
 }
 
 .kwoon-areas__head,
@@ -1322,13 +1326,11 @@ body .section {
   margin-bottom: 10px;
   padding: 6px 15px;
   border-radius: 999px;
-
   font-family: "Cinzel", serif;
   font-size: 0.72rem;
   font-weight: 700;
   letter-spacing: 0.16em;
   text-transform: uppercase;
-
   color: #3b2014;
   background: rgba(255,238,199,0.28);
   border: 1px solid rgba(88,44,25,0.24);
@@ -1354,46 +1356,41 @@ body .section {
   font-weight: 600;
 }
 
-/* corpo scritto nella pergamena */
 .kwoon-areas__grid {
+  position: relative;
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 0;
-  margin-top: 26px;
-
-  border-radius: 18px;
+  margin-top: 28px;
+  border-radius: 22px 18px 24px 20px;
   overflow: hidden;
-
   background:
+    radial-gradient(ellipse at 17% 50%, rgba(255,238,196,0.16), transparent 26%),
+    radial-gradient(ellipse at 50% 50%, rgba(85,41,22,0.10), transparent 35%),
+    radial-gradient(ellipse at 83% 50%, rgba(255,238,196,0.14), transparent 26%),
     linear-gradient(90deg,
-      rgba(255,232,188,0.10),
-      rgba(92,47,27,0.08) 33%,
-      rgba(255,232,188,0.10) 50%,
-      rgba(92,47,27,0.08) 66%,
-      rgba(255,232,188,0.10)
+      rgba(255,232,188,0.18),
+      rgba(91,46,26,0.10) 33%,
+      rgba(255,232,188,0.15) 50%,
+      rgba(91,46,26,0.10) 66%,
+      rgba(255,232,188,0.18)
     );
-
   box-shadow:
-    inset 0 1px 0 rgba(255,244,214,0.18),
-    inset 0 -1px 0 rgba(85,43,24,0.18);
+    inset 0 1px 0 rgba(255,244,214,0.20),
+    inset 0 -1px 0 rgba(85,43,24,0.20),
+    inset 0 18px 34px rgba(255,235,190,0.08),
+    inset 0 -22px 38px rgba(69,32,17,0.10);
 }
 
-/* pieghe leggere della pergamena, non barre divisorie */
 .kwoon-areas__grid::before {
   content: "";
   position: absolute;
   inset: 0;
   background:
-    linear-gradient(90deg,
-      transparent 32.7%,
-      rgba(72,35,19,0.16) 33.2%,
-      rgba(255,232,190,0.10) 33.7%,
-      transparent 34.5%,
-      transparent 65.5%,
-      rgba(72,35,19,0.16) 66.2%,
-      rgba(255,232,190,0.10) 66.8%,
-      transparent 67.6%
-    );
+    radial-gradient(ellipse at 33.2% 50%, rgba(62,29,15,0.18), transparent 2.8%),
+    radial-gradient(ellipse at 34.1% 50%, rgba(255,232,190,0.12), transparent 2.2%),
+    radial-gradient(ellipse at 66.2% 50%, rgba(62,29,15,0.18), transparent 2.8%),
+    radial-gradient(ellipse at 67.1% 50%, rgba(255,232,190,0.12), transparent 2.2%);
   pointer-events: none;
 }
 
@@ -1406,7 +1403,6 @@ body .section {
   overflow: hidden;
 }
 
-/* sfumatura singola area, effetto carta non card */
 .kwoon-area::before {
   content: "";
   position: absolute;
@@ -1419,22 +1415,17 @@ body .section {
   pointer-events: none;
 }
 
-/* ombra/piega interna laterale, non barra verticale */
 .kwoon-area::after {
   content: "";
   position: absolute;
-  top: 22px;
-  right: 0;
-  bottom: 22px;
-  width: 18px;
+  top: 24px;
+  right: -9px;
+  bottom: 24px;
+  width: 28px;
   background:
-    linear-gradient(90deg,
-      transparent,
-      rgba(63,30,17,0.12),
-      rgba(255,232,190,0.08),
-      transparent
-    );
-  opacity: 0.72;
+    radial-gradient(ellipse at 50% 50%, rgba(60,28,14,0.17), transparent 58%),
+    linear-gradient(90deg, transparent, rgba(63,30,17,0.14), rgba(255,232,190,0.10), transparent);
+  opacity: 0.78;
   pointer-events: none;
 }
 
@@ -1442,31 +1433,25 @@ body .section {
   display: none;
 }
 
-/* sigillo rosso con logo */
 .kwoon-area__seal {
   position: absolute;
   right: 22px;
   top: 22px;
   z-index: 3;
-
   width: 46px;
   height: 46px;
   padding: 7px;
-
   display: flex;
   align-items: center;
   justify-content: center;
-
   background:
     radial-gradient(circle at 35% 28%, rgba(255,143,103,0.18), transparent 28%),
     linear-gradient(135deg, rgba(101,24,17,0.96), rgba(132,39,25,0.92));
-
   border: 1px solid rgba(222,169,104,0.44);
   box-shadow:
     0 12px 26px rgba(48,18,10,0.28),
     inset 0 0 0 1px rgba(255,230,184,0.09),
     inset 0 -8px 16px rgba(47,13,8,0.24);
-
   transform: rotate(-5deg);
   transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
 }
@@ -1476,7 +1461,6 @@ body .section {
   height: 100%;
   object-fit: contain;
   display: block;
-
   opacity: 0.92;
   filter:
     sepia(30%)
@@ -1491,10 +1475,8 @@ body .section {
   margin-bottom: 20px;
   border-radius: 12px;
   overflow: hidden;
-
   background: rgba(64,32,18,0.25);
   border: 1px solid rgba(89,45,26,0.20);
-
   box-shadow:
     inset 0 0 24px rgba(43,20,11,0.30),
     0 8px 20px rgba(65,31,17,0.14);
@@ -1515,14 +1497,12 @@ body .section {
   height: 100%;
   display: block;
   object-fit: cover;
-
   filter:
     grayscale(18%)
     sepia(28%)
     saturate(0.82)
     brightness(0.78)
     contrast(0.98);
-
   transform: scale(1.01);
   transition: filter 0.35s ease, transform 0.35s ease;
 }
@@ -1536,17 +1516,14 @@ body .section {
 .kwoon-area__content h3 {
   margin-bottom: 10px;
   padding: 0 38px;
-
   font-family: "Cinzel", serif;
   font-size: 1.34rem;
   font-weight: 700;
   letter-spacing: 0.045em;
   color: #28160f;
-
   text-shadow:
     0 1px 0 rgba(255,236,197,0.24),
     0 4px 12px rgba(78,38,22,0.18);
-
   transition: color 0.3s ease, transform 0.3s ease;
 }
 
@@ -1570,7 +1547,6 @@ body .section {
     saturate(0.92)
     brightness(0.92)
     contrast(1.02);
-
   transform: scale(1.045);
 }
 
@@ -1588,7 +1564,6 @@ body .section {
     inset 0 -8px 16px rgba(47,13,8,0.24);
 }
 
-/* ===== MOBILE AREE SERVITE – PERGAMENA VERTICALE ===== */
 @media (max-width: 768px) {
   .kwoon-areas {
     padding-top: 42px;
@@ -1607,6 +1582,7 @@ body .section {
     width: auto;
     height: 34px;
     border-radius: 999px;
+    transform: none;
   }
 
   .kwoon-areas__inner::before {
@@ -1679,12 +1655,7 @@ body .section {
     width: auto;
     height: 16px;
     background:
-      linear-gradient(to bottom,
-        transparent,
-        rgba(63,30,17,0.12),
-        rgba(255,232,190,0.08),
-        transparent
-      );
+      linear-gradient(to bottom, transparent, rgba(63,30,17,0.12), rgba(255,232,190,0.08), transparent);
   }
 
   .kwoon-area__seal {
