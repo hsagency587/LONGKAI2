@@ -371,17 +371,7 @@ h2{
         rgba(122, 63, 38, 0.15)
     );
     }
-/* H1 – servizio principale */
-.service h1 {
-    font-family: "Cinzel", serif;
-    font-size: 3.2rem;
-    font-weight: 700;
-    color: #2a1810;
-    margin-bottom: 22px;
-    letter-spacing: 0.04em;
-}
-    
-/* H2 – servizi successivi */
+/* Titoli servizi */
 .service h2 {
     font-family: "Cinzel", serif;
     font-size: 2.4rem;
@@ -390,7 +380,16 @@ h2{
     margin-bottom: 18px;
     letter-spacing: 0.03em;
 }
-    
+/* servizio largo su tutta la riga */
+.service-link--wide {
+    grid-column: 1 / -1;
+}
+
+.service-link--wide .service {
+    max-width: 880px;
+    margin-left: auto;
+    margin-right: auto;
+}    
 /* descrizione */
 .service p {
    font-family: "Noto Serif", serif;
