@@ -1177,29 +1177,34 @@ body .section {
    AREE SERVITE – PROVINCE DEL KWOON
    PERGAMENA REALISTICA CON ASSET
    =============================== */
-
 .kwoon-areas {
   position: relative;
   padding: 54px clamp(10px, 1.6vw, 26px) 62px !important;
   overflow: hidden;
+  isolation: isolate;
 
   background:
-    radial-gradient(circle at 50% 48%, rgba(217,179,130,0.10), transparent 36%),
-    linear-gradient(135deg, rgba(14,7,5,0.97), rgba(44,25,18,0.94));
+    linear-gradient(
+      rgba(18, 9, 6, 0.68),
+      rgba(18, 9, 6, 0.72)
+    );
 }
-
 .kwoon-areas::before {
   content: "";
   position: absolute;
   inset: 0;
+  z-index: 0;
+
   background:
-    radial-gradient(circle at 50% 50%, rgba(217,179,130,0.05), transparent 40%),
-    linear-gradient(to bottom, rgba(8,4,3,0.48), rgba(8,4,3,0.42));
+    radial-gradient(circle at 50% 48%, rgba(217,179,130,0.12), transparent 38%),
+    linear-gradient(to bottom, rgba(8,4,3,0.20), rgba(8,4,3,0.34));
+
   pointer-events: none;
 }
 
 .kwoon-scroll {
   position: relative;
+  z-index: 1;
   width: 100%;
   max-width: 1780px;
   min-height: 560px;
