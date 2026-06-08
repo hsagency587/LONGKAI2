@@ -416,7 +416,7 @@ h2{
     display: grid;
     grid-template-columns: 1fr 1fr;
     column-gap: 90px;
-    row-gap: 38px;
+    row-gap: 72px;
     align-items: start;
 }
 
