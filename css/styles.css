@@ -1174,134 +1174,282 @@ body .section {
   }
 }
 /* ===============================
-   TEASER VIGEVANO – INDEX PRINCIPALE
+   AREE SERVITE – PROVINCE DEL KWOON
    =============================== */
 
-.vigevano-teaser-wrap {
-  padding-top: 18px;
-  padding-bottom: 28px;
-}
-
-.vigevano-teaser {
+.kwoon-areas {
   position: relative;
-  display: grid;
-  grid-template-columns: 1.2fr 0.8fr;
-  gap: 28px;
-  align-items: center;
-  padding: 32px 34px;
-  border-radius: 24px;
+  padding-top: 58px;
+  padding-bottom: 62px;
   overflow: hidden;
-  text-decoration: none;
 
   background:
-    linear-gradient(135deg, rgba(255,255,255,0.11), rgba(255,255,255,0.05)),
-    rgba(20,10,7,0.62);
-
-  border: 1px solid rgba(255,255,255,0.16);
-  box-shadow:
-    0 24px 50px rgba(0,0,0,0.26),
-    inset 0 1px 0 rgba(255,255,255,0.05);
-
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-
-  transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
+    radial-gradient(circle at 50% 42%, rgba(217,179,130,0.13), transparent 34%),
+    linear-gradient(135deg, rgba(20,10,7,0.86), rgba(45,25,17,0.76));
 }
 
-.vigevano-teaser:hover {
-  transform: translateY(-4px);
-  box-shadow:
-    0 28px 60px rgba(0,0,0,0.32),
-    inset 0 1px 0 rgba(255,255,255,0.05);
-  border-color: rgba(217,179,130,0.28);
-}
-
-.vigevano-teaser__aura {
+.kwoon-areas::before {
+  content: "";
   position: absolute;
-  inset: -15%;
+  inset: 0;
   background:
-    radial-gradient(circle at 20% 25%, rgba(217,179,130,0.18), transparent 28%),
-    radial-gradient(circle at 82% 72%, rgba(217,179,130,0.12), transparent 24%);
-  filter: blur(18px);
-  opacity: 0.95;
+    linear-gradient(to right, rgba(139,74,47,0.18), transparent 18%, transparent 82%, rgba(139,74,47,0.18)),
+    linear-gradient(to bottom, rgba(217,179,130,0.10), transparent 22%, transparent 78%, rgba(217,179,130,0.08));
   pointer-events: none;
 }
 
-.vigevano-teaser__left,
-.vigevano-teaser__right {
+.kwoon-areas__inner {
+  position: relative;
+  z-index: 1;
+  max-width: 1240px;
+  margin: 0 auto;
+}
+
+.kwoon-areas__symbol {
+  position: absolute;
+  left: 50%;
+  top: 52%;
+  transform: translate(-50%, -50%);
+  font-family: "Noto Serif", serif;
+  font-size: clamp(8rem, 17vw, 18rem);
+  font-weight: 600;
+  line-height: 1;
+  color: rgba(217,179,130,0.075);
+  text-shadow: 0 0 42px rgba(217,179,130,0.10);
+  pointer-events: none;
+  user-select: none;
+  white-space: nowrap;
+}
+
+.kwoon-areas__head {
+  position: relative;
+  max-width: 760px;
+  margin: 0 auto 34px;
+  text-align: center;
+}
+
+.kwoon-areas__eyebrow {
+  display: inline-block;
+  margin-bottom: 10px;
+  padding: 6px 14px;
+  border-radius: 999px;
+
+  font-family: "Cinzel", serif;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+
+  color: var(--secondary);
+  background: rgba(255,255,255,0.07);
+  border: 1px solid rgba(217,179,130,0.18);
+}
+
+.kwoon-areas__head h2 {
+  margin-bottom: 12px;
+  color: #f6f3ef;
+  text-shadow: 0 4px 18px rgba(0,0,0,0.42);
+}
+
+.kwoon-areas__intro {
+  max-width: 680px;
+  margin: 0 auto;
+  color: rgba(246,243,239,0.78);
+  font-size: 1rem;
+  line-height: 1.7;
+}
+
+.kwoon-areas__grid {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0;
+  border-top: 1px solid rgba(217,179,130,0.18);
+  border-bottom: 1px solid rgba(217,179,130,0.14);
+}
+
+.kwoon-area {
+  position: relative;
+  display: block;
+  padding: 22px 26px 24px;
+  text-decoration: none;
+  overflow: hidden;
+}
+
+.kwoon-area + .kwoon-area {
+  border-left: 1px solid rgba(217,179,130,0.20);
+}
+
+.kwoon-area::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 24px;
+  bottom: 24px;
+  width: 3px;
+  background: linear-gradient(
+    to bottom,
+    rgba(217,179,130,0.78),
+    rgba(139,74,47,0.18)
+  );
+  opacity: 0.55;
+  transition: opacity 0.3s ease, background 0.3s ease;
+}
+
+.kwoon-area__seal {
+  position: absolute;
+  right: 22px;
+  top: 18px;
+  width: 42px;
+  height: 42px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  font-family: "Noto Serif", serif;
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: rgba(246,243,239,0.70);
+
+  background: rgba(105,28,20,0.62);
+  border: 1px solid rgba(217,179,130,0.28);
+  box-shadow:
+    0 10px 28px rgba(0,0,0,0.28),
+    inset 0 0 0 1px rgba(255,255,255,0.04);
+
+  transform: rotate(-4deg);
+  transition: transform 0.3s ease, border-color 0.3s ease;
+}
+
+.kwoon-area__image {
+  position: relative;
+  height: 118px;
+  margin-bottom: 18px;
+  border-radius: 12px;
+  overflow: hidden;
+  background: rgba(0,0,0,0.25);
+  border: 1px solid rgba(217,179,130,0.16);
+}
+
+.kwoon-area__image::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(to bottom, rgba(20,10,7,0.05), rgba(20,10,7,0.44)),
+    radial-gradient(circle at 50% 30%, transparent, rgba(20,10,7,0.25));
+  pointer-events: none;
+}
+
+.kwoon-area__image img {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: cover;
+  filter: grayscale(24%) sepia(12%) brightness(0.78);
+  transform: scale(1.01);
+  transition: filter 0.35s ease, transform 0.35s ease;
+}
+
+.kwoon-area__content {
   position: relative;
   z-index: 1;
 }
 
-.vigevano-teaser__eyebrow {
-  display: inline-block;
-  margin-bottom: 14px;
-  padding: 7px 12px;
-  border-radius: 999px;
+.kwoon-area__content h3 {
+  margin-bottom: 8px;
+  padding-right: 42px;
+
   font-family: "Cinzel", serif;
-  font-size: 0.72rem;
-  text-transform: uppercase;
-  letter-spacing: 0.14em;
+  font-size: 1.35rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: #f6f3ef;
+  text-shadow: 0 3px 14px rgba(0,0,0,0.42);
+
+  transition: color 0.3s ease, transform 0.3s ease;
+}
+
+.kwoon-area__content p {
+  max-width: 340px;
+  color: rgba(246,243,239,0.72);
+  font-size: 0.94rem;
+  line-height: 1.68;
+}
+
+.kwoon-area:hover::before {
+  opacity: 1;
+  background: linear-gradient(
+    to bottom,
+    rgba(217,179,130,0.95),
+    rgba(139,74,47,0.32)
+  );
+}
+
+.kwoon-area:hover .kwoon-area__image img {
+  filter: grayscale(8%) sepia(8%) brightness(0.92);
+  transform: scale(1.045);
+}
+
+.kwoon-area:hover .kwoon-area__content h3 {
   color: var(--secondary);
-  background: rgba(255,255,255,0.07);
-  border: 1px solid rgba(255,255,255,0.12);
+  transform: translateX(3px);
 }
 
-.vigevano-teaser h2 {
-  margin-bottom: 12px;
-  color: #f6f3ef;
+.kwoon-area:hover .kwoon-area__seal {
+  transform: rotate(0deg) scale(1.04);
+  border-color: rgba(217,179,130,0.44);
 }
 
-.vigevano-teaser p {
-  margin: 0;
-  color: rgba(246,243,239,0.82);
-  max-width: 660px;
-}
-
-.vigevano-teaser__right {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: 16px;
-}
-
-.vigevano-teaser__badge {
-  padding: 12px 16px;
-  border-radius: 16px;
-  font-family: "Cinzel", serif;
-  font-size: 0.92rem;
-  color: #f6f3ef;
-  background: rgba(255,255,255,0.08);
-  border: 1px solid rgba(255,255,255,0.14);
-  box-shadow: inset 0 1px 0 rgba(255,255,255,0.04);
-}
-
-.vigevano-teaser__cta {
-  display: inline-flex;
-  align-items: center;
-  gap: 12px;
-  padding: 14px 18px;
-  border-radius: 16px;
-  background: linear-gradient(135deg, rgba(217,179,130,0.18), rgba(217,179,130,0.08));
-  border: 1px solid rgba(217,179,130,0.20);
-  color: #f6f3ef;
-  font-family: "Cinzel", serif;
-  letter-spacing: 0.05em;
-}
-
-.vigevano-teaser__cta strong {
-  font-size: 1.1rem;
-  color: var(--secondary);
-}
-
+/* ===== MOBILE AREE SERVITE ===== */
 @media (max-width: 768px) {
-  .vigevano-teaser {
-    grid-template-columns: 1fr;
-    padding: 24px 20px;
-    gap: 18px;
+  .kwoon-areas {
+    padding-top: 42px;
+    padding-bottom: 46px;
   }
 
-  .vigevano-teaser__right {
-    align-items: flex-start;
+  .kwoon-areas__symbol {
+    top: 48%;
+    font-size: 8rem;
+    opacity: 0.8;
+  }
+
+  .kwoon-areas__head {
+    margin-bottom: 26px;
+  }
+
+  .kwoon-areas__head h2 {
+    font-size: 1.7rem;
+  }
+
+  .kwoon-areas__intro {
+    font-size: 0.95rem;
+  }
+
+  .kwoon-areas__grid {
+    grid-template-columns: 1fr;
+    border-top: 1px solid rgba(217,179,130,0.16);
+    border-bottom: 1px solid rgba(217,179,130,0.16);
+  }
+
+  .kwoon-area {
+    padding: 22px 18px 24px;
+  }
+
+  .kwoon-area + .kwoon-area {
+    border-left: 0;
+    border-top: 1px solid rgba(217,179,130,0.16);
+  }
+
+  .kwoon-area__image {
+    height: 120px;
+  }
+
+  .kwoon-area__content h3 {
+    font-size: 1.25rem;
+  }
+
+  .kwoon-area__content p {
+    max-width: none;
   }
 }
