@@ -1175,17 +1175,17 @@ body .section {
 }
 /* ===============================
    AREE SERVITE – PROVINCE DEL KWOON
-   PERGAMENA TRADIZIONALE
+   PERGAMENA TRADIZIONALE REALISTICA
    =============================== */
 
 .kwoon-areas {
   position: relative;
-  padding-top: 62px;
-  padding-bottom: 68px;
+  padding: 58px 0 66px;
   overflow: hidden;
+
   background:
     radial-gradient(circle at 50% 45%, rgba(217,179,130,0.10), transparent 34%),
-    linear-gradient(135deg, rgba(20,10,7,0.94), rgba(52,30,22,0.90));
+    linear-gradient(135deg, rgba(18,9,6,0.96), rgba(48,27,19,0.92));
 }
 
 .kwoon-areas::before {
@@ -1193,204 +1193,247 @@ body .section {
   position: absolute;
   inset: 0;
   background:
-    radial-gradient(circle at 50% 50%, rgba(217,179,130,0.08), transparent 36%),
-    linear-gradient(to bottom, rgba(12,7,5,0.44), rgba(12,7,5,0.38));
+    radial-gradient(circle at 50% 50%, rgba(217,179,130,0.05), transparent 38%),
+    linear-gradient(to bottom, rgba(8,4,3,0.48), rgba(8,4,3,0.40));
   pointer-events: none;
 }
 
+/* pergamena larga quasi tutta la pagina */
 .kwoon-areas__inner {
   position: relative;
   z-index: 1;
-  max-width: 1280px;
+  width: calc(100vw - 42px);
+  max-width: 1760px;
   margin: 0 auto;
-  padding: 48px 92px 54px;
+  padding: 56px 132px 62px;
   overflow: hidden;
-  border-radius: 42px 38px 46px 40px;
+
+  border-radius: 38px 36px 42px 40px;
+
   background:
-    radial-gradient(ellipse at 18% 24%, rgba(255,235,190,0.26), transparent 25%),
-    radial-gradient(ellipse at 82% 72%, rgba(86,42,23,0.20), transparent 30%),
-    radial-gradient(ellipse at 48% 50%, rgba(255,229,178,0.18), transparent 46%),
-    linear-gradient(90deg,
-      rgba(89,45,25,0.72) 0%,
-      rgba(151,91,50,0.88) 4%,
-      rgba(207,160,100,0.97) 10%,
-      rgba(222,184,125,0.98) 22%,
-      rgba(202,158,102,0.97) 50%,
-      rgba(222,184,125,0.98) 78%,
-      rgba(207,160,100,0.97) 90%,
-      rgba(151,91,50,0.88) 96%,
-      rgba(89,45,25,0.72) 100%
+    radial-gradient(ellipse at 18% 18%, rgba(255,241,204,0.28), transparent 22%),
+    radial-gradient(ellipse at 82% 78%, rgba(95,45,24,0.18), transparent 30%),
+    radial-gradient(ellipse at 48% 48%, rgba(255,229,178,0.14), transparent 44%),
+    linear-gradient(180deg,
+      rgba(238,202,145,0.96) 0%,
+      rgba(224,181,119,0.98) 16%,
+      rgba(214,169,108,0.98) 50%,
+      rgba(226,184,123,0.98) 82%,
+      rgba(168,98,55,0.92) 100%
     );
+
   box-shadow:
-    0 38px 88px rgba(0,0,0,0.52),
-    inset 28px 0 38px rgba(70,34,18,0.28),
-    inset -28px 0 38px rgba(70,34,18,0.28),
-    inset 0 18px 34px rgba(255,232,184,0.20),
-    inset 0 -22px 42px rgba(72,35,19,0.30),
-    inset 0 0 0 1px rgba(255,238,199,0.18);
+    0 38px 96px rgba(0,0,0,0.52),
+    inset 0 22px 36px rgba(255,238,198,0.26),
+    inset 0 -28px 44px rgba(77,38,20,0.30),
+    inset 38px 0 46px rgba(82,39,21,0.24),
+    inset -38px 0 46px rgba(82,39,21,0.24),
+    inset 0 0 0 1px rgba(255,239,202,0.18);
 }
 
+/* texture carta: macchie, usura, fibre simulate solo CSS */
+.kwoon-areas__inner > * {
+  position: relative;
+}
+
+.kwoon-areas__inner::marker {
+  display: none;
+}
+
+/* rotolo sinistro realistico */
 .kwoon-areas__inner::before {
   content: "";
   position: absolute;
-  left: 18px;
-  top: 22px;
-  bottom: 22px;
-  width: 68px;
-  border-radius: 54% 46% 48% 52% / 9% 13% 87% 91%;
-  transform: rotate(-0.8deg);
+  left: 28px;
+  top: 30px;
+  bottom: 30px;
+  width: 82px;
+  z-index: 1;
+
+  border-radius: 48% 52% 49% 51% / 7% 11% 89% 93%;
+
   background:
-    radial-gradient(ellipse at 42% 8%, rgba(255,231,181,0.52), transparent 26%),
-    radial-gradient(ellipse at 44% 92%, rgba(74,31,15,0.44), transparent 30%),
+    radial-gradient(circle at 50% 16px, rgba(58,28,14,0.98) 0 8px, rgba(116,65,35,0.96) 9px 16px, transparent 17px),
+    radial-gradient(circle at 50% calc(100% - 16px), rgba(58,28,14,0.98) 0 8px, rgba(116,65,35,0.96) 9px 16px, transparent 17px),
+    radial-gradient(ellipse at 42% 7%, rgba(255,225,163,0.48), transparent 24%),
+    radial-gradient(ellipse at 42% 93%, rgba(55,22,10,0.46), transparent 26%),
+    radial-gradient(ellipse at 38% 50%, rgba(255,232,171,0.38), transparent 31%),
     linear-gradient(90deg,
-      rgba(50,23,12,0.88) 0%,
-      rgba(104,58,31,0.96) 18%,
-      rgba(193,133,72,0.96) 42%,
-      rgba(230,184,112,0.88) 56%,
-      rgba(126,69,36,0.94) 78%,
-      rgba(48,22,12,0.86) 100%
+      rgba(42,19,9,0.96) 0%,
+      rgba(75,39,20,0.98) 13%,
+      rgba(133,78,43,0.98) 31%,
+      rgba(221,164,92,0.98) 48%,
+      rgba(248,205,126,0.96) 58%,
+      rgba(154,91,49,0.98) 75%,
+      rgba(75,36,18,0.96) 100%
     );
+
   box-shadow:
-    18px 0 26px rgba(57,27,14,0.36),
-    8px 0 12px rgba(87,42,22,0.22),
-    inset -18px 0 24px rgba(38,16,8,0.48),
-    inset 12px 0 22px rgba(255,224,165,0.22),
-    inset 0 18px 28px rgba(255,224,165,0.16),
-    inset 0 -24px 30px rgba(42,17,8,0.36);
+    24px 0 30px rgba(55,25,12,0.36),
+    9px 0 16px rgba(78,37,18,0.24),
+    inset -22px 0 28px rgba(33,13,6,0.52),
+    inset 14px 0 24px rgba(255,227,166,0.26),
+    inset 0 22px 24px rgba(255,225,164,0.12),
+    inset 0 -26px 28px rgba(43,17,8,0.36);
+
   pointer-events: none;
 }
 
+/* rotolo destro realistico */
 .kwoon-areas__inner::after {
   content: "";
   position: absolute;
-  right: 18px;
-  top: 22px;
-  bottom: 22px;
-  width: 68px;
-  border-radius: 46% 54% 52% 48% / 13% 9% 91% 87%;
-  transform: rotate(0.8deg);
+  right: 28px;
+  top: 30px;
+  bottom: 30px;
+  width: 82px;
+  z-index: 1;
+
+  border-radius: 52% 48% 51% 49% / 11% 7% 93% 89%;
+
   background:
-    radial-gradient(ellipse at 58% 8%, rgba(255,231,181,0.52), transparent 26%),
-    radial-gradient(ellipse at 56% 92%, rgba(74,31,15,0.44), transparent 30%),
+    radial-gradient(circle at 50% 16px, rgba(58,28,14,0.98) 0 8px, rgba(116,65,35,0.96) 9px 16px, transparent 17px),
+    radial-gradient(circle at 50% calc(100% - 16px), rgba(58,28,14,0.98) 0 8px, rgba(116,65,35,0.96) 9px 16px, transparent 17px),
+    radial-gradient(ellipse at 58% 7%, rgba(255,225,163,0.48), transparent 24%),
+    radial-gradient(ellipse at 58% 93%, rgba(55,22,10,0.46), transparent 26%),
+    radial-gradient(ellipse at 62% 50%, rgba(255,232,171,0.38), transparent 31%),
     linear-gradient(90deg,
-      rgba(48,22,12,0.86) 0%,
-      rgba(126,69,36,0.94) 22%,
-      rgba(230,184,112,0.88) 44%,
-      rgba(193,133,72,0.96) 58%,
-      rgba(104,58,31,0.96) 82%,
-      rgba(50,23,12,0.88) 100%
+      rgba(75,36,18,0.96) 0%,
+      rgba(154,91,49,0.98) 25%,
+      rgba(248,205,126,0.96) 42%,
+      rgba(221,164,92,0.98) 52%,
+      rgba(133,78,43,0.98) 69%,
+      rgba(75,39,20,0.98) 87%,
+      rgba(42,19,9,0.96) 100%
     );
+
   box-shadow:
-    -18px 0 26px rgba(57,27,14,0.36),
-    -8px 0 12px rgba(87,42,22,0.22),
-    inset 18px 0 24px rgba(38,16,8,0.48),
-    inset -12px 0 22px rgba(255,224,165,0.22),
-    inset 0 18px 28px rgba(255,224,165,0.16),
-    inset 0 -24px 30px rgba(42,17,8,0.36);
+    -24px 0 30px rgba(55,25,12,0.36),
+    -9px 0 16px rgba(78,37,18,0.24),
+    inset 22px 0 28px rgba(33,13,6,0.52),
+    inset -14px 0 24px rgba(255,227,166,0.26),
+    inset 0 22px 24px rgba(255,225,164,0.12),
+    inset 0 -26px 28px rgba(43,17,8,0.36);
+
   pointer-events: none;
 }
 
+/* ideogrammi stampati nella pergamena */
 .kwoon-areas__symbol {
   position: absolute;
   left: 50%;
   top: 58%;
   z-index: 0;
   transform: translate(-50%, -50%);
+
+  width: 92%;
+  text-align: center;
+
   font-family: "Noto Serif", serif;
-  font-size: clamp(9rem, 18vw, 19rem);
+  font-size: clamp(5.8rem, 10.2vw, 10.8rem);
   font-weight: 700;
-  line-height: 1;
+  line-height: 1.05;
+  letter-spacing: 0.04em;
   white-space: nowrap;
   user-select: none;
   pointer-events: none;
-  color: rgba(78,38,22,0.24);
+
+  color: rgba(94,51,30,0.24);
   text-shadow:
-    0 1px 0 rgba(255,230,184,0.24),
-    0 0 34px rgba(255,226,174,0.18);
+    0 1px 0 rgba(255,235,194,0.20),
+    0 0 24px rgba(111,64,38,0.12);
 }
 
 .kwoon-areas__head,
 .kwoon-areas__grid {
   position: relative;
-  z-index: 2;
+  z-index: 3;
 }
 
 .kwoon-areas__head {
-  max-width: 760px;
-  margin: 0 auto 34px;
+  max-width: 850px;
+  margin: 0 auto 36px;
   text-align: center;
 }
 
 .kwoon-areas__eyebrow {
   display: inline-block;
   margin-bottom: 10px;
-  padding: 6px 15px;
+  padding: 6px 16px;
   border-radius: 999px;
+
   font-family: "Cinzel", serif;
   font-size: 0.72rem;
   font-weight: 700;
   letter-spacing: 0.16em;
   text-transform: uppercase;
+
   color: #3b2014;
   background: rgba(255,238,199,0.28);
-  border: 1px solid rgba(88,44,25,0.24);
+  border: 1px solid rgba(88,44,25,0.20);
   box-shadow:
-    inset 0 1px 0 rgba(255,255,255,0.16),
-    0 8px 18px rgba(72,34,18,0.16);
+    inset 0 1px 0 rgba(255,255,255,0.18),
+    0 8px 18px rgba(72,34,18,0.12);
 }
 
 .kwoon-areas__head h2 {
-  margin-bottom: 12px;
+  margin-bottom: 14px;
   color: #2a1810;
   text-shadow:
-    0 1px 0 rgba(255,232,190,0.22),
-    0 4px 16px rgba(59,31,18,0.22);
+    0 1px 0 rgba(255,232,190,0.18),
+    0 4px 14px rgba(59,31,18,0.16);
 }
 
 .kwoon-areas__intro {
-  max-width: 690px;
+  max-width: 760px;
   margin: 0 auto;
   color: rgba(48,31,23,0.82);
   font-size: 1rem;
-  line-height: 1.7;
+  line-height: 1.75;
   font-weight: 600;
 }
 
+/* parte centrale dove sono scritte le province */
 .kwoon-areas__grid {
   position: relative;
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 0;
-  margin-top: 28px;
-  border-radius: 22px 18px 24px 20px;
+  margin-top: 32px;
+
+  border-radius: 20px 18px 22px 20px;
   overflow: hidden;
+
   background:
-    radial-gradient(ellipse at 17% 50%, rgba(255,238,196,0.16), transparent 26%),
-    radial-gradient(ellipse at 50% 50%, rgba(85,41,22,0.10), transparent 35%),
-    radial-gradient(ellipse at 83% 50%, rgba(255,238,196,0.14), transparent 26%),
+    radial-gradient(ellipse at 18% 50%, rgba(255,239,202,0.12), transparent 24%),
+    radial-gradient(ellipse at 50% 50%, rgba(78,38,21,0.08), transparent 36%),
+    radial-gradient(ellipse at 82% 50%, rgba(255,239,202,0.11), transparent 24%),
+    linear-gradient(180deg, rgba(255,241,212,0.10), rgba(125,74,42,0.06)),
     linear-gradient(90deg,
-      rgba(255,232,188,0.18),
-      rgba(91,46,26,0.10) 33%,
-      rgba(255,232,188,0.15) 50%,
-      rgba(91,46,26,0.10) 66%,
-      rgba(255,232,188,0.18)
+      rgba(255,232,188,0.10),
+      rgba(98,51,29,0.08) 33%,
+      rgba(255,232,188,0.10) 50%,
+      rgba(98,51,29,0.08) 66%,
+      rgba(255,232,188,0.10)
     );
+
   box-shadow:
-    inset 0 1px 0 rgba(255,244,214,0.20),
-    inset 0 -1px 0 rgba(85,43,24,0.20),
-    inset 0 18px 34px rgba(255,235,190,0.08),
-    inset 0 -22px 38px rgba(69,32,17,0.10);
+    inset 0 1px 0 rgba(255,244,214,0.18),
+    inset 0 -1px 0 rgba(85,43,24,0.16),
+    inset 0 18px 32px rgba(255,236,195,0.06),
+    inset 0 -22px 34px rgba(65,31,17,0.08);
 }
 
+/* pieghe tra province, non barre dritte */
 .kwoon-areas__grid::before {
   content: "";
   position: absolute;
   inset: 0;
   background:
-    radial-gradient(ellipse at 33.2% 50%, rgba(62,29,15,0.18), transparent 2.8%),
-    radial-gradient(ellipse at 34.1% 50%, rgba(255,232,190,0.12), transparent 2.2%),
-    radial-gradient(ellipse at 66.2% 50%, rgba(62,29,15,0.18), transparent 2.8%),
-    radial-gradient(ellipse at 67.1% 50%, rgba(255,232,190,0.12), transparent 2.2%);
+    radial-gradient(ellipse at 33.1% 50%, rgba(72,36,19,0.16), transparent 3.1%),
+    radial-gradient(ellipse at 34% 50%, rgba(255,235,194,0.13), transparent 2.2%),
+    radial-gradient(ellipse at 66.1% 50%, rgba(72,36,19,0.16), transparent 3.1%),
+    radial-gradient(ellipse at 67% 50%, rgba(255,235,194,0.13), transparent 2.2%);
   pointer-events: none;
 }
 
@@ -1398,7 +1441,7 @@ body .section {
   position: relative;
   display: block;
   min-height: 292px;
-  padding: 24px 28px 28px;
+  padding: 24px 30px 28px;
   text-decoration: none;
   overflow: hidden;
 }
@@ -1408,24 +1451,25 @@ body .section {
   position: absolute;
   inset: 0;
   background:
-    radial-gradient(circle at 50% 0%, rgba(255,236,196,0.15), transparent 34%),
-    radial-gradient(circle at 50% 100%, rgba(81,40,23,0.10), transparent 42%);
+    radial-gradient(circle at 50% 0%, rgba(255,236,196,0.12), transparent 34%),
+    radial-gradient(circle at 50% 100%, rgba(81,40,23,0.08), transparent 42%);
   opacity: 0.68;
   transition: opacity 0.3s ease;
   pointer-events: none;
 }
 
+/* piega interna laterale, non divisorio moderno */
 .kwoon-area::after {
   content: "";
   position: absolute;
   top: 24px;
-  right: -9px;
+  right: -8px;
   bottom: 24px;
-  width: 28px;
+  width: 24px;
   background:
-    radial-gradient(ellipse at 50% 50%, rgba(60,28,14,0.17), transparent 58%),
-    linear-gradient(90deg, transparent, rgba(63,30,17,0.14), rgba(255,232,190,0.10), transparent);
-  opacity: 0.78;
+    radial-gradient(ellipse at 50% 50%, rgba(67,33,18,0.14), transparent 58%),
+    linear-gradient(90deg, transparent, rgba(63,30,17,0.10), rgba(255,232,190,0.08), transparent);
+  opacity: 0.70;
   pointer-events: none;
 }
 
@@ -1433,53 +1477,60 @@ body .section {
   display: none;
 }
 
+/* sigillo rosso */
 .kwoon-area__seal {
   position: absolute;
   right: 22px;
   top: 22px;
-  z-index: 3;
+  z-index: 4;
+
   width: 46px;
   height: 46px;
-  padding: 7px;
+  padding: 2px;
+
   display: flex;
   align-items: center;
   justify-content: center;
+
   background:
     radial-gradient(circle at 35% 28%, rgba(255,143,103,0.18), transparent 28%),
     linear-gradient(135deg, rgba(101,24,17,0.96), rgba(132,39,25,0.92));
+
   border: 1px solid rgba(222,169,104,0.44);
   box-shadow:
     0 12px 26px rgba(48,18,10,0.28),
     inset 0 0 0 1px rgba(255,230,184,0.09),
     inset 0 -8px 16px rgba(47,13,8,0.24);
+
   transform: rotate(-5deg);
   transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
 }
 
 .kwoon-area__seal img {
-  width: 100%;
-  height: 100%;
+  width: 94%;
+  height: 94%;
   object-fit: contain;
   display: block;
-  opacity: 0.92;
+  opacity: 0.98;
   filter:
-    sepia(30%)
-    saturate(1.12)
+    sepia(32%)
+    saturate(1.14)
     contrast(1.08)
-    drop-shadow(0 2px 4px rgba(0,0,0,0.36));
+    drop-shadow(0 2px 4px rgba(0,0,0,0.34));
 }
 
 .kwoon-area__image {
   position: relative;
-  height: 108px;
-  margin-bottom: 20px;
+  height: 110px;
+  margin-bottom: 22px;
   border-radius: 12px;
   overflow: hidden;
-  background: rgba(64,32,18,0.25);
-  border: 1px solid rgba(89,45,26,0.20);
+
+  background: rgba(64,32,18,0.18);
+  border: 1px solid rgba(89,45,26,0.16);
   box-shadow:
-    inset 0 0 24px rgba(43,20,11,0.30),
-    0 8px 20px rgba(65,31,17,0.14);
+    inset 0 0 18px rgba(43,20,11,0.22),
+    0 8px 20px rgba(65,31,17,0.10);
 }
 
 .kwoon-area__image::after {
@@ -1487,8 +1538,8 @@ body .section {
   position: absolute;
   inset: 0;
   background:
-    linear-gradient(to bottom, rgba(189,139,83,0.10), rgba(74,34,18,0.34)),
-    radial-gradient(circle at 50% 30%, transparent, rgba(62,29,16,0.22));
+    linear-gradient(to bottom, rgba(189,139,83,0.08), rgba(74,34,18,0.28)),
+    radial-gradient(circle at 50% 30%, transparent, rgba(62,29,16,0.18));
   pointer-events: none;
 }
 
@@ -1497,42 +1548,47 @@ body .section {
   height: 100%;
   display: block;
   object-fit: cover;
+
   filter:
     grayscale(18%)
     sepia(28%)
     saturate(0.82)
     brightness(0.78)
     contrast(0.98);
+
   transform: scale(1.01);
   transition: filter 0.35s ease, transform 0.35s ease;
 }
 
 .kwoon-area__content {
   position: relative;
-  z-index: 2;
+  z-index: 3;
   text-align: center;
 }
 
 .kwoon-area__content h3 {
   margin-bottom: 10px;
-  padding: 0 38px;
+  padding: 0 34px;
+
   font-family: "Cinzel", serif;
-  font-size: 1.34rem;
+  font-size: 1.38rem;
   font-weight: 700;
   letter-spacing: 0.045em;
   color: #28160f;
+
   text-shadow:
-    0 1px 0 rgba(255,236,197,0.24),
-    0 4px 12px rgba(78,38,22,0.18);
+    0 1px 0 rgba(255,236,197,0.22),
+    0 4px 10px rgba(78,38,22,0.14);
+
   transition: color 0.3s ease, transform 0.3s ease;
 }
 
 .kwoon-area__content p {
-  max-width: 350px;
+  max-width: 360px;
   margin: 0 auto;
   color: rgba(45,29,21,0.78);
-  font-size: 0.94rem;
-  line-height: 1.68;
+  font-size: 0.95rem;
+  line-height: 1.70;
   font-weight: 600;
 }
 
@@ -1564,59 +1620,68 @@ body .section {
     inset 0 -8px 16px rgba(47,13,8,0.24);
 }
 
+/* ===== MOBILE ===== */
 @media (max-width: 768px) {
   .kwoon-areas {
-    padding-top: 42px;
-    padding-bottom: 46px;
+    padding-top: 40px;
+    padding-bottom: 44px;
   }
 
   .kwoon-areas__inner {
-    padding: 38px 22px 42px;
-    border-radius: 26px;
+    width: calc(100vw - 24px);
+    padding: 42px 18px 44px;
+    border-radius: 24px;
   }
 
   .kwoon-areas__inner::before,
   .kwoon-areas__inner::after {
-    left: 22px;
-    right: 22px;
+    left: 18px;
+    right: 18px;
     width: auto;
-    height: 34px;
+    height: 36px;
     border-radius: 999px;
-    transform: none;
   }
 
   .kwoon-areas__inner::before {
     top: 14px;
     bottom: auto;
     background:
-      linear-gradient(to bottom, rgba(58,29,17,0.78), rgba(210,166,108,0.86), rgba(83,41,24,0.72));
+      radial-gradient(circle at 10% 50%, rgba(58,28,14,0.86) 0 8px, transparent 9px),
+      radial-gradient(circle at 90% 50%, rgba(58,28,14,0.86) 0 8px, transparent 9px),
+      linear-gradient(to bottom, rgba(61,31,17,0.82), rgba(212,166,106,0.88), rgba(84,43,23,0.78));
     box-shadow:
-      0 12px 18px rgba(53,25,13,0.24),
-      inset 0 -8px 14px rgba(45,20,11,0.34);
+      0 10px 16px rgba(53,25,13,0.22),
+      inset 0 -8px 14px rgba(45,20,11,0.30);
+    transform: none;
   }
 
   .kwoon-areas__inner::after {
     top: auto;
     bottom: 14px;
     background:
-      linear-gradient(to bottom, rgba(83,41,24,0.72), rgba(210,166,108,0.86), rgba(58,29,17,0.78));
+      radial-gradient(circle at 10% 50%, rgba(58,28,14,0.86) 0 8px, transparent 9px),
+      radial-gradient(circle at 90% 50%, rgba(58,28,14,0.86) 0 8px, transparent 9px),
+      linear-gradient(to bottom, rgba(84,43,23,0.78), rgba(212,166,106,0.88), rgba(61,31,17,0.82));
     box-shadow:
-      0 -12px 18px rgba(53,25,13,0.24),
-      inset 0 8px 14px rgba(45,20,11,0.34);
+      0 -10px 16px rgba(53,25,13,0.22),
+      inset 0 8px 14px rgba(45,20,11,0.30);
+    transform: none;
   }
 
   .kwoon-areas__symbol {
-    top: 52%;
-    font-size: 8.4rem;
-    opacity: 0.68;
+    top: 54%;
+    width: 88%;
+    font-size: 4.4rem;
+    white-space: normal;
+    line-height: 1.16;
   }
 
   .kwoon-areas__head {
-    margin-bottom: 26px;
+    margin-bottom: 24px;
   }
 
   .kwoon-areas__head h2 {
-    font-size: 1.7rem;
+    font-size: 1.65rem;
   }
 
   .kwoon-areas__intro {
@@ -1632,11 +1697,11 @@ body .section {
     background:
       linear-gradient(to bottom,
         transparent 32.7%,
-        rgba(72,35,19,0.15) 33.2%,
+        rgba(72,35,19,0.12) 33.2%,
         rgba(255,232,190,0.10) 33.7%,
         transparent 34.5%,
         transparent 65.5%,
-        rgba(72,35,19,0.15) 66.2%,
+        rgba(72,35,19,0.12) 66.2%,
         rgba(255,232,190,0.10) 66.8%,
         transparent 67.6%
       );
@@ -1644,7 +1709,7 @@ body .section {
 
   .kwoon-area {
     min-height: auto;
-    padding: 22px 18px 24px;
+    padding: 22px 16px 24px;
   }
 
   .kwoon-area::after {
@@ -1655,23 +1720,29 @@ body .section {
     width: auto;
     height: 16px;
     background:
-      linear-gradient(to bottom, transparent, rgba(63,30,17,0.12), rgba(255,232,190,0.08), transparent);
+      linear-gradient(to bottom, transparent, rgba(63,30,17,0.10), rgba(255,232,190,0.08), transparent);
   }
 
   .kwoon-area__seal {
     width: 42px;
     height: 42px;
-    right: 18px;
-    top: 20px;
+    right: 16px;
+    top: 18px;
+    padding: 2px;
+  }
+
+  .kwoon-area__seal img {
+    width: 95%;
+    height: 95%;
   }
 
   .kwoon-area__image {
-    height: 118px;
+    height: 116px;
   }
 
   .kwoon-area__content h3 {
-    font-size: 1.24rem;
-    padding: 0 36px;
+    font-size: 1.22rem;
+    padding: 0 30px;
   }
 
   .kwoon-area__content p {
