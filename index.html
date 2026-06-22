@@ -13,6 +13,7 @@
     <link rel="preload" as="image" href="/img/logo-transition.png">
     <link rel="stylesheet" href="/css/styles.css">
     <script src="/js/transition.js" defer></script>
+    <script src="/js/nav.js" defer></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;700&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
@@ -28,13 +29,41 @@
   </div>
 </div>
 <header class="header hero">
-    <nav class="nav">
-        <div class="sifu-badge">Sifu Diego</div>
-        <ul>
-            <li><a href="#servizi">Cosa faccio</a></li>
-            <li><a href="#prenota">Prenota</a></li>
-            <li><a href="#footer">Dove alleno</a></li>
-        </ul>
+    <nav class="nav" aria-label="Navigazione principale">
+        <a class="nav__logo" href="/" aria-label="Sifu Diego">
+            <img src="/img/logo-transition.png" alt="">
+        </a>
+        <button class="nav__toggle" type="button" aria-expanded="false" aria-controls="nav-menu" aria-label="Apri o chiudi il menu">
+            <span aria-hidden="true"></span>
+        </button>
+        <div id="nav-menu" class="nav__panel">
+            <ul class="nav__links">
+                <li>
+                    <details class="nav__dropdown">
+                        <summary>Cosa faccio</summary>
+                        <ul class="nav__submenu">
+                            <li><a href="/services/wing-chun-tradizionale.html">Wing Chun tradizionale</a></li>
+                            <li><a href="/services/allenamenti-privati.html">Lezioni private</a></li>
+                            <li><a href="/services/bastone-wing-chun.html">Bastone e doppie lame</a></li>
+                            <li><a href="/services/preparazione-gare.html">Preparazione gare</a></li>
+                            <li><a href="/services/corso-bambini.html">Bambini 7+</a></li>
+                        </ul>
+                    </details>
+                </li>
+                <li>
+                    <details class="nav__dropdown">
+                        <summary>Dove alleno</summary>
+                        <ul class="nav__submenu">
+                            <li><a href="/location/mortara.html">Mortara</a></li>
+                            <li><a href="/location/vigevano.html">Vigevano</a></li>
+                        </ul>
+                    </details>
+                </li>
+                <li><a href="#prenota">Prenota</a></li>
+            </ul>
+        </div>
+        <div class="sifu-badge nav__badge">Sifu Diego</div>
+        <a class="nav__contact" href="https://wa.me/393337469173" aria-label="Contatta Sifu Diego su WhatsApp">Contatta</a>
     </nav>
 
     <section class="hero">
@@ -80,6 +109,7 @@
         <span class="service__seal" aria-hidden="true"><img src="/img/logo-transition.png" alt=""></span>
         <h2>Wing Chun Tradizionale</h2>
         <p>Forme, struttura, sensibilit&agrave;.</p>
+        <span class="page-cta">Apri</span>
       </article>
     </a>
 
@@ -88,14 +118,19 @@
         <span class="service__seal" aria-hidden="true"><img src="/img/logo-transition.png" alt=""></span>
         <h2>Lezioni private</h2>
         <p>Percorsi individuali.</p>
+        <span class="page-cta">Apri</span>
       </article>
     </a>
 
     <a href="services/bastone-wing-chun.html" class="service-link service-link--floor service-link--floor-1">
       <article class="service">
         <span class="service__seal" aria-hidden="true"><img src="/img/logo-transition.png" alt=""></span>
-        <h2>Bastone (Lok Dim Boon Kwan) e Doppie Lame (Baat Jaam Do)</h2>
+        <h2>
+          <span class="service-title-line"><span class="service-title-main">Bastone</span> <span class="service-title-cn">(Lok Dim Boon Kwan)</span></span>
+          <span class="service-title-line"><span class="service-title-main">Doppie Lame</span> <span class="service-title-cn">(Baat Jaam Do)</span></span>
+        </h2>
         <p>Distanza, potenza, coordinazione.</p>
+        <span class="page-cta">Apri</span>
       </article>
     </a>
 
@@ -104,6 +139,7 @@
         <span class="service__seal" aria-hidden="true"><img src="/img/logo-transition.png" alt=""></span>
         <h2>Preparazione gare</h2>
         <p>Tecnica, mente, condizione.</p>
+        <span class="page-cta">Apri</span>
       </article>
     </a>
 
@@ -112,6 +148,7 @@
         <span class="service__seal" aria-hidden="true"><img src="/img/logo-transition.png" alt=""></span>
         <h2>Bambini 7+</h2>
         <p>Coordinazione e controllo.</p>
+        <span class="page-cta">Apri</span>
       </article>
     </a>
   </div>
@@ -194,6 +231,7 @@
               Lezioni martedi e giovedi, 20:00-21:00. Pratica essenziale e difesa personale.
             </p>
             <span class="kwoon-area__meta">Via Baroni 23</span>
+            <span class="page-cta">Apri</span>
           </div>
         </a>
 
@@ -208,6 +246,7 @@
               Lezioni mercoledi, 19:00-21:00. Forme, sensibilit&agrave; e applicazioni del Wing Chun.
             </p>
             <span class="kwoon-area__meta">Via Cappuccini 151</span>
+            <span class="page-cta">Apri</span>
           </div>
         </a>
       </div>
@@ -287,34 +326,92 @@
 <!-- Footer -->
 
 <footer id="footer" class="site-footer">
-  <!-- MAPPE -->
-  <div class="footer-maps">
-    <iframe
-      src="https://www.google.com/maps?q=Via+Baroni+23+Mortara&output=embed"
-      loading="lazy"
-      referrerpolicy="no-referrer-when-downgrade">
-    </iframe>
+  <div class="footer-shell">
+    <div class="footer-grid">
+      <section class="footer-brand" aria-labelledby="footer-brand-title">
+        <img class="footer-brand-logo" src="/img/logo1.png" alt="">
+        <h2 id="footer-brand-title">WING CHUN - L&ograve;ngkai</h2>
+        <a class="footer-cta" href="https://wa.me/393337469173">Contatta su WhatsApp</a>
+      </section>
 
-    <iframe
-      src="https://www.google.com/maps?q=Via+Cappuccini+151+Vigevano&output=embed"
-      loading="lazy"
-      referrerpolicy="no-referrer-when-downgrade">
-    </iframe>
+      <nav class="footer-column" aria-label="Link rapidi">
+        <h2>Link rapidi</h2>
+        <ul>
+          <li><a href="/">Home</a></li>
+          <li><a href="/#chi-sono">Chi sono</a></li>
+          <li><a href="/#servizi">Servizi</a></li>
+          <li><a href="/#prenota">Prenota</a></li>
+        </ul>
+      </nav>
+
+      <nav class="footer-column footer-courses" aria-label="Corsi e sedi">
+        <h2>Corsi e sedi</h2>
+        <div class="footer-courses-layout">
+          <div class="footer-courses-group">
+            <h3>Corsi</h3>
+            <ul>
+              <li><a href="/services/wing-chun-tradizionale.html">Wing Chun tradizionale</a></li>
+              <li><a href="/services/allenamenti-privati.html">Lezioni private</a></li>
+              <li><a href="/services/bastone-wing-chun.html">Bastone e doppie lame</a></li>
+              <li><a href="/services/preparazione-gare.html">Preparazione gare</a></li>
+              <li><a href="/services/corso-bambini.html">Bambini 7+</a></li>
+            </ul>
+          </div>
+          <div class="footer-courses-group footer-venues">
+            <h3>Sedi</h3>
+            <ul>
+              <li><a href="/location/mortara.html">Palestra di Mortara</a></li>
+              <li><a href="/location/vigevano.html">Palestra di Vigevano</a></li>
+            </ul>
+          </div>
+        </div>
+      </nav>
+
+      <section class="footer-column footer-contacts" aria-labelledby="footer-contacts-title">
+        <h2 id="footer-contacts-title">Contatti</h2>
+        <ul>
+          <li><a href="tel:+393337469173">333 746 9173</a></li>
+          <li><a href="mailto:longkaiasd@gmail.com">longkaiasd@gmail.com</a></li>
+          <li><a href="https://www.instagram.com/longkai_wingchun">Instagram</a></li>
+          <li><a href="https://www.facebook.com/people/L%C3%B2ngkai/61585876657291/#">Facebook</a></li>
+        </ul>
+      </section>
+    </div>
+
+    <section class="footer-locations" aria-labelledby="footer-locations-title">
+      <h2 id="footer-locations-title">Dove alleno</h2>
+      <div class="footer-map-grid">
+        <article class="footer-map-card">
+          <div class="footer-map-info">
+            <h3>Mortara</h3>
+            <p>Via Baroni 23, Mortara (PV)</p>
+            <a href="https://www.google.com/maps?q=Via+Baroni+23+Mortara" target="_blank" rel="noopener">Apri in Google Maps</a>
+          </div>
+          <iframe title="Mappa della sede di Mortara" src="https://www.google.com/maps?q=Via+Baroni+23+Mortara&output=embed" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
+        </article>
+
+        <article class="footer-map-card">
+          <div class="footer-map-info">
+            <h3>Vigevano</h3>
+            <p>Via Cappuccini 151, Vigevano (PV)</p>
+            <a href="https://www.google.com/maps?q=Via+Cappuccini+151+Vigevano" target="_blank" rel="noopener">Apri in Google Maps</a>
+          </div>
+          <iframe title="Mappa della sede di Vigevano" src="https://www.google.com/maps?q=Via+Cappuccini+151+Vigevano&output=embed" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
+        </article>
+      </div>
+    </section>
   </div>
 
-  <!-- BOTTOM -->
-  <div class="footer-bottom">
-    <div class="footer-inner">
-      <p>© WING CHUN - Lòngkai       333 746 9173</p>
-     
-
-      <div class="footer-links">
-        <a href="#top">Torna su</a>
+  <div class="footer-legal">
+    <div class="footer-shell footer-legal-inner">
+      <p>&copy; 2026 WING CHUN - L&ograve;ngkai</p>
+      <nav aria-label="Link legali">
         <a href="/privacy-policy.html">Privacy Policy</a>
-      </div>
+        <a href="/termini-condizioni.html">Termini e condizioni</a>
+        <a href="#">Torna su</a>
+      </nav>
     </div>
   </div>
-
 </footer>
 <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
 <script>
