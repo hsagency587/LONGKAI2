@@ -147,10 +147,16 @@ h2{
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 20px;
+    align-content: start;
+    align-items: start;
 }
 
 .images img {
+    display: block;
     width: 100%;
+    max-width: 100%;
+    height: auto;
+    object-fit: contain;
     border-radius: 12px;
     filter: grayscale(20%);
     transition: 0.4s;
