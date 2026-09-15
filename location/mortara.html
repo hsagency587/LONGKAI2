@@ -19,6 +19,7 @@
   <link rel="stylesheet" href="/css/styles.css">
   <link rel="stylesheet" href="/css/wing-chun-vigevano.css">
   <script src="/js/transition.js" defer></script>
+  <script src="/js/nav.js" defer></script>
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -92,13 +93,41 @@
   </div>
 
   <header class="header service-hero service-hero-vigevano">
-    <nav class="nav">
-      <div class="sifu-badge">Sifu Diego</div>
-      <ul>
-        <li><a href="#info">Info</a></li>
-        <li><a href="#contatti">Contatti</a></li>
-        <li><a href="#mappa">Mappa</a></li>
-      </ul>
+    <nav class="nav" aria-label="Navigazione principale">
+        <a class="nav__logo" href="/" aria-label="Sifu Diego">
+            <img src="/img/logo-transition.png" alt="" width="420" height="630" decoding="async">
+        </a>
+        <button class="nav__toggle" type="button" aria-expanded="false" aria-controls="nav-menu" aria-label="Apri o chiudi il menu">
+            <span aria-hidden="true"></span>
+        </button>
+        <div id="nav-menu" class="nav__panel">
+            <ul class="nav__links">
+                <li>
+                    <details class="nav__dropdown">
+                        <summary>Cosa faccio</summary>
+                        <ul class="nav__submenu">
+                            <li><a href="/services/wing-chun-tradizionale.html">Wing Chun tradizionale</a></li>
+                            <li><a href="/services/allenamenti-privati.html">Lezioni private</a></li>
+                            <li><a href="/services/bastone-wing-chun.html">Bastone e doppie lame</a></li>
+                            <li><a href="/services/preparazione-gare.html">Preparazione gare</a></li>
+                            <li><a href="/services/corso-bambini.html">Bambini 7+</a></li>
+                        </ul>
+                    </details>
+                </li>
+                <li>
+                    <details class="nav__dropdown">
+                        <summary>Dove alleno</summary>
+                        <ul class="nav__submenu">
+                            <li><a href="/location/mortara.html">Mortara</a></li>
+                            <li><a href="/location/vigevano.html">Vigevano</a></li>
+                        </ul>
+                    </details>
+                </li>
+                <li><a href="/#prenota">Prenota</a></li>
+            </ul>
+        </div>
+        <div class="sifu-badge nav__badge">Sifu Diego</div>
+        <a class="nav__contact" href="https://wa.me/393337469173" aria-label="Contatta Sifu Diego su WhatsApp">Contatta</a>
     </nav>
 
     <section class="hero">
@@ -123,6 +152,36 @@
 
           <p>
             Il percorso segue la trasmissione del Wing Chun tradizionale, con lavoro diretto e attenzione all'allievo.
+          </p>
+
+          <p>
+            Vieni a trovarci a
+            <a href="https://www.google.com/maps?q=Scuola+Elementare+Olivelli+Via+Zanetti+Mortara" target="_blank" rel="noopener">
+              Mortara
+            </a>.
+            <br>
+            <strong>Giorni lezioni:</strong><br> 19:00-20:00 Mercoledi e Venerdi
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <section class="section vigevano-local-hook">
+      <div class="content">
+        <div class="vigevano-local-hook__box">
+          <h2>Vuoi iniziare Wing Chun?</h2>
+
+          <p>
+            Se stai cercando un’arte marziale per <strong>imparare a difenderti</strong> e migliorare coordinazione e riflessi.
+          </p>
+
+          <p>
+            e Sei di: <h3>Vigevano</h3> <h3>Garlasco</h3>
+            <h3>Gambolò</h3> <h3>Cassolnovo</h3> <h3>Robbio</h3>
+            <h3>Cilavegna</h3>
+            <h3>Mede</h3>
+            Intraprendi il percorso del Wing Chun
+            affidandoti al <strong>Sifu Diego.</strong>
           </p>
 
           <p>
@@ -210,6 +269,7 @@
           <div class="footer-map-info">
             <h3>Mortara</h3>
             <p>Via Zanetti — palestra della scuola elementare Olivelli, Mortara (PV)</p>
+            <p>Mercoledì e venerdì, 19:00-20:00</p>
             <a href="https://www.google.com/maps?q=Scuola+Elementare+Olivelli+Via+Zanetti+Mortara" target="_blank" rel="noopener">Apri in Google Maps</a>
           </div>
           <iframe title="Mappa della sede di Mortara" src="https://www.google.com/maps?q=Scuola+Elementare+Olivelli+Via+Zanetti+Mortara&output=embed" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
@@ -219,6 +279,7 @@
           <div class="footer-map-info">
             <h3>Vigevano</h3>
             <p>Corso Garibaldi 70 — palestra della scuola elementare Vidari, Vigevano (PV)</p>
+            <p>Martedì, 19:00-21:00</p>
             <a href="https://www.google.com/maps?q=Corso+Garibaldi+70+Vigevano" target="_blank" rel="noopener">Apri in Google Maps</a>
           </div>
           <iframe title="Mappa della sede di Vigevano" src="https://www.google.com/maps?q=Corso+Garibaldi+70+Vigevano&output=embed" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>

@@ -16,6 +16,7 @@
     <link rel="preload" as="image" href="/img/logo-transition.png">
     <link rel="stylesheet" href="/css/styles.css">
     <script src="/js/transition.js" defer></script>
+    <script src="/js/nav.js" defer></script>
 
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -70,13 +71,41 @@
 </div>
 <!-- ================= HEADER ================= -->
 <header class="header hero">
-    <nav class="nav">
-         <div class="sifu-badge">Sifu Diego</div>
-        <ul>
-            <li><a href="/index.html#chi-sono">Chi sono</a></li>
-            <li><a href="/index.html#servizi">Servizi</a></li>
-            <li><a href="/index.html#prenota">Prenota</a></li>
-        </ul>
+    <nav class="nav" aria-label="Navigazione principale">
+        <a class="nav__logo" href="/" aria-label="Sifu Diego">
+            <img src="/img/logo-transition.png" alt="" width="420" height="630" decoding="async">
+        </a>
+        <button class="nav__toggle" type="button" aria-expanded="false" aria-controls="nav-menu" aria-label="Apri o chiudi il menu">
+            <span aria-hidden="true"></span>
+        </button>
+        <div id="nav-menu" class="nav__panel">
+            <ul class="nav__links">
+                <li>
+                    <details class="nav__dropdown">
+                        <summary>Cosa faccio</summary>
+                        <ul class="nav__submenu">
+                            <li><a href="/services/wing-chun-tradizionale.html">Wing Chun tradizionale</a></li>
+                            <li><a href="/services/allenamenti-privati.html">Lezioni private</a></li>
+                            <li><a href="/services/bastone-wing-chun.html">Bastone e doppie lame</a></li>
+                            <li><a href="/services/preparazione-gare.html">Preparazione gare</a></li>
+                            <li><a href="/services/corso-bambini.html">Bambini 7+</a></li>
+                        </ul>
+                    </details>
+                </li>
+                <li>
+                    <details class="nav__dropdown">
+                        <summary>Dove alleno</summary>
+                        <ul class="nav__submenu">
+                            <li><a href="/location/mortara.html">Mortara</a></li>
+                            <li><a href="/location/vigevano.html">Vigevano</a></li>
+                        </ul>
+                    </details>
+                </li>
+                <li><a href="/#prenota">Prenota</a></li>
+            </ul>
+        </div>
+        <div class="sifu-badge nav__badge">Sifu Diego</div>
+        <a class="nav__contact" href="https://wa.me/393337469173" aria-label="Contatta Sifu Diego su WhatsApp">Contatta</a>
     </nav>
 </header>
 
@@ -182,6 +211,7 @@
           <div class="footer-map-info">
             <h3>Mortara</h3>
             <p>Via Zanetti — palestra della scuola elementare Olivelli, Mortara (PV)</p>
+            <p>Mercoledì e venerdì, 19:00-20:00</p>
             <a href="https://www.google.com/maps?q=Scuola+Elementare+Olivelli+Via+Zanetti+Mortara" target="_blank" rel="noopener">Apri in Google Maps</a>
           </div>
           <iframe title="Mappa della sede di Mortara" src="https://www.google.com/maps?q=Scuola+Elementare+Olivelli+Via+Zanetti+Mortara&output=embed" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
@@ -191,6 +221,7 @@
           <div class="footer-map-info">
             <h3>Vigevano</h3>
             <p>Corso Garibaldi 70 — palestra della scuola elementare Vidari, Vigevano (PV)</p>
+            <p>Martedì, 19:00-21:00</p>
             <a href="https://www.google.com/maps?q=Corso+Garibaldi+70+Vigevano" target="_blank" rel="noopener">Apri in Google Maps</a>
           </div>
           <iframe title="Mappa della sede di Vigevano" src="https://www.google.com/maps?q=Corso+Garibaldi+70+Vigevano&output=embed" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
