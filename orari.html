@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Posti e orari — Sifu Diego</title>
+    <meta name="robots" content="noindex, follow">
+    <link rel="stylesheet" href="/css/styles.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;700&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
+    <style>
+      /* Solo questa pagina: una schermata, pergamena centrata, niente scroll */
+      body {
+        min-height: 100vh;
+        min-height: 100dvh;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+      }
+      .kwoon-areas {
+        padding-top: 16px !important;
+        padding-bottom: 16px !important;
+      }
+      /* Le card qui non sono link: niente stati hover */
+      .kwoon-area:hover::before { opacity: 0; }
+      .kwoon-area:hover .kwoon-area__content h3 { color: #1d0f09; transform: none; }
+      .kwoon-area:hover .kwoon-area__seal { transform: rotate(-5deg); border-color: rgba(222,169,104,0.44); }
+      @media (max-width: 768px) {
+        .kwoon-area:hover .kwoon-area__seal { transform: translateX(-50%) rotate(-5deg); }
+      }
+      /* Griglia giorno | orario al posto della frase */
+      .orari-griglia {
+        display: grid;
+        grid-template-columns: max-content max-content;
+        margin: 0;
+        color: rgba(29,17,11,0.92);
+        font-size: 1rem;
+        line-height: 1.62;
+        font-weight: 700;
+        text-shadow: 0 1px 0 rgba(255,239,202,0.26);
+      }
+      /* Righe leggere, nel tono dei separatori della pergamena */
+      .orari-griglia dt,
+      .orari-griglia dd {
+        margin: 0;
+        padding: 4px 12px;
+        border-bottom: 1px solid rgba(44,22,12,0.18);
+      }
+      .orari-griglia dt {
+        border-right: 1px solid rgba(44,22,12,0.18);
+        padding-left: 0;
+      }
+      @media (max-width: 768px) {
+        /* Compattata per stare in una schermata da 360x640 */
+        .kwoon-areas {
+          padding-top: 0 !important;
+          padding-bottom: 0 !important;
+        }
+        .kwoon-scroll,
+        .kwoon-scroll__content {
+          min-height: 0;
+        }
+        .kwoon-scroll__content {
+          padding: 64px 44px 36px;
+        }
+        .kwoon-areas__grid {
+          margin-top: 4px;
+        }
+        .kwoon-area {
+          padding: 34px 0 14px;
+        }
+        .kwoon-area__seal {
+          width: 28px;
+          height: 28px;
+          top: 4px;
+        }
+        .kwoon-area__content h3 {
+          font-size: 1.7rem;
+          margin-bottom: 6px;
+        }
+        .orari-griglia {
+          justify-content: center;
+          font-size: 0.88rem;
+          line-height: 1.55;
+        }
+        .orari-griglia dt,
+        .orari-griglia dd {
+          padding: 1px 10px;
+        }
+        .kwoon-area__meta {
+          margin-top: 8px;
+          letter-spacing: 0.1em;
+        }
+      }
+    </style>
+</head>
+<body>
+
+<!-- PALESTRE DEL KWOON -->
+<section class="section kwoon-areas">
+  <div class="kwoon-scroll">
+
+    <picture class="kwoon-scroll__bg" aria-hidden="true">
+      <source media="(max-width: 768px)" srcset="/img/pergamena-kwoon-mobile.png">
+      <img src="/img/pergamena-kwoon.png" alt="" width="1400" height="525" decoding="async">
+    </picture>
+
+    <div class="kwoon-scroll__content">
+      <div class="kwoon-areas__head">
+        <h2>Dove alleno</h2>
+        <p class="kwoon-areas__intro">
+          Wing Chun tradizionale a Mortara e Vigevano, con pratica guidata da Sifu Diego.
+        </p>
+      </div>
+
+      <div class="kwoon-areas__grid">
+        <div class="kwoon-area">
+          <div class="kwoon-area__seal" aria-hidden="true">
+            <img src="/img/logo-transition.png" alt="" width="420" height="630" decoding="async">
+          </div>
+
+          <div class="kwoon-area__content">
+            <h3>Mortara</h3>
+            <dl class="orari-griglia">
+              <dt>Mercoledi</dt><dd>19:00-20:00</dd>
+              <dt>Venerdi</dt><dd>19:00-20:00</dd>
+            </dl>
+            <span class="kwoon-area__meta">Via Zanetti — palestra della scuola elementare Olivelli</span>
+          </div>
+        </div>
+
+        <div class="kwoon-area">
+          <div class="kwoon-area__seal" aria-hidden="true">
+            <img src="/img/logo-transition.png" alt="" width="420" height="630" decoding="async">
+          </div>
+
+          <div class="kwoon-area__content">
+            <h3>Vigevano</h3>
+            <dl class="orari-griglia">
+              <dt>Martedi</dt><dd>19:00-21:00</dd>
+            </dl>
+            <span class="kwoon-area__meta">Corso Garibaldi 70 — palestra della scuola elementare Vidari</span>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+</section>
+
+</body>
+</html>
