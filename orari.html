@@ -137,8 +137,8 @@
         left: 6px;
         bottom: 6px;
         z-index: 2;
-        width: 44%;
-        max-width: 110px;
+        width: 52%;
+        max-width: 150px;
         aspect-ratio: 1 / 1;
         padding: 0;
         margin: 0;
@@ -159,21 +159,27 @@
       /* Il segno sta sempre sul riquadro piccolo: vuol dire "clicca per ingrandire" */
       .orari-mappa:not(.is-scambiato) .orari-mappa__link .orari-scambia__tasto,
       .orari-mappa.is-scambiato .orari-scambia .orari-scambia__tasto { display: none; }
+      /* Stessi colori del sigillo col dragone: fondo rosso, segno e bordo oro */
       .orari-scambia__tasto {
         position: absolute;
-        right: 3px;
-        bottom: 3px;
+        right: 4px;
+        bottom: 4px;
         display: flex;
         align-items: center;
         justify-content: center;
-        width: 20px;
-        height: 20px;
+        width: 30px;
+        height: 30px;
         font-family: "Noto Serif", serif;
-        font-size: 12px;
+        font-size: 17px;
         line-height: 1;
-        color: #f6f3ef;
-        background: rgba(46,21,11,0.78);
-        border: 1px solid rgba(240,193,121,0.62);
+        color: #dea968;
+        background:
+          radial-gradient(circle at 35% 28%, rgba(255,143,103,0.18), transparent 28%),
+          linear-gradient(135deg, rgba(101,24,17,0.96), rgba(132,39,25,0.92));
+        border: 1px solid rgba(222,169,104,0.44);
+        box-shadow:
+          0 6px 14px rgba(48,18,10,0.34),
+          inset 0 0 0 1px rgba(255,230,184,0.09);
       }
 
       /* Scambiati: la foto prende tutto, la mappa va nell'angolo */
@@ -189,8 +195,8 @@
       .orari-mappa.is-scambiato .orari-mappa__link {
         inset: auto auto 6px 6px;
         z-index: 2;
-        width: 44%;
-        max-width: 110px;
+        width: 52%;
+        max-width: 150px;
         aspect-ratio: 1 / 1;
         border: 1px solid rgba(240,193,121,0.62);
         box-shadow: 0 3px 9px rgba(24,10,5,0.45);
@@ -258,8 +264,8 @@
         .orari-mappa.is-scambiato .orari-mappa__link {
           left: 8px;
           bottom: 8px;
-          width: 35%;
-          max-width: 126px;
+          width: 48%;
+          max-width: 150px;
         }
         .orari-mappa.is-scambiato .orari-mappa__link { inset: auto auto 8px 8px; }
         .kwoon-area__meta {
