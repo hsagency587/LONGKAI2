@@ -10,25 +10,63 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;700&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
     <style>
-      /* Solo questa pagina: una schermata, pergamena centrata, niente scroll */
+      /* Solo questa pagina: badge in cima, pergamena al centro, footer in fondo.
+         Lo sfondo perde il logo (qui non si vede mai) e resta il solo colore
+         di copertura gia usato dal sito. */
       body {
         min-height: 100vh;
         min-height: 100dvh;
         display: flex;
         flex-direction: column;
-        justify-content: center;
+        background: #1e0f0a;
       }
+
+      /* Navbar senza voci: solo il badge, a destra.
+         Nel sito .nav e una griglia a quattro colonne (logo, menu, badge,
+         contatto) con display:grid !important: il badge da solo cadrebbe
+         nella prima. Lo si fa attraversare tutte, il suo justify-self:end
+         lo porta a destra. */
+      .nav .sifu-badge { grid-column: 1 / -1; }
+
       .kwoon-areas {
-        padding-top: 16px !important;
-        padding-bottom: 16px !important;
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        padding-top: 14px !important;
+        padding-bottom: 14px !important;
       }
-      /* Le card qui non sono link: niente stati hover */
-      .kwoon-area:hover::before { opacity: 0; }
-      .kwoon-area:hover .kwoon-area__content h3 { color: #1d0f09; transform: none; }
-      .kwoon-area:hover .kwoon-area__seal { transform: rotate(-5deg); border-color: rgba(222,169,104,0.44); }
-      @media (max-width: 768px) {
-        .kwoon-area:hover .kwoon-area__seal { transform: translateX(-50%) rotate(-5deg); }
+
+      /* Footer senza link: la riga del copyright resta sola, centrata */
+      .site-footer .footer-legal-inner { justify-content: center; }
+
+      /* DESKTOP: a sinistra sigillo, citta e orari; a destra la mappa;
+         l'indirizzo sotto tutto, centrato */
+      .kwoon-area {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) minmax(0, 44%);
+        grid-template-areas:
+          "testo mappa"
+          "meta  meta";
+        column-gap: 18px;
+        align-items: center;
       }
+      .kwoon-area__content {
+        grid-area: testo;
+        max-width: none;
+        text-align: left;
+      }
+      .orari-pannello { grid-area: mappa; }
+      .kwoon-area__meta { grid-area: meta; }
+
+      /* Il sigillo esce dall'angolo e sale in cima alla colonna di sinistra */
+      .kwoon-area__seal {
+        position: static;
+        transform: rotate(-5deg);
+        margin: 0 0 10px;
+      }
+      .kwoon-area:hover .kwoon-area__seal { transform: rotate(-5deg); }
+
       /* Griglia giorno | orario al posto della frase */
       .orari-griglia {
         display: grid;
@@ -40,7 +78,6 @@
         font-weight: 700;
         text-shadow: 0 1px 0 rgba(255,239,202,0.26);
       }
-      /* Righe leggere, nel tono dei separatori della pergamena */
       .orari-griglia dt,
       .orari-griglia dd {
         margin: 0;
@@ -51,51 +88,191 @@
         border-right: 1px solid rgba(44,22,12,0.18);
         padding-left: 0;
       }
+
+      /* Indirizzo staccato dalla linea di separazione, centrato sotto la card */
+      .kwoon-area__meta {
+        display: block;
+        margin-top: 18px;
+        margin-bottom: 4px;
+        text-align: center;
+        text-wrap: balance;
+      }
+
+      /* Il riquadro: dentro ci stanno la mappa e la foto, una grande e una
+         nell'angolo. Si scambiano di posto al clic sulla piccola. */
+      .orari-mappa {
+        position: relative;
+        display: block;
+        aspect-ratio: 4 / 3;
+        border: 1px solid rgba(94,48,26,0.38);
+        box-shadow: 0 6px 16px rgba(46,21,11,0.26);
+        overflow: hidden;
+        background: rgba(232,214,180,0.6);
+      }
+
+      /* Strato grande: la mappa. Si clicca tutta e porta su Google Maps */
+      .orari-mappa__link {
+        position: absolute;
+        inset: 0;
+        display: block;
+      }
+      .orari-mappa__link iframe {
+        width: 100%;
+        height: 100%;
+        border: 0;
+        display: block;
+        /* il clic non entra nella mappa: apre Google Maps e non blocca lo scorrimento */
+        pointer-events: none;
+      }
+
+      /* Strato piccolo: la foto dell'ingresso, nell'angolo */
+      .orari-scambia {
+        position: absolute;
+        left: 6px;
+        bottom: 6px;
+        z-index: 2;
+        width: 44%;
+        max-width: 110px;
+        aspect-ratio: 1 / 1;
+        padding: 0;
+        margin: 0;
+        cursor: pointer;
+        border: 1px solid rgba(240,193,121,0.62);
+        background: none;
+        box-shadow: 0 3px 9px rgba(24,10,5,0.45);
+        overflow: hidden;
+      }
+      .orari-scambia img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        object-position: 50% 38%;  /* inquadra il portone, non la scalinata */
+        display: block;
+      }
+
+      /* Il segno sta sempre sul riquadro piccolo: vuol dire "clicca per ingrandire" */
+      .orari-mappa:not(.is-scambiato) .orari-mappa__link .orari-scambia__tasto,
+      .orari-mappa.is-scambiato .orari-scambia .orari-scambia__tasto { display: none; }
+      .orari-scambia__tasto {
+        position: absolute;
+        right: 3px;
+        bottom: 3px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 20px;
+        height: 20px;
+        font-family: "Noto Serif", serif;
+        font-size: 12px;
+        line-height: 1;
+        color: #f6f3ef;
+        background: rgba(46,21,11,0.78);
+        border: 1px solid rgba(240,193,121,0.62);
+      }
+
+      /* Scambiati: la foto prende tutto, la mappa va nell'angolo */
+      .orari-mappa.is-scambiato .orari-scambia {
+        inset: 0;
+        width: auto;
+        max-width: none;
+        aspect-ratio: auto;
+        border: 0;
+        box-shadow: none;
+        z-index: 1;
+      }
+      .orari-mappa.is-scambiato .orari-mappa__link {
+        inset: auto auto 6px 6px;
+        z-index: 2;
+        width: 44%;
+        max-width: 110px;
+        aspect-ratio: 1 / 1;
+        border: 1px solid rgba(240,193,121,0.62);
+        box-shadow: 0 3px 9px rgba(24,10,5,0.45);
+        overflow: hidden;
+      }
+
+      .orari-mappa__link:focus-visible,
+      .orari-scambia:focus-visible {
+        outline: 2px solid rgba(89,35,20,0.9);
+        outline-offset: -3px;
+      }
+
       @media (max-width: 768px) {
-        /* Compattata per stare in una schermata da 360x640 */
-        .kwoon-areas {
-          padding-top: 0 !important;
-          padding-bottom: 0 !important;
+        /* La pergamena prende tutta la larghezza dello schermo.
+           body .section ha padding 22px 6% !important (styles.css 2276):
+           serve la stessa specificita per scavalcarlo */
+        body .kwoon-areas {
+          padding: 0 !important;
         }
         .kwoon-scroll,
         .kwoon-scroll__content {
           min-height: 0;
         }
+        /* I rulli della pergamena crescono in proporzione all'altezza:
+           i margini sopra e sotto li tengono liberi */
         .kwoon-scroll__content {
-          padding: 64px 44px 36px;
+          padding: 116px 52px 104px;
         }
-        .kwoon-areas__grid {
-          margin-top: 4px;
+        .kwoon-areas__head { margin-bottom: 0; }
+        .kwoon-areas__intro {
+          font-size: 0.74rem;
+          line-height: 1.42;
         }
+        .kwoon-areas__grid { margin-top: 6px; }
+
+        /* Tutto in colonna e al centro, mappa compresa */
         .kwoon-area {
-          padding: 34px 0 14px;
+          display: block;
+          text-align: center;
+          padding: 12px 0 22px;
         }
+        .kwoon-area__content { text-align: center; }
         .kwoon-area__seal {
           width: 28px;
           height: 28px;
-          top: 4px;
+          margin: 0 auto 6px;
         }
         .kwoon-area__content h3 {
-          font-size: 1.7rem;
+          font-size: 1.44rem;
           margin-bottom: 6px;
+          text-align: center;
         }
         .orari-griglia {
           justify-content: center;
-          font-size: 0.88rem;
-          line-height: 1.55;
+          font-size: 0.82rem;
+          line-height: 1.5;
         }
         .orari-griglia dt,
-        .orari-griglia dd {
-          padding: 1px 10px;
+        .orari-griglia dd { padding: 2px 10px; }
+
+        .orari-pannello {
+          position: relative;
+          z-index: 3;   /* il separatore ondulato del grid non passa sopra la mappa */
+          margin-top: 14px;
         }
+        .orari-scambia,
+        .orari-mappa.is-scambiato .orari-mappa__link {
+          left: 8px;
+          bottom: 8px;
+          width: 35%;
+          max-width: 126px;
+        }
+        .orari-mappa.is-scambiato .orari-mappa__link { inset: auto auto 8px 8px; }
         .kwoon-area__meta {
-          margin-top: 8px;
-          letter-spacing: 0.1em;
+          max-width: 250px;
+          margin: 12px auto 2px;
+          font-size: 0.66rem;
         }
       }
     </style>
 </head>
 <body>
+
+<header>
+  <nav class="nav" aria-label="Navigazione">
+    <div class="sifu-badge nav__badge">Sifu Diego</div>
+  </nav>
+</header>
 
 <!-- PALESTRE DEL KWOON -->
 <section class="section kwoon-areas">
@@ -116,32 +293,52 @@
 
       <div class="kwoon-areas__grid">
         <div class="kwoon-area">
-          <div class="kwoon-area__seal" aria-hidden="true">
-            <img src="/img/logo-transition.png" alt="" width="420" height="630" decoding="async">
-          </div>
-
           <div class="kwoon-area__content">
+            <div class="kwoon-area__seal" aria-hidden="true">
+              <img src="/img/logo-transition.png" alt="" width="420" height="630" decoding="async">
+            </div>
             <h3>Mortara</h3>
             <dl class="orari-griglia">
-              <dt>Mercoledi</dt><dd>19:00-20:00</dd>
-              <dt>Venerdi</dt><dd>19:00-20:00</dd>
+              <dt>Mercoledi e venerdi</dt><dd>19:00-20:00</dd>
             </dl>
-            <span class="kwoon-area__meta">Via Zanetti — palestra della scuola elementare Olivelli</span>
           </div>
+
+          <div class="orari-pannello">
+            <div class="orari-mappa">
+              <a class="orari-mappa__link" href="https://maps.app.goo.gl/UQvgTA2BVgmQEXpTA" target="_blank" rel="noopener">
+                <iframe title="Mappa della palestra di Mortara" src="https://www.google.com/maps?q=loc:45.248556,8.733760&amp;z=16&amp;output=embed" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
+                <span class="orari-scambia__tasto" aria-hidden="true">&#8644;</span>
+              </a>
+              <button class="orari-scambia" type="button" aria-pressed="false" aria-label="Ingrandisci la foto dell'ingresso di Mortara">
+                <img src="/img/ingresso-palestra-olivelli-mortara.jpg" alt="L'ingresso della palestra della scuola Olivelli a Mortara: scalinata e portone a vetri" width="560" height="666" loading="lazy" decoding="async">
+                <span class="orari-scambia__tasto" aria-hidden="true">&#8644;</span>
+              </button>
+            </div>
+          </div>
+
+          <span class="kwoon-area__meta">Via Zanetti — palestra della scuola elementare Olivelli</span>
         </div>
 
         <div class="kwoon-area">
-          <div class="kwoon-area__seal" aria-hidden="true">
-            <img src="/img/logo-transition.png" alt="" width="420" height="630" decoding="async">
-          </div>
-
           <div class="kwoon-area__content">
+            <div class="kwoon-area__seal" aria-hidden="true">
+              <img src="/img/logo-transition.png" alt="" width="420" height="630" decoding="async">
+            </div>
             <h3>Vigevano</h3>
             <dl class="orari-griglia">
               <dt>Martedi</dt><dd>19:00-21:00</dd>
             </dl>
-            <span class="kwoon-area__meta">Corso Garibaldi 70 — palestra della scuola elementare Vidari</span>
           </div>
+
+          <div class="orari-pannello">
+            <div class="orari-mappa">
+              <a class="orari-mappa__link" href="https://maps.app.goo.gl/QE6h1ukBw115ajDB8" target="_blank" rel="noopener">
+                <iframe title="Mappa della palestra di Vigevano" src="https://www.google.com/maps?q=loc:45.316950,8.852572&amp;z=16&amp;output=embed" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
+              </a>
+            </div>
+          </div>
+
+          <span class="kwoon-area__meta">Corso Garibaldi 70 — palestra della scuola elementare Vidari</span>
         </div>
       </div>
 
@@ -149,6 +346,45 @@
 
   </div>
 </section>
+
+<footer class="site-footer">
+  <div class="footer-legal">
+    <div class="footer-shell footer-legal-inner">
+      <p>&copy; 2026 WING CHUN - L&ograve;ngkai</p>
+    </div>
+  </div>
+</footer>
+
+<script>
+/* Foto e mappa si scambiano di posto: si clicca sempre il riquadro piccolo per
+   ingrandirlo. La mappa porta su Google Maps solo quando e gia grande.
+   Senza script la foto resta nell'angolo e la mappa grande: niente va perso. */
+document.querySelectorAll(".orari-scambia").forEach(function (tasto) {
+  var riquadro = tasto.closest(".orari-mappa");
+  var link = riquadro.querySelector(".orari-mappa__link");
+
+  var scambia = function () {
+    var fotoGrande = riquadro.classList.toggle("is-scambiato");
+    tasto.setAttribute("aria-pressed", fotoGrande ? "true" : "false");
+    tasto.setAttribute("aria-label", fotoGrande
+      ? "Rimetti la mappa in primo piano"
+      : "Ingrandisci la foto dell'ingresso di Mortara");
+    link.setAttribute("aria-label", fotoGrande
+      ? "Rimetti la mappa in primo piano"
+      : "Apri la palestra di Mortara su Google Maps");
+  };
+
+  tasto.addEventListener("click", scambia);
+
+  link.addEventListener("click", function (e) {
+    /* mappa piccola: il primo clic la ingrandisce, non apre Google Maps */
+    if (riquadro.classList.contains("is-scambiato")) {
+      e.preventDefault();
+      scambia();
+    }
+  });
+});
+</script>
 
 </body>
 </html>
