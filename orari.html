@@ -65,7 +65,13 @@
         transform: rotate(-5deg);
         margin: 0 0 10px;
       }
+      /* Le card non sono link: nessuno stato al passaggio del mouse.
+         Senza questo Vigevano diventava rossiccia e Mortara no. */
       .kwoon-area:hover .kwoon-area__seal { transform: rotate(-5deg); }
+      .kwoon-area:hover .kwoon-area__content h3 {
+        color: #1d0f09;
+        transform: none;
+      }
 
       /* Griglia giorno | orario al posto della frase */
       .orari-griglia {
@@ -214,10 +220,6 @@
           padding: 116px 52px 104px;
         }
         .kwoon-areas__head { margin-bottom: 0; }
-        .kwoon-areas__intro {
-          font-size: 0.74rem;
-          line-height: 1.42;
-        }
         .kwoon-areas__grid { margin-top: 6px; }
 
         /* Tutto in colonna e al centro, mappa compresa */
@@ -287,10 +289,7 @@
 
     <div class="kwoon-scroll__content">
       <div class="kwoon-areas__head">
-        <h2>Dove alleno</h2>
-        <p class="kwoon-areas__intro">
-          Wing Chun tradizionale a Mortara e Vigevano, con pratica guidata da Sifu Diego.
-        </p>
+        <h2>Orari e giorni</h2>
       </div>
 
       <div class="kwoon-areas__grid">
