@@ -341,7 +341,12 @@
             <div class="orari-mappa">
               <a class="orari-mappa__link" href="https://maps.app.goo.gl/QE6h1ukBw115ajDB8" target="_blank" rel="noopener">
                 <iframe title="Mappa della palestra di Vigevano" src="https://www.google.com/maps?q=loc:45.316950,8.852572&amp;z=16&amp;output=embed" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
+                <span class="orari-scambia__tasto" aria-hidden="true">&#8644;</span>
               </a>
+              <button class="orari-scambia" type="button" aria-pressed="false" aria-label="Ingrandisci la foto dell'ingresso di Vigevano">
+                <img src="/img/ingresso-palestra-vidari-vigevano.jpg" alt="Un allievo indica l'ingresso della palestra della scuola Vidari a Vigevano: il portone verde al civico 70 di Corso Garibaldi" width="640" height="617" loading="lazy" decoding="async">
+                <span class="orari-scambia__tasto" aria-hidden="true">&#8644;</span>
+              </button>
             </div>
           </div>
 
@@ -370,15 +375,19 @@ document.querySelectorAll(".orari-scambia").forEach(function (tasto) {
   var riquadro = tasto.closest(".orari-mappa");
   var link = riquadro.querySelector(".orari-mappa__link");
 
+  /* le etichette di riposo stanno nel sorgente, una per sede */
+  var etichettaFoto = tasto.getAttribute("aria-label");
+  var etichettaMappa = "Apri " + riquadro.querySelector("iframe").title.replace("Mappa della ", "") + " su Google Maps";
+
   var scambia = function () {
     var fotoGrande = riquadro.classList.toggle("is-scambiato");
     tasto.setAttribute("aria-pressed", fotoGrande ? "true" : "false");
     tasto.setAttribute("aria-label", fotoGrande
       ? "Rimetti la mappa in primo piano"
-      : "Ingrandisci la foto dell'ingresso di Mortara");
+      : etichettaFoto);
     link.setAttribute("aria-label", fotoGrande
       ? "Rimetti la mappa in primo piano"
-      : "Apri la palestra di Mortara su Google Maps");
+      : etichettaMappa);
   };
 
   tasto.addEventListener("click", scambia);
