@@ -14,6 +14,10 @@ import { vistaDiagnostica } from './viste/diagnostica.js';
 import { vistaSegnala } from './viste/segnala.js';
 import { vistaImpostazioni } from './viste/impostazioni.js';
 import { vistaNuovaPassword } from './viste/nuova-password.js';
+import { vistaScadenze } from './viste/scadenze.js';
+import { vistaCassetta } from './viste/cassetta.js';
+import { vistaCorsi } from './viste/corsi.js';
+import { vistaArgomenti } from './viste/argomenti.js';
 
 registraVista('accesso', vistaAccesso);
 registraVista('oggi', vistaOggi);
@@ -25,6 +29,10 @@ registraVista('diagnostica', vistaDiagnostica);
 registraVista('segnala', vistaSegnala);
 registraVista('impostazioni', vistaImpostazioni);
 registraVista('nuova-password', vistaNuovaPassword);
+registraVista('scadenze', vistaScadenze);
+registraVista('cassetta', vistaCassetta);
+registraVista('corsi', vistaCorsi);
+registraVista('argomenti', (main, p) => vistaArgomenti(main, p, { indietro: 'allenamenti/argomenti', titolo: 'Argomenti' }));
 registraVista('non-trovata', (main) => { main.textContent = 'Questa schermata non esiste.'; });
 
 const PUBBLICHE = new Set(['accesso']);

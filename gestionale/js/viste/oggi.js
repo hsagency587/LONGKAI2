@@ -50,15 +50,15 @@ export async function vistaOggi(main) {
   // DA FARE
   if (daFare) {
     const righe = [];
-    if (daFare.quote) righe.push(riga({ principale: `${daFare.quote} quote da incassare`, destra: euro(daFare.quoteCent), pallino: 'attenzione', href: '#/quote' }));
-    if (daFare.daRichiamare) righe.push(riga({ principale: `${daFare.daRichiamare} da richiamare`, secondaria: 'mancano da 3 lezioni', pallino: 'info', href: '#/allievi' }));
-    if (daFare.daCompletare) righe.push(riga({ principale: `${daFare.daCompletare} schede da completare`, pallino: 'info', href: '#/allievi' }));
+    if (daFare.quote) righe.push(riga({ principale: `${daFare.quote} quote da incassare`, destra: euro(daFare.quoteCent), pallino: 'attenzione', href: '#/allievi?f=da_pagare' }));
+    if (daFare.daRichiamare) righe.push(riga({ principale: `${daFare.daRichiamare} da richiamare`, secondaria: 'mancano da 3 lezioni', pallino: 'info', href: '#/allievi?f=da_richiamare' }));
+    if (daFare.daCompletare) righe.push(riga({ principale: `${daFare.daCompletare} schede da completare`, pallino: 'info', href: '#/allievi?f=da_completare' }));
     main.append(sezione('Da fare', righe.length ? el('div', { class: 'elenco' }, righe) : statoVuoto('Niente da fare. Bene.'), p?.ruolo === 'sifu' ? el('button', { class: 'tasto azione', 'data-scrittura': '', testo: '+ Pagamento', onclick: () => toast('In fase 3.') }) : null));
   }
 
   // SCADENZE
   if (scad) {
     const testo = `${scad.scadute} scadute · ${scad.entro7} entro 7 giorni · ${scad.entro30} entro 30`;
-    main.append(sezione('Scadenze', el('div', { class: 'elenco' }, riga({ principale: testo, pallino: scad.scadute ? 'errore' : scad.entro7 ? 'attenzione' : 'ok', href: '#/altro/scadenze' }))));
+    main.append(sezione('Scadenze', el('div', { class: 'elenco' }, riga({ principale: testo, pallino: scad.scadute ? 'errore' : scad.entro7 ? 'attenzione' : 'ok', href: '#/scadenze' }))));
   }
 }

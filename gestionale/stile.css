@@ -120,6 +120,7 @@ img { max-width: 100%; display: block; }
   position: sticky; top: 0; z-index: 20;
   padding-top: env(safe-area-inset-top);
   background: var(--c-sfondo);
+  min-width: 0; /* un titolo lungo non allarga la pagina: si taglia con i puntini */
 }
 .barra-alto {
   display: flex; align-items: center; gap: var(--s-3);
@@ -131,7 +132,8 @@ img { max-width: 100%; display: block; }
 .barra-alto .logo { width: 28px; height: 28px; border-radius: 50%; object-fit: cover; }
 .barra-alto h1 { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .barra-alto .azione { margin-left: auto; }
-.contenuto { grid-area: contenuto; padding: var(--s-4); max-width: var(--larghezza-max); width: 100%; margin: 0 auto; }
+.contenuto { grid-area: contenuto; padding: var(--s-4); max-width: var(--larghezza-max); width: 100%; min-width: 0; margin: 0 auto; }
+.vista { min-width: 0; }
 
 .nav {
   position: fixed; left: 0; right: 0; bottom: 0; z-index: 30;
@@ -209,6 +211,32 @@ img { max-width: 100%; display: block; }
 .chip.extra { border-color: var(--c-attenzione); color: var(--c-attenzione); font-weight: 700; font-size: 0.72rem; letter-spacing: 0.06em; }
 .chip.recupero { border-color: var(--c-info); color: var(--c-info); font-weight: 700; font-size: 0.72rem; letter-spacing: 0.06em; }
 .chip .x { opacity: 0.7; margin-left: 2px; }
+
+.chips.scorrevole { flex-wrap: nowrap; overflow-x: auto; padding-bottom: 2px; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
+.chips.scorrevole::-webkit-scrollbar { display: none; }
+.chips.scorrevole .chip { flex: none; text-decoration: none; }
+.spazio { height: var(--s-4); }
+
+/* ---------- scheda: stato, avvisi, blocchi di modulo ---------- */
+.stato-chip { display: inline-block; padding: 2px 10px; border-radius: var(--raggio-chip); font-size: var(--t-14); font-weight: 600; background: var(--c-superficie-2); border: 1px solid var(--c-bordo); }
+.stato-chip.attivo { color: var(--c-ok); border-color: var(--c-ok); }
+.stato-chip.sospeso { color: var(--c-info); border-color: var(--c-info); }
+.stato-chip.uscito { color: var(--c-testo-2); }
+.riga-stato { display: flex; align-items: center; gap: var(--s-3); flex-wrap: wrap; margin-bottom: var(--s-2); }
+.avviso-riga { display: flex; align-items: center; gap: var(--s-2); margin-top: var(--s-2); color: var(--c-attenzione); text-decoration: none; font-size: var(--t-14); }
+.avviso-riga svg { width: 20px; height: 20px; }
+.griglia-campi { display: grid; gap: 0 var(--s-4); }
+.titolo-blocco { margin: var(--s-4) 0 var(--s-2); font-size: 0.72rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--c-terracotta-2); }
+.tasti-colonna { display: flex; flex-direction: column; gap: var(--s-2); }
+.tasti-colonna .tasto { width: 100%; }
+.riga.selezionata { background: var(--c-superficie-2); box-shadow: inset 3px 0 0 var(--c-oro); }
+.campo input[type="file"] { padding: var(--s-2); }
+.interruttore input[type="checkbox"] { width: 24px; height: 24px; min-height: 0; accent-color: var(--c-oro); }
+.interruttore.piccolo { min-height: 40px; font-size: var(--t-14); margin-top: var(--s-3); }
+.sezione-forma { border: 1px solid var(--c-bordo); border-radius: var(--raggio); padding: var(--s-3); margin-bottom: var(--s-2); }
+.riga-orario { display: grid; grid-template-columns: 1fr auto; align-items: center; gap: var(--s-3); }
+.riga-orario input[type="time"] { min-height: 40px; padding: 0 var(--s-2); border-radius: var(--raggio); border: 1px solid var(--c-bordo); background: var(--c-superficie); color: var(--c-testo); }
+.riga-orario input[type="time"]:disabled { opacity: 0.4; }
 
 /* ---------- tasti ---------- */
 .tasto {
@@ -322,6 +350,7 @@ body.sola-lettura .nav a[data-scrittura] { display: none !important; }
   .nav a { font-size: 0.7rem; }
   .toast { bottom: var(--s-5); }
   .griglia-2 { grid-template-columns: 1fr 1fr; }
+  .griglia-campi { grid-template-columns: 1fr 1fr; }
 }
 
 /* ---------- esteso: barra laterale con etichette, due colonne ---------- */

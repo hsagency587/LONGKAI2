@@ -167,3 +167,233 @@ export async function chiamaFunzione(nome, corpo = {}) {
 }
 export const salute = () => chiamaFunzione('salute');
 export const segnala = (dati) => chiamaFunzione('segnala', dati);
+
+/* ============================================================
+   FASE 1 — allievi, documenti, scadenze, cassetta, corsi, argomenti, tariffe, impostazioni
+   ============================================================ */
+
+function controlla(...risposte) { for (const r of risposte) if (r.error) throw r.error; }
+function oggi() { return new Date(Date.now() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 10); }
+export class ErroreConflitto extends Error { constructor() { super('Qualcun altro ha modificato questa scheda nel frattempo: ricarica e riprova.'); this.name = 'ErroreConflitto'; } }
+function nomeFileSicuro(nome) {
+  return String(nome || 'file').normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-zA-Z0-9._-]+/g, '_').slice(0, 80);
+}
+function idNuovo() { return (crypto.randomUUID && crypto.randomUUID()) || `${Date.now()}-${Math.random().toString(16).slice(2)}`; }
+
+/* ---------- allievi ---------- */
+export async function elencoAllieviCompleto() {
+  const r = await sb().from('v_allievi_elenco').select('*').order('cognome').order('nome');
+  controlla(r);
+  return r.data || [];
+}
+export async function allievoCompleto(id) {
+  const [a, isc, abb, doc, sc, saldo] = await Promise.all([
+    sb().from('allievi').select('*').eq('id', id).maybeSingle(),
+    sb().from('iscrizioni').select('id, corso_id, dal, al, corsi(nome, citta)').eq('allievo_id', id).order('dal'),
+    sb().from('abbonamenti').select('id, tariffa_id, dal, al, rinnovo_automatico, importo_personalizzato_cent, lezioni_rimanenti, nota, tariffe(nome, importo_cent, tipo)').eq('allievo_id', id).order('dal', { ascending: false }),
+    sb().from('documenti').select('id, tipo, nome, dimensione, mime, data, scadenza, creato_il').eq('allievo_id', id).order('data', { ascending: false }),
+    sb().from('scadenze').select('id, tipo, data, stato, documento_id').eq('allievo_id', id).order('data'),
+    sb().from('v_saldo_allievo').select('*').eq('allievo_id', id).maybeSingle(),
+  ]);
+  controlla(a, isc, abb, doc, sc, saldo);
+  return { allievo: a.data, iscrizioni: isc.data || [], abbonamenti: abb.data || [], documenti: doc.data || [], scadenze: sc.data || [], saldo: saldo.data };
+}
+export async function nuovoAllievo(dati) {
+  const r = await sb().from('allievi').insert(dati).select('id').single();
+  controlla(r);
+  return r.data.id;
+}
+/** Salva con il blocco ottimistico: se la riga è cambiata dopo la lettura, non scrive e lo dice. */
+export async function salvaAllievo(id, dati, aggiornatoIl) {
+  let q = sb().from('allievi').update(dati).eq('id', id);
+  if (aggiornatoIl) q = q.eq('aggiornato_il', aggiornatoIl);
+  const r = await q.select('aggiornato_il');
+  controlla(r);
+  if (!r.data?.length) throw new ErroreConflitto();
+  return r.data[0].aggiornato_il;
+}
+export async function cambiaStatoAllievo(id, stato) {
+  const r = await sb().from('allievi').update({ stato, uscito_il: stato === 'uscito' ? oggi() : null }).eq('id', id).select('id');
+  controlla(r);
+}
+export async function iscrivi(allievoId, corsoId, dal = oggi()) {
+  const r = await sb().from('iscrizioni').insert({ allievo_id: allievoId, corso_id: corsoId, dal }).select('id').single();
+  controlla(r);
+  return r.data.id;
+}
+export async function chiudiIscrizione(id, al = oggi()) {
+  const r = await sb().from('iscrizioni').update({ al }).eq('id', id).select('id');
+  controlla(r);
+}
+export async function salvaAbbonamento(allievoId, dati, idEsistente = null) {
+  const corpo = { allievo_id: allievoId, tariffa_id: dati.tariffa_id, dal: dati.dal, al: dati.al || null, rinnovo_automatico: dati.rinnovo_automatico !== false, importo_personalizzato_cent: dati.importo_personalizzato_cent ?? null, nota: dati.nota || null };
+  const r = idEsistente ? await sb().from('abbonamenti').update(corpo).eq('id', idEsistente).select('id').single() : await sb().from('abbonamenti').insert(corpo).select('id').single();
+  controlla(r);
+  return r.data.id;
+}
+export async function chiudiAbbonamento(id, al = oggi()) {
+  const r = await sb().from('abbonamenti').update({ al, rinnovo_automatico: false }).eq('id', id).select('id');
+  controlla(r);
+}
+export async function mettiFuori(id, data = oggi()) {
+  const r = await sb().rpc('metti_fuori_allievo', { p_allievo: id, p_data: data });
+  controlla(r);
+  return r.data; // il saldo che resta, in centesimi
+}
+export async function esportaAllievo(id) {
+  const r = await sb().rpc('esporta_allievo', { p_allievo: id });
+  controlla(r);
+  return r.data;
+}
+export async function unisciAllievi(tieni, togli) {
+  const r = await sb().rpc('unisci_allievi', { p_tieni: tieni, p_togli: togli });
+  controlla(r);
+}
+export async function eliminaAllievo(id) {
+  const r = await sb().rpc('elimina_allievo', { p_allievo: id });
+  controlla(r);
+}
+/** Importa gli allievi da un CSV già letto: inserisce le schede e, se il corso è riconosciuto, l'iscrizione. */
+export async function importaAllievi(allievi, corsiDisponibili) {
+  let inseriti = 0; let iscritti = 0;
+  for (const a of allievi) {
+    const { corso, ...dati } = a;
+    dati.da_completare = !dati.cognome || !dati.nascita;
+    const r = await sb().from('allievi').insert(dati).select('id').single();
+    controlla(r);
+    inseriti++;
+    const c = corso ? (corsiDisponibili || []).find((x) => x.nome.toLowerCase() === corso.toLowerCase() || x.citta.toLowerCase() === corso.toLowerCase()) : null;
+    if (c) { await iscrivi(r.data.id, c.id); iscritti++; }
+  }
+  return { inseriti, iscritti };
+}
+
+/* ---------- documenti e scadenze ---------- */
+export async function caricaDocumento(allievoId, file, { tipo, data, scadenza }) {
+  const percorso = `allievi/${allievoId}/${idNuovo()}-${nomeFileSicuro(file.name)}`;
+  const { error } = await sb().storage.from('documenti').upload(percorso, file, { upsert: false, contentType: file.type || 'application/octet-stream' });
+  if (error) throw error;
+  const r = await sb().rpc('carica_documento', { p_allievo: allievoId, p_tipo: tipo, p_percorso: percorso, p_nome: String(file.name).slice(0, 120), p_dimensione: file.size, p_mime: file.type, p_data: data, p_scadenza: scadenza || null });
+  controlla(r);
+  return r.data;
+}
+export async function apriDocumento(id) {
+  const r = await chiamaFunzione('apri-documento', { documento_id: id });
+  return r.url;
+}
+export async function spostaDocumento(documentoId, allievoId) {
+  const r1 = await sb().from('documenti').update({ allievo_id: allievoId }).eq('id', documentoId).select('id');
+  const r2 = await sb().from('scadenze').update({ allievo_id: allievoId }).eq('documento_id', documentoId).select('id');
+  controlla(r1, r2);
+}
+export async function rinnovaScadenza(allievoId, tipo, data) {
+  const r = await sb().rpc('rinnova_scadenza', { p_allievo: allievoId, p_tipo: tipo, p_data: data });
+  controlla(r);
+  return r.data;
+}
+export async function annullaScadenza(id) {
+  const r = await sb().from('scadenze').update({ stato: 'annullata' }).eq('id', id).select('id');
+  controlla(r);
+}
+export async function scadenzeAperte() {
+  const r = await sb().from('scadenze').select('id, tipo, data, stato, allievo_id, allievi(nome, cognome, telefono, stato)').eq('stato', 'aperta').order('data');
+  controlla(r);
+  return (r.data || []).filter((s) => s.allievi && s.allievi.stato !== 'uscito');
+}
+
+/* ---------- cassetta ---------- */
+export async function cassettaElenco() {
+  const r = await sb().from('cassetta').select('id, nome, mime, dimensione, arrivato_il, fonte, stato, allievo_id, documento_id, allievi(nome, cognome)').order('arrivato_il', { ascending: false }).limit(100);
+  controlla(r);
+  return r.data || [];
+}
+export async function mettiInCassetta(file) {
+  const percorso = `cassetta/${idNuovo()}-${nomeFileSicuro(file.name)}`;
+  const { error } = await sb().storage.from('documenti').upload(percorso, file, { upsert: false, contentType: file.type || 'application/octet-stream' });
+  if (error) throw error;
+  const r = await sb().from('cassetta').insert({ percorso, nome: String(file.name).slice(0, 120), mime: file.type, dimensione: file.size, fonte: 'app' }).select('id').single();
+  controlla(r);
+  return r.data.id;
+}
+export async function smistaCassetta(id, allievoId, tipo, data, scadenza) {
+  const r = await sb().rpc('smista_cassetta', { p_cassetta: id, p_allievo: allievoId, p_tipo: tipo, p_data: data, p_scadenza: scadenza || null });
+  controlla(r);
+  return r.data;
+}
+export async function scartaCassetta(id) {
+  const r = await sb().from('cassetta').update({ stato: 'scartato' }).eq('id', id).select('id');
+  controlla(r);
+}
+export async function apriCassetta(id) {
+  const r = await chiamaFunzione('apri-documento', { cassetta_id: id });
+  return r.url;
+}
+
+/* ---------- corsi ---------- */
+export async function corsiCompleti() {
+  const r = await sb().from('corsi').select('id, nome, citta, durata_minuti, attivo, sospeso_dal, sospeso_al, ordine, aggiornato_il, corsi_orari(id, giorno, ora)').order('ordine');
+  controlla(r);
+  return r.data || [];
+}
+/** Salva un corso e i suoi orari (giorno + ora): toglie quelli spariti, aggiunge i nuovi, aggiorna le ore cambiate. */
+export async function salvaCorso(id, dati, orari) {
+  let corsoId = id;
+  if (corsoId) { const r = await sb().from('corsi').update(dati).eq('id', corsoId).select('id'); controlla(r); if (!r.data?.length) throw new Error('corso non trovato'); }
+  else { const r = await sb().from('corsi').insert(dati).select('id').single(); controlla(r); corsoId = r.data.id; }
+  const esistenti = await sb().from('corsi_orari').select('id, giorno, ora').eq('corso_id', corsoId);
+  controlla(esistenti);
+  const vecchi = esistenti.data || [];
+  for (const v of vecchi) {
+    const n = orari.find((o) => o.giorno === v.giorno);
+    if (!n) { const r = await sb().from('corsi_orari').delete().eq('id', v.id); controlla(r); }
+    else if (n.ora !== String(v.ora).slice(0, 5)) { const r = await sb().from('corsi_orari').update({ ora: n.ora }).eq('id', v.id); controlla(r); }
+  }
+  for (const n of orari) {
+    if (!vecchi.some((v) => v.giorno === n.giorno)) { const r = await sb().from('corsi_orari').insert({ corso_id: corsoId, giorno: n.giorno, ora: n.ora }); controlla(r); }
+  }
+  return corsoId;
+}
+
+/* ---------- argomenti ---------- */
+export async function argomentiTutti() {
+  const r = await sb().from('argomenti').select('id, area, nome, sinonimi, pronunce, sezioni, attivo, ordine, aggiornato_il').order('area').order('ordine').order('nome');
+  controlla(r);
+  return r.data || [];
+}
+/** Salva un argomento e scrive la versione (prima → dopo) nella cronologia delle correzioni. */
+export async function salvaArgomento(id, dati, prima = null, testoDetto = null) {
+  let argId = id;
+  if (argId) { const r = await sb().from('argomenti').update(dati).eq('id', argId).select('id'); controlla(r); if (!r.data?.length) throw new Error('argomento non trovato'); }
+  else { const r = await sb().from('argomenti').insert(dati).select('id').single(); controlla(r); argId = r.data.id; }
+  const s = await sessione();
+  const v = await sb().from('argomenti_versioni').insert({ argomento_id: argId, prima, dopo: dati, testo_detto: testoDetto, profilo_id: s?.user?.id || null });
+  controlla(v);
+  return argId;
+}
+
+/* ---------- tariffe ---------- */
+export async function tariffeTutte() {
+  const r = await sb().from('tariffe').select('id, nome, importo_cent, tipo, n_lezioni, comprende_private, comprende_extra, attiva, ordine').order('ordine').order('nome');
+  controlla(r);
+  return r.data || [];
+}
+export async function salvaTariffa(id, dati) {
+  const r = id ? await sb().from('tariffe').update(dati).eq('id', id).select('id').single() : await sb().from('tariffe').insert(dati).select('id').single();
+  controlla(r);
+  return r.data.id;
+}
+
+/* ---------- impostazioni: un campo alla volta, con la cronologia ---------- */
+export async function salvaImpostazione(gruppo, campo, valore, testoDetto = null) {
+  const r = await sb().from('impostazioni').select('valori').eq('id', 1).maybeSingle();
+  controlla(r);
+  const valori = r.data?.valori || {};
+  const prima = valori[gruppo]?.[campo];
+  valori[gruppo] = { ...(valori[gruppo] || {}), [campo]: valore };
+  const u = await sb().from('impostazioni').update({ valori }).eq('id', 1).select('id');
+  controlla(u);
+  const s = await sessione();
+  const v = await sb().from('impostazioni_versioni').insert({ campo: `${gruppo}.${campo}`, prima: prima ?? null, dopo: valore, testo_detto: testoDetto, profilo_id: s?.user?.id || null });
+  controlla(v);
+  return valori;
+}

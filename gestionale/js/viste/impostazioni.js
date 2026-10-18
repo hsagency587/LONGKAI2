@@ -1,18 +1,31 @@
-/* Longkai — viste/impostazioni.js: in fase 0 l'aspetto (tema, testo) e l'elenco dei gruppi che arriveranno. */
+/* Longkai — viste/impostazioni.js: aspetto, allievi (gestione, CSV, regole), corsi, forme e tecniche, scadenze, associazione. Il resto arriva con le fasi. */
 import { el } from '../base.js';
-import { leggiLocale } from '../dati.js';
-import { testata, sezione, riga, applicaAspetto, toast } from '../ui.js';
+import { leggiLocale, impostazioni, salvaImpostazione, elencoAllieviCompleto, importaAllievi, corsiCompleti, soloLettura } from '../dati.js';
+import { testata, sezione, riga, applicaAspetto, toast, avvisa, apriFoglio, statoVuoto } from '../ui.js';
+import { analizzaCsv, allieviDaCsv, csvDaAllievi } from '../../comune/csv.js';
+import { nomeCompleto } from '../../comune/allievi.js';
+import { disegnaCorsi } from './corsi.js';
+import { disegnaArgomenti } from './argomenti.js';
+import { campo } from './allievo-modulo.js';
 
-export function vistaImpostazioni(main, parametri) {
+const GRUPPI = [['Associazione', 'associazione'], ['Accesso e sicurezza', 'sicurezza'], ['Voce', 'voce'], ['Corsi', 'corsi'], ['Allievi', 'allievi'], ['Forme e tecniche', 'forme'], ['Private', 'private'], ['Presenze e ore', 'presenze'], ['Programma', 'programma'], ['Quote', 'quote'], ['Scadenze e avvisi', 'scadenze'], ['Promemoria agli allievi', 'promemoria'], ['Rapporti', 'rapporti'], ['Intelligenza artificiale', 'ia'], ['Dati', 'dati'], ['Segnalazioni', 'segnalazioni']];
+
+export async function vistaImpostazioni(main, parametri) {
   const gruppo = parametri[0];
+  const lettura = soloLettura();
+  const ridisegna = () => { main.replaceChildren(); vistaImpostazioni(main, parametri); };
+  if (gruppo === 'allievi') { testata('Allievi', { indietro: 'impostazioni' }); await gruppoAllievi(main, lettura, ridisegna); return; }
+  if (gruppo === 'corsi') { testata('Corsi', { indietro: 'impostazioni' }); await disegnaCorsi(main, ridisegna); return; }
+  if (gruppo === 'forme') { testata('Forme e tecniche', { indietro: 'impostazioni' }); await disegnaArgomenti(main, ridisegna); return; }
+  if (gruppo === 'scadenze') { testata('Scadenze e avvisi', { indietro: 'impostazioni' }); await gruppoScadenze(main, lettura, ridisegna); return; }
+  if (gruppo === 'associazione') { testata('Associazione', { indietro: 'impostazioni' }); await gruppoAssociazione(main, lettura, ridisegna); return; }
   if (gruppo && gruppo !== 'aspetto') {
-    testata('Impostazioni', { indietro: 'impostazioni' });
-    main.append(el('div', { class: 'vuoto' }, [el('p', { testo: 'Questo gruppo arriva in una fase successiva.' })]));
+    testata(GRUPPI.find(([, k]) => k === gruppo)?.[0] || 'Impostazioni', { indietro: 'impostazioni' });
+    main.append(statoVuoto('Questo gruppo arriva in una fase successiva.'));
     return;
   }
   testata('Impostazioni', { indietro: 'altro' });
   const loc = leggiLocale();
-  const ridisegna = () => { main.replaceChildren(); vistaImpostazioni(main, ['aspetto']); };
   const chipsTema = el('div', { class: 'chips' });
   for (const [k, nome] of [['scuro', 'Scuro'], ['chiaro', 'Chiaro'], ['sistema', 'Come il telefono']]) {
     chipsTema.append(el('button', { class: 'chip' + ((loc.tema || 'scuro') === k ? ' scelto' : ''), testo: nome, onclick: () => { applicaAspetto({ tema: k }); toast('Tema cambiato.'); ridisegna(); } }));
@@ -21,11 +34,111 @@ export function vistaImpostazioni(main, parametri) {
   for (const [k, nome] of [['normale', 'Normale'], ['grande', 'Grande']]) {
     chipsTesto.append(el('button', { class: 'chip' + ((loc.testo || 'normale') === k ? ' scelto' : ''), testo: nome, onclick: () => { applicaAspetto({ testo: k }); toast('Testo cambiato.'); ridisegna(); } }));
   }
-  main.replaceChildren();
   main.append(sezione('Aspetto', [el('div', { class: 'blocco' }, [el('p', { class: 'piccolo attenuato', testo: 'Tema' }), chipsTema, el('p', { class: 'piccolo attenuato', style: null, testo: 'Dimensione del testo' }), chipsTesto])]));
   const altri = el('div', { class: 'elenco' });
-  for (const [nome, k] of [['Associazione', 'associazione'], ['Accesso e sicurezza', 'sicurezza'], ['Voce', 'voce'], ['Corsi', 'corsi'], ['Allievi', 'allievi'], ['Forme e tecniche', 'forme'], ['Private', 'private'], ['Presenze e ore', 'presenze'], ['Programma', 'programma'], ['Quote', 'quote'], ['Scadenze e avvisi', 'scadenze'], ['Promemoria agli allievi', 'promemoria'], ['Rapporti', 'rapporti'], ['Intelligenza artificiale', 'ia'], ['Dati', 'dati'], ['Segnalazioni', 'segnalazioni']]) {
-    altri.append(riga({ principale: nome, href: '#/impostazioni/' + k }));
-  }
+  for (const [nome, k] of GRUPPI) altri.append(riga({ principale: nome, href: '#/impostazioni/' + k }));
   main.append(sezione('Tutto il resto', altri));
+}
+
+function tastoCorreggi() { return el('button', { class: 'tasto bordo', 'data-scrittura': '', testo: 'Correggi parlando', onclick: () => toast('La correzione a voce arriva in fase 4.') }); }
+
+/* ---------- Allievi: gestione, importazione, regole ---------- */
+async function gruppoAllievi(main, lettura, ridisegna) {
+  const imp = (await impostazioni().catch(() => ({}))).allievi || {};
+  const azioni = el('div', { class: 'elenco' }, [
+    riga({ principale: 'Elenco degli allievi', secondaria: 'cerca, filtra, apri le schede', href: '#/allievi' }),
+    lettura ? null : riga({ principale: 'Aggiungi un allievo', href: '#/allievi/nuovo' }),
+    lettura ? null : riga({ principale: 'Importa da un foglio (CSV)', secondaria: 'colonne: nome, cognome, nascita, email, telefono, città, corso, note', onclick: () => foglioImporta(ridisegna) }),
+    riga({ principale: 'Esporta l\'elenco (CSV)', onclick: async () => {
+      try {
+        const tutti = await elencoAllieviCompleto();
+        const blob = new Blob([csvDaAllievi(tutti)], { type: 'text/csv;charset=utf-8' });
+        const a = el('a', { href: URL.createObjectURL(blob), download: 'allievi-longkai.csv' }); document.body.append(a); a.click(); a.remove();
+        toast('File pronto.');
+      } catch (e) { avvisa(e.message); }
+    } }),
+  ]);
+  main.append(sezione('Gestione', azioni));
+  if (lettura) return;
+  const tipo = el('div', { class: 'chips' });
+  for (const [k, nome] of [['extra', 'Lezione in più (da pagare)'], ['normale', 'Normale']]) {
+    tipo.append(el('button', { class: 'chip' + ((imp.tipo_non_iscritto || 'extra') === k ? ' scelto' : ''), testo: nome, onclick: async () => { try { await salvaImpostazione('allievi', 'tipo_non_iscritto', k); toast('Salvato.'); ridisegna(); } catch (e) { avvisa(e.message); } } }));
+  }
+  const tutore = el('input', { type: 'checkbox' }); tutore.checked = imp.tutore_sotto_18 !== false;
+  tutore.addEventListener('change', async () => { try { await salvaImpostazione('allievi', 'tutore_sotto_18', tutore.checked); toast('Salvato.'); } catch (e) { avvisa(e.message); } });
+  main.append(sezione('Regole', el('div', { class: 'blocco' }, [
+    tastoCorreggi(),
+    el('p', { class: 'piccolo attenuato', style: null, testo: 'Chi viene a lezione senza essere iscritto a quel corso è segnato come:' }), tipo,
+    el('label', { class: 'interruttore' }, [el('span', { testo: 'Sotto i 18 anni serve il tutore' }), tutore]),
+  ])));
+}
+
+function foglioImporta(ridisegna) {
+  const file = el('input', { type: 'file', accept: '.csv,text/csv' });
+  const anteprima = el('div');
+  let letti = null;
+  const importa = el('button', { class: 'tasto pieno grande', testo: 'Importa', disabled: true, onclick: async () => {
+    if (!letti?.allievi.length) return;
+    importa.disabled = true;
+    try {
+      const corsi = await corsiCompleti().catch(() => []);
+      const r = await importaAllievi(letti.allievi, corsi);
+      chiudi(); toast(`Importati ${r.inseriti} allievi` + (r.iscritti ? `, ${r.iscritti} iscritti ai corsi.` : '.')); ridisegna();
+    } catch (e) { avvisa(e.message); importa.disabled = false; }
+  } });
+  file.addEventListener('change', async () => {
+    const f = file.files?.[0];
+    if (!f) return;
+    const testo = await f.text();
+    letti = allieviDaCsv(analizzaCsv(testo));
+    anteprima.replaceChildren();
+    if (!letti.allievi.length) { anteprima.append(el('p', { class: 'errore-campo', testo: letti.colonne.includes('nome') ? 'Nessuna riga con un nome.' : 'Non trovo la colonna “nome” nella prima riga.' })); importa.disabled = true; return; }
+    const elenco = el('div', { class: 'elenco' });
+    for (const a of letti.allievi.slice(0, 5)) elenco.append(riga({ principale: nomeCompleto(a), secondaria: [a.nascita, a.citta, a.corso].filter(Boolean).join(' · ') }));
+    anteprima.append(el('p', { class: 'attenuato', testo: `${letti.allievi.length} allievi letti` + (letti.scartate ? `, ${letti.scartate} righe senza nome scartate` : '') + `. Colonne riconosciute: ${letti.colonne.join(', ')}.` }), elenco);
+    importa.disabled = false;
+  });
+  const chiudi = apriFoglio('Importa da un foglio', el('div', {}, [campo('File CSV', file, 'La prima riga sono le intestazioni: nome, cognome, nascita (gg/mm/aaaa), email, telefono, città, corso, note.'), anteprima, importa]));
+}
+
+/* ---------- Scadenze e avvisi ---------- */
+async function gruppoScadenze(main, lettura, ridisegna) {
+  const imp = (await impostazioni().catch(() => ({}))).scadenze || {};
+  const soglie = el('input', { type: 'text', value: (imp.soglie || [30, 15, 7]).join(', '), inputmode: 'numeric' });
+  const cert = el('input', { type: 'number', min: '1', max: '36', value: imp.certificato_mesi ?? 12, inputmode: 'numeric' });
+  const tess = el('input', { type: 'number', min: '1', max: '36', value: imp.tesseramento_mesi ?? 12, inputmode: 'numeric' });
+  const richiamo = el('input', { type: 'number', min: '1', max: '10', value: imp.da_richiamare_lezioni ?? 3, inputmode: 'numeric' });
+  const salva = el('button', { class: 'tasto pieno', testo: 'Salva', onclick: async () => {
+    const s = soglie.value.split(/[,\s]+/).map((x) => Number(x)).filter((x) => x > 0);
+    if (!s.length) { avvisa('Le soglie sono numeri di giorni, separati da virgola.'); return; }
+    try {
+      await salvaImpostazione('scadenze', 'soglie', s);
+      await salvaImpostazione('scadenze', 'certificato_mesi', Number(cert.value) || 12);
+      await salvaImpostazione('scadenze', 'tesseramento_mesi', Number(tess.value) || 12);
+      await salvaImpostazione('scadenze', 'da_richiamare_lezioni', Number(richiamo.value) || 3);
+      toast('Salvato.'); ridisegna();
+    } catch (e) { avvisa(e.message); }
+  } });
+  const blocco = el('div', { class: 'blocco' }, [tastoCorreggi(), campo('Avvisi a (giorni prima)', soglie, 'es. 30, 15, 7 — e sempre allo scaduto'), el('div', { class: 'griglia-campi' }, [campo('Il certificato dura (mesi)', cert), campo('Il tesseramento dura (mesi)', tess)]), campo('“Da richiamare” dopo N lezioni di fila mancate', richiamo), lettura ? null : salva]);
+  if (lettura) blocco.querySelectorAll('input').forEach((x) => { x.disabled = true; });
+  main.append(sezione('Scadenze', blocco), el('p', { class: 'piccolo attenuato', testo: 'L\'ora degli avvisi, i canali (app, push, email) e il promemoria serale arrivano in fase 7.' }));
+}
+
+/* ---------- Associazione ---------- */
+async function gruppoAssociazione(main, lettura, ridisegna) {
+  const imp = (await impostazioni().catch(() => ({}))).associazione || {};
+  const nome = el('input', { type: 'text', value: imp.nome || 'Longkai' });
+  const sedi = el('input', { type: 'text', value: (imp.sedi || []).join(', ') });
+  const email = el('input', { type: 'email', value: imp.email_mittente || '', inputmode: 'email' });
+  const salva = el('button', { class: 'tasto pieno', testo: 'Salva', onclick: async () => {
+    try {
+      await salvaImpostazione('associazione', 'nome', nome.value.trim() || 'Longkai');
+      await salvaImpostazione('associazione', 'sedi', sedi.value.split(',').map((x) => x.trim()).filter(Boolean));
+      await salvaImpostazione('associazione', 'email_mittente', email.value.trim());
+      toast('Salvato.'); ridisegna();
+    } catch (e) { avvisa(e.message); }
+  } });
+  const blocco = el('div', { class: 'blocco' }, [tastoCorreggi(), campo('Nome', nome), campo('Sedi', sedi, 'separate da virgola'), campo('Email mittente per gli avvisi', email, 'si usa dalla fase 7'), lettura ? null : salva]);
+  if (lettura) blocco.querySelectorAll('input').forEach((x) => { x.disabled = true; });
+  main.append(sezione('Associazione', blocco));
 }

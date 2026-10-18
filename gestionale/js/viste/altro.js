@@ -10,9 +10,9 @@ export async function vistaAltro(main, parametri) {
   const p = await profilo().catch(() => null);
   const voci = [
     ['Rapporti', 'rapporto', '#/altro/rapporti'],
-    ['Scadenze', 'avviso', '#/altro/scadenze'],
-    ['Corsi', 'calendario', '#/altro/corsi'],
-    ['Cassetta', 'documento', '#/altro/cassetta'],
+    ['Scadenze', 'avviso', '#/scadenze'],
+    ['Corsi', 'calendario', '#/corsi'],
+    ['Cassetta', 'documento', '#/cassetta'],
     ['Impostazioni', 'impostazioni', '#/impostazioni'],
     ['Cambia password', 'esci', '#/nuova-password'],
     ['Correggi parlando', 'microfono', '#/altro/correggi'],
