@@ -50,20 +50,31 @@ export async function vistaOggi(main) {
     }
     const pianiDelCorso = piani.length ? `${piani.length} con piano personale` : null;
     const obiettiviN = obiettivi.length ? `${obiettivi.length} obiettivi aperti` : null;
-    const statoRiga = corso.stato === 'fatta' ? 'fatta ✓' : corso.stato === 'saltata' ? 'saltata' + (corso.motivo ? ': ' + corso.motivo : '') : 'da fare';
+    const inCoda = leggiLocale().coda.some((l) => l.tipo === 'dettatura' && l.sessione_id === corso.id && l.stato !== 'fallito');
+    const fallita = leggiLocale().coda.find((l) => l.tipo === 'dettatura' && l.sessione_id === corso.id && l.stato === 'fallito');
+    const statoRiga = corso.stato === 'fatta' ? 'fatta ✓' : corso.stato === 'saltata' ? 'saltata' + (corso.motivo ? ': ' + corso.motivo : '') : corso.in_revisione ? 'in revisione: la bozza è pronta' : inCoda ? 'in coda: sto trascrivendo' : fallita ? 'dettatura ferma: ' + (fallita.errore || '') : 'da fare';
     blocco.append(
       el('div', { class: 'principale', testo: `${corso.corso_nome || 'Lezione'} · ${corso.citta || ''} · ${formattaOra(corso.ora)} · ${formattaMinuti(corso.durata_minuti)}` + (corso.tipo === 'straordinaria' ? ' · straordinaria' : '') }),
       el('div', { class: 'secondaria attenuato', testo: [statoRiga, corso.presenti ? `${corso.presenti} presenti` : null, pianiDelCorso, obiettiviN].filter(Boolean).join(' · ') }),
       previsto ? el('div', { class: 'secondaria', testo: 'Previsto: ' + previsto }) : el('div', { class: 'secondaria attenuato', testo: 'Niente di previsto: libero.' }),
     );
     if (sifu && corso.stato === 'prevista') {
-      blocco.append(
-        el('button', { class: 'tasto pieno grande', 'data-scrittura': '', onclick: () => toast('La dettatura arriva in fase 4: intanto “A mano”.') }, [icona('microfono'), 'Detta il rapportino']),
-        el('div', { class: 'tasti riga-sotto', 'data-scrittura': '' }, [
-          el('a', { class: 'tasto bordo', href: `#/sessione/${corso.id}`, testo: 'A mano' }),
-          el('button', { class: 'tasto bordo', testo: 'Salta', onclick: () => foglioSalta(corso.id, ridisegna) }),
-        ]),
-      );
+      if (corso.in_revisione) {
+        blocco.append(el('a', { class: 'tasto pieno grande', 'data-scrittura': '', href: `#/sessione/${corso.id}` }, [icona('spunta'), 'Rivedi e conferma']));
+        blocco.append(el('div', { class: 'tasti riga-sotto', 'data-scrittura': '' }, [el('a', { class: 'tasto bordo', href: `#/detta/${corso.id}`, testo: 'Detta di nuovo' }), el('button', { class: 'tasto bordo', testo: 'Salta', onclick: () => foglioSalta(corso.id, ridisegna) })]));
+      } else if (inCoda) {
+        blocco.append(el('p', { class: 'attenuato', style: null }, [el('span', { class: 'in-coda', testo: '…' }), ' Sto trascrivendo: ti avviso io. Puoi chiudere l\'app.']));
+        blocco.append(el('div', { class: 'tasti riga-sotto', 'data-scrittura': '' }, [el('a', { class: 'tasto bordo', href: `#/sessione/${corso.id}`, testo: 'Intanto a mano' }), el('a', { class: 'tasto', href: '#/diagnostica', testo: 'La coda' })]));
+      } else {
+        blocco.append(
+          el('a', { class: 'tasto pieno grande', 'data-scrittura': '', href: `#/detta/${corso.id}` }, [icona('microfono'), 'Detta il rapportino']),
+          el('div', { class: 'tasti riga-sotto', 'data-scrittura': '' }, [
+            el('a', { class: 'tasto bordo', href: `#/sessione/${corso.id}`, testo: 'A mano' }),
+            el('button', { class: 'tasto bordo', testo: 'Salta', onclick: () => foglioSalta(corso.id, ridisegna) }),
+          ]),
+        );
+        if (fallita) blocco.append(el('a', { class: 'tasto', href: '#/diagnostica', testo: 'Vedi perché la dettatura si è fermata' }));
+      }
     } else if (sifu && corso.stato === 'fatta') {
       blocco.append(el('div', { class: 'tasti riga-sotto', 'data-scrittura': '' }, [el('a', { class: 'tasto bordo', href: `#/sessione/${corso.id}`, testo: 'Modifica' }), el('button', { class: 'tasto', testo: 'PDF', onclick: () => toast('Il rapportino PDF arriva in fase 6.') })]));
     } else if (sifu && corso.stato === 'saltata') {
@@ -84,7 +95,7 @@ export async function vistaOggi(main) {
   for (const s of priv) {
     const piano = piani.find((x) => x.allievo_id === s.allievo_id);
     const pianoTesto = piano?.prossimo_passo_nota ? ' · piano: ' + piano.prossimo_passo_nota : '';
-    elenco.append(riga({ principale: `${formattaOra(s.ora)} · ${nomeDi({ nome: s.allievo_nome, cognome: s.allievo_cognome })}`, secondaria: formattaMinuti(s.durata_minuti) + (s.stato === 'fatta' ? ' · fatta' : s.stato === 'saltata' ? ' · saltata' : '') + pianoTesto, pallino: s.stato === 'fatta' ? 'ok' : s.stato === 'saltata' ? 'neutro' : 'attenzione', onclick: () => (sifu ? foglioPrivata(s, ridisegna) : vai(`sessione/${s.id}`)) }));
+    elenco.append(riga({ principale: `${formattaOra(s.ora)} · ${nomeDi({ nome: s.allievo_nome, cognome: s.allievo_cognome })}`, secondaria: formattaMinuti(s.durata_minuti) + (s.stato === 'fatta' ? ' · fatta' : s.stato === 'saltata' ? ' · saltata' : s.in_revisione ? ' · bozza pronta: rivedi' : '') + pianoTesto, pallino: s.stato === 'fatta' ? 'ok' : s.stato === 'saltata' ? 'neutro' : 'attenzione', onclick: () => (sifu ? foglioPrivata(s, ridisegna) : vai(`sessione/${s.id}`)) }));
   }
   main.append(sezione('Private', elenco, sifu ? el('button', { class: 'tasto azione', 'data-scrittura': '', testo: '+ Privata', onclick: () => foglioNuovaPrivata(oggi, imp.private || {}, ridisegna) }) : null));
 
@@ -168,8 +179,8 @@ export async function foglioNuovaPrivata(dataIniziale, impPrivate, ridisegna, al
 function foglioPrivata(s, ridisegna) {
   const figli = [el('p', { class: 'attenuato', testo: `${formattaData(s.data)} · ${formattaOra(s.ora)} · ${formattaMinuti(s.durata_minuti)}` + (s.nota ? ' · ' + s.nota : '') })];
   if (s.stato === 'prevista') {
-    figli.push(el('a', { class: 'tasto pieno', href: `#/sessione/${s.id}`, testo: 'A mano', onclick: () => chiudi() }));
-    figli.push(el('button', { class: 'tasto bordo', testo: 'Detta', onclick: () => toast('La dettatura arriva in fase 4.') }));
+    figli.push(el('a', { class: 'tasto pieno', href: `#/sessione/${s.id}`, testo: s.in_revisione ? 'Rivedi e conferma' : 'A mano', onclick: () => chiudi() }));
+    figli.push(el('a', { class: 'tasto bordo', href: `#/detta/${s.id}`, testo: 'Detta', onclick: () => chiudi() }));
     figli.push(el('button', { class: 'tasto bordo', testo: 'Salta', onclick: async () => { try { await saltaSessione(s.id, null); chiudi(); toast('Saltata.'); ridisegna(); } catch (e) { avvisa(e.message); } } }));
     figli.push(el('button', { class: 'tasto bordo', testo: 'Sposta a domani', onclick: async () => { try { const { spostaSessione } = await import('../dati.js'); await spostaSessione(s.id, { data: aggiungiGiorni(s.data, 1), ora: s.ora, durata_minuti: s.durata_minuti }); chiudi(); toast('Spostata a domani.'); ridisegna(); } catch (e) { avvisa(e.message); } } }));
     figli.push(el('button', { class: 'tasto pericolo', testo: 'Annulla', onclick: () => { chiudi(); foglioAnnulla(s, ridisegna); } }));

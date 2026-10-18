@@ -258,6 +258,30 @@ img { max-width: 100%; display: block; }
 .area-dettagli .elenco { margin-top: var(--s-2); }
 details > summary { cursor: pointer; }
 
+/* ---------- la bolla e la dettatura ---------- */
+.bolla { position: fixed; right: var(--s-4); bottom: calc(var(--nav-altezza) + env(safe-area-inset-bottom) + var(--s-4)); width: 60px; height: 60px; border-radius: 50%; background: var(--c-oro); color: var(--c-oro-testo); border: 0; box-shadow: 0 6px 20px var(--c-ombra); z-index: 35; display: flex; align-items: center; justify-content: center; cursor: pointer; }
+.bolla svg { width: 28px; height: 28px; }
+.bolla:hover { background: var(--c-oro-2); }
+body.senza-bolla .bolla, body.sola-lettura .bolla { display: none; }
+.detta { text-align: center; }
+.detta + .chips { justify-content: center; }
+.domanda { font-family: var(--f-titoli); font-size: var(--t-22); margin: var(--s-4) 0 var(--s-2); text-align: center; }
+.mic { width: 120px; height: 120px; border-radius: 50%; border: 0; background: var(--c-oro); color: var(--c-oro-testo); margin: var(--s-4) auto; display: flex; align-items: center; justify-content: center; box-shadow: 0 8px 30px var(--c-ombra); cursor: pointer; }
+.mic svg { width: 56px; height: 56px; }
+.mic.registra { background: var(--c-errore); color: #fff; animation: pulsa 1.4s ease-in-out infinite; }
+.mic.pausa { background: var(--c-attenzione); color: #1a1613; animation: none; }
+@keyframes pulsa { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.06); } }
+.tacchette { display: flex; gap: 4px; justify-content: center; height: 32px; align-items: flex-end; margin: var(--s-3) 0; }
+.tacchette span { width: 6px; height: 6px; border-radius: 3px; background: var(--c-bordo); transition: height 80ms; }
+.tacchette span.viva { background: var(--c-oro); }
+.tempo { font-variant-numeric: tabular-nums; font-size: var(--t-28); font-family: var(--f-titoli); text-align: center; }
+.promemoria { text-align: left; margin: var(--s-4) auto 0; max-width: 420px; padding-left: var(--s-5); }
+.promemoria li { margin-bottom: var(--s-1); color: var(--c-testo-2); }
+.passi { display: flex; gap: 6px; justify-content: center; margin-bottom: var(--s-2); }
+.passi span { width: 10px; height: 10px; border-radius: 50%; background: var(--c-bordo); }
+.passi span.fatto { background: var(--c-ok); }
+.passi span.corrente { background: var(--c-oro); }
+
 /* ---------- tasti ---------- */
 .tasto {
   display: inline-flex; align-items: center; justify-content: center; gap: var(--s-2);
@@ -364,6 +388,7 @@ body.sola-lettura .nav a[data-scrittura] { display: none !important; }
 
 /* ---------- medio: barra laterale stretta ---------- */
 @media (min-width: 600px) {
+  .bolla { bottom: var(--s-5); }
   .app { grid-template-columns: 80px 1fr; grid-template-rows: auto 1fr; grid-template-areas: "nav barra" "nav contenuto"; padding-bottom: 0; }
   .app.senza-nav { grid-template-columns: 1fr; grid-template-areas: "barra" "contenuto"; }
   .nav { position: sticky; top: 0; bottom: auto; left: auto; right: auto; grid-area: nav; height: 100dvh; grid-auto-flow: row; grid-auto-columns: auto; grid-auto-rows: 72px; align-content: start; padding-top: var(--s-3); border-top: 0; border-right: 1px solid var(--c-bordo); }

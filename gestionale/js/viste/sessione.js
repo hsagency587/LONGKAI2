@@ -1,7 +1,7 @@
 /* Longkai — viste/sessione.js: una sessione (corso, straordinaria o privata) fatta a mano: presenti, gruppo, singoli, forme,
    pagamenti, prossima volta. È la stessa revisione della dettatura (fase 4), senza il vocale. Una sessione fatta si riapre e si corregge. */
 import { el, euro, nuovoId } from '../base.js';
-import { sessioneCompleta, attesiSessione, allieviAttivi, argomentiAttivi, confermaSessione, saltaSessione, riapriSessione, annullaSessione, spostaSessione, nuovoAllievoVeloce, ultimoContenutoCorso, soloLettura, impostazioni } from '../dati.js';
+import { sessioneCompleta, attesiSessione, allieviAttivi, argomentiAttivi, confermaSessione, saltaSessione, riapriSessione, annullaSessione, spostaSessione, nuovoAllievoVeloce, ultimoContenutoCorso, soloLettura, impostazioni, aggiungiSoprannome, aggiungiPronuncia, creaPrivate } from '../dati.js';
 import { testata, riga, sezione, scheletri, statoVuoto, toast, avvisa, apriFoglio, chiedi, vai } from '../ui.js';
 import { normalizza } from '../../comune/fonetica.js';
 import { formattaData, formattaOra, oggiRoma } from '../../comune/date.js';
@@ -42,7 +42,7 @@ export async function vistaSessione(main, parametri) {
   }
 
   /* ---------- lo stato del modulo, già riempito se la sessione è fatta ---------- */
-  const st = { presenti: [], gruppo: { argomenti: [], nota: '' }, singoli: [], forme: [], pagamenti: [], prossima_volta: { argomenti: [], nota: '' }, nota: s.nota || '' };
+  const st = { presenti: [], gruppo: { argomenti: [], nota: '' }, singoli: [], forme: [], pagamenti: [], prossima_volta: { argomenti: [], nota: '' }, piani: [], nota: s.nota || '', testo_grezzo: d.testoGrezzo || '' };
   const iscritti = new Set(attesi.map((a) => a.allievo_id));
   const giaPresenti = new Map(d.presenze.map((p) => [p.allievo_id, p]));
   const aggiungiPresente = (a, { presente, minuti, tipo }) => {
@@ -61,7 +61,73 @@ export async function vistaSessione(main, parametri) {
   for (const f of d.forme) st.forme.push({ allievo_id: f.allievo_id, forma_id: f.forma_id, stato: f.a_stato, sezione: f.a_sezione });
   for (const p of d.pagamenti) st.pagamenti.push({ allievo_id: p.allievo_id, importo_cent: p.importo_cent, metodo: p.metodo, nota: p.nota, registrato: true });
   if (d.programmaProssima) st.prossima_volta = { argomenti: [...(d.programmaProssima.programma_argomenti || [])].sort((a, b) => a.ordine - b.ordine).map((x) => x.argomento_id), nota: d.programmaProssima.nota || '' };
+  // la bozza della dettatura (fase 4): riempie il modulo; quello che non è stato riconosciuto finisce in "Da sistemare"
+  const b = s.stato !== 'fatta' && d.bozza ? d.bozza : null;
+  const daSistemare = { nomi: [], argomenti: [] };
+  if (b) {
+    if (Array.isArray(b.presenti) && b.presenti.length) {
+      const detti = new Map(b.presenti.map((p) => [p.allievo_id, p]));
+      for (const p of st.presenti) { const x = detti.get(p.allievo_id); p.presente = Boolean(x); if (x?.minuti) p.minuti = minutiValidi(x.minuti, s.durata_minuti); if (x?.tipo) p.tipo = x.tipo; }
+      for (const [aid, x] of detti) if (!st.presenti.some((p) => p.allievo_id === aid)) { const a = tutti.find((y) => y.id === aid); if (a) aggiungiPresente(a, { presente: true, minuti: x.minuti, tipo: x.tipo }); }
+    }
+    for (const aid of b.assenti_detti || []) { const p = st.presenti.find((x) => x.allievo_id === aid); if (p) p.presente = false; }
+    if (b.gruppo) st.gruppo = { argomenti: b.gruppo.argomenti || [], nota: b.gruppo.nota || '' };
+    for (const x of b.singoli || []) { const sg = singolo(x.allievo_id); sg.argomenti = x.argomenti || []; sg.nota = x.nota || ''; sg.osservazione = x.osservazione || ''; }
+    for (const f of b.forme || []) st.forme.push({ allievo_id: f.allievo_id, forma_id: f.forma_id, stato: f.stato || 'in_apprendimento', sezione: f.sezione || 0 });
+    for (const p of b.pagamenti || []) st.pagamenti.push({ allievo_id: p.allievo_id, importo_cent: p.importo_cent, metodo: p.metodo || 'contanti', nota: [p.periodo, p.nota].filter(Boolean).join(' · ') || null });
+    if (b.prossima_volta && ((b.prossima_volta.argomenti || []).length || b.prossima_volta.nota)) st.prossima_volta = { argomenti: b.prossima_volta.argomenti || [], nota: b.prossima_volta.nota || '' };
+    for (const p of b.piani || []) st.piani.push({ allievo_id: p.allievo_id, argomenti: p.argomenti || [], prossimo_passo: p.prossimo_passo || '' });
+    daSistemare.nomi = (b.non_riconosciuti?.nomi || []).map((n) => ({ ...n, risolto: false }));
+    daSistemare.argomenti = (b.non_riconosciuti?.argomenti || []).map((n) => ({ ...n, risolto: false }));
+    st.privateDette = b.private || [];
+  }
   function singolo(allievoId) { let x = st.singoli.find((y) => y.allievo_id === allievoId); if (!x) { x = { allievo_id: allievoId, argomenti: [], nota: '', osservazione: '' }; st.singoli.push(x); } return x; }
+
+  /* ---------- DA SISTEMARE (dalla dettatura) ---------- */
+  if (b && (daSistemare.nomi.length || daSistemare.argomenti.length)) {
+    const boxDS = el('div', { class: 'elenco' });
+    const disegnaDS = () => {
+      boxDS.replaceChildren();
+      for (const n of daSistemare.nomi) boxDS.append(riga({ principale: `“${n.sentito}”`, secondaria: n.risolto ? 'sistemato: ' + n.risolto : 'nome non riconosciuto' + (n.candidati?.length ? ' · forse: ' + n.candidati.map((id) => nomeDi(tutti.find((a) => a.id === id))).filter(Boolean).join(', ') : ''), pallino: n.risolto ? 'ok' : 'attenzione', onclick: n.risolto ? null : () => foglioNome(n) }));
+      for (const n of daSistemare.argomenti) boxDS.append(riga({ principale: `“${n.sentito}”`, secondaria: n.risolto ? 'sistemato: ' + n.risolto : 'termine non riconosciuto' + (n.dove ? ' · detto in: ' + n.dove : ''), pallino: n.risolto ? 'ok' : 'attenzione', onclick: n.risolto ? null : () => foglioTermine(n) }));
+    };
+    const foglioNome = (n) => {
+      const ricorda = el('input', { type: 'checkbox' }); ricorda.checked = imp.voce?.ricorda_pronunce !== false;
+      const candidati = (n.candidati || []).map((id) => tutti.find((a) => a.id === id)).filter(Boolean);
+      const cerca = el('input', { type: 'search', placeholder: 'Chi è?', autocomplete: 'off' });
+      const elenco = el('div', { class: 'elenco' });
+      const scegli = async (a) => {
+        if (!st.presenti.some((p) => p.allievo_id === a.id)) aggiungiPresente(a, { presente: true, minuti: n.minuti });
+        else st.presenti.find((p) => p.allievo_id === a.id).presente = true;
+        n.risolto = nomeDi(a);
+        if (ricorda.checked) { try { await aggiungiSoprannome(a.id, n.sentito); } catch { /* niente */ } }
+        chiudi(); disegnaPresenti(); disegnaDS();
+      };
+      const mostra = () => { elenco.replaceChildren(); const q = normalizza(cerca.value); const righe = (q ? tutti.filter((a) => normalizza(nomeDi(a)).includes(q) || (a.soprannomi || []).some((x) => normalizza(x).includes(q))) : candidati).slice(0, 6); for (const a of righe) elenco.append(riga({ principale: nomeDi(a), secondaria: !q && candidati.includes(a) ? 'proposto' : null, onclick: () => scegli(a) })); if (!righe.length) elenco.append(statoVuoto('Nessuno.')); };
+      cerca.addEventListener('input', mostra);
+      const chiudi = apriFoglio(`“${n.sentito}”: chi è?`, el('div', {}, [el('div', { class: 'campo' }, [cerca]), elenco, el('label', { class: 'interruttore' }, [el('span', { testo: 'Ricorda come lo dico' }), ricorda]), el('button', { class: 'tasto bordo', testo: 'Nuovo allievo', onclick: async () => { try { const a = await nuovoAllievoVeloce(n.sentito); tutti.push(a); await scegli(a); toast('Creato: la scheda resta da completare.'); } catch (e) { avvisa(e.message); } } }), el('button', { class: 'tasto', testo: 'Lascia perdere', onclick: () => { n.risolto = '(ignorato)'; chiudi(); disegnaDS(); } })]));
+      mostra();
+    };
+    const foglioTermine = (n) => {
+      const ricorda = el('input', { type: 'checkbox' }); ricorda.checked = imp.voce?.ricorda_pronunce !== false;
+      const cerca = el('input', { type: 'search', placeholder: 'Qual è?', autocomplete: 'off', value: '' });
+      const elenco = el('div', { class: 'elenco' });
+      const scegli = async (a) => {
+        if (n.dove === 'prossima_volta') { if (!st.prossima_volta.argomenti.includes(a.id)) st.prossima_volta.argomenti.push(a.id); }
+        else if (!st.gruppo.argomenti.includes(a.id)) st.gruppo.argomenti.push(a.id);
+        n.risolto = a.nome;
+        if (ricorda.checked) { try { await aggiungiPronuncia(a.id, n.sentito); } catch { /* niente */ } }
+        chiudi(); disegnaGruppo(); disegnaDS();
+      };
+      const mostra = () => { elenco.replaceChildren(); const q = normalizza(cerca.value || n.sentito); const righe = argomenti.filter((a) => normalizza(a.nome).includes(q) || (a.sinonimi || []).some((x) => normalizza(x).includes(q)) || (a.pronunce || []).some((x) => normalizza(x).includes(q)) || (q.length > 3 && normalizza(a.nome).slice(0, 4) === q.slice(0, 4))).slice(0, 8); for (const a of righe) elenco.append(riga({ principale: a.nome, secondaria: a.area, onclick: () => scegli(a) })); if (!righe.length) elenco.append(statoVuoto('Niente di simile: cerca.')); };
+      cerca.addEventListener('input', mostra);
+      const chiudi = apriFoglio(`“${n.sentito}”: quale argomento?`, el('div', {}, [el('div', { class: 'campo' }, [cerca]), elenco, el('label', { class: 'interruttore' }, [el('span', { testo: 'Ricorda come lo dico' }), ricorda]), el('button', { class: 'tasto', testo: 'Lascia perdere', onclick: () => { n.risolto = '(ignorato)'; chiudi(); disegnaDS(); } })]));
+      mostra();
+    };
+    disegnaDS();
+    main.append(sezione('Da sistemare', boxDS));
+  }
+  if (b && b.titolo) main.append(el('p', { class: 'attenuato', testo: '“' + b.titolo + '”' }));
 
   /* ---------- PRESENTI ---------- */
   const boxPresenti = el('div', { class: 'elenco' });
@@ -128,6 +194,22 @@ export async function vistaSessione(main, parametri) {
     main.append(sezione('Osservazioni e forme', el('div', { class: 'blocco' }, [campo('Osservazione', oss), boxForme, el('button', { class: 'tasto bordo', testo: '▲ Avanzamento in una forma', onclick: () => foglioForma({ allievo_id: s.allievo_id, nome: nomeDi({ nome: s.allievo_nome, cognome: s.allievo_cognome }) }, st, forme, disegnaForme) })])));
   }
 
+  /* ---------- PRIVATE DETTE (dalla dettatura del corso) ---------- */
+  if ((st.privateDette || []).length && s.tipo !== 'privata') {
+    const boxPr = el('div', { class: 'elenco' });
+    for (const p of st.privateDette) {
+      const nome = nomeDi(tutti.find((a) => a.id === p.allievo_id)) || 'privata';
+      boxPr.append(riga({ principale: nome + (p.ora ? ' · ' + p.ora : ''), secondaria: [(p.argomenti || []).map((id) => argomenti.find((a) => a.id === id)?.nome).filter(Boolean).join(', '), p.nota, p.osservazione ? '“' + p.osservazione + '”' : null].filter(Boolean).join(' · ') || 'detta a voce', pallino: 'info', onclick: async () => {
+        try {
+          const sid = p.sessione_id;
+          if (!sid) { if (!p.allievo_id) { avvisa('Non so di chi è questa privata.'); return; } await creaPrivate({ allievoId: p.allievo_id, data: s.data, ora: p.ora || '17:00', minuti: p.minuti || 60 }); toast('Privata creata: aprila da Oggi per confermarla.'); return; }
+          vai(`sessione/${sid}`);
+        } catch (e) { avvisa(e.message); }
+      } }));
+    }
+    main.append(sezione('Private dette', boxPr));
+  }
+
   /* ---------- PAGAMENTI ---------- */
   const boxPag = el('div', { class: 'elenco' });
   const disegnaPag = () => {
@@ -169,7 +251,9 @@ export async function vistaSessione(main, parametri) {
   if (s.stato === 'prevista') secondari.append(el('button', { class: 'tasto', testo: 'Salta', onclick: () => foglioSalta(id, ridisegna) }));
   if (s.tipo === 'privata' && s.stato === 'prevista') secondari.append(el('button', { class: 'tasto', testo: 'Sposta', onclick: () => foglioSposta(s, ridisegna) }));
   if (s.stato !== 'fatta') secondari.append(el('button', { class: 'tasto pericolo', testo: 'Annulla la sessione', onclick: () => foglioAnnulla(s, ridisegna) }));
-  main.append(sezione('Nota', el('div', { class: 'blocco' }, [campo('Nota', nota)])), errore, conferma, el('div', { class: 'spazio' }), secondari);
+  main.append(sezione('Nota', el('div', { class: 'blocco' }, [campo('Nota', nota)])));
+  if (st.testo_grezzo) main.append(el('details', { class: 'area-dettagli' }, [el('summary', { testo: 'Il testo dettato' }), el('p', { class: 'piccolo attenuato', style: null, testo: st.testo_grezzo })]));
+  main.append(errore, conferma, el('div', { class: 'spazio' }), secondari);
 }
 
 /* ---------- fogli ---------- */

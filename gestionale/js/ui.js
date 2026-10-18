@@ -74,6 +74,14 @@ function disegnaNav(attiva) {
 }
 export function mostraNav(si) { document.getElementById('nav').classList.toggle('nascosto', !si); document.getElementById('app').classList.toggle('senza-nav', !si); }
 
+/* ---------- la bolla per dettare (solo il Sifu) ---------- */
+export function mostraBolla(si, azione) {
+  let b = document.getElementById('bolla');
+  if (!si) { b?.remove(); return; }
+  if (!b) { b = el('button', { id: 'bolla', class: 'bolla', 'aria-label': 'Detta', title: 'Detta' }, icona('microfono')); document.body.append(b); }
+  b.onclick = azione;
+}
+
 /* ---------- strisce in cima ---------- */
 export function striscia(id, testo, { tipo = '', tasto = null } = {}) {
   const box = document.getElementById('strisce');

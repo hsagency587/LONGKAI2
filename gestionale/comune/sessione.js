@@ -19,7 +19,10 @@ export function datiPerConferma(stato) {
   const pagamenti = (s.pagamenti || []).filter((p) => p.allievo_id && p.importo_cent > 0).map((p) => ({ allievo_id: p.allievo_id, importo_cent: Math.round(p.importo_cent), metodo: p.metodo || 'contanti', nota: (p.nota || '').trim() || null }));
   if (pagamenti.length) dati.pagamenti = pagamenti;
   if (s.prossima_volta && ((s.prossima_volta.argomenti || []).length || (s.prossima_volta.nota || '').trim())) dati.prossima_volta = { argomenti: s.prossima_volta.argomenti || [], nota: (s.prossima_volta.nota || '').trim() || null };
+  const piani = (s.piani || []).filter((p) => p.allievo_id && ((p.argomenti || []).length || (p.prossimo_passo || '').trim())).map((p) => ({ allievo_id: p.allievo_id, prossimo_passo_argomenti: p.argomenti || [], prossimo_passo_nota: (p.prossimo_passo || '').trim() || null }));
+  if (piani.length) dati.piani = piani;
   if ((s.nota || '').trim()) dati.nota = s.nota.trim();
+  if ((s.testo_grezzo || '').trim()) dati.testo_grezzo = s.testo_grezzo;
   return dati;
 }
 

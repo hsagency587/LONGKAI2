@@ -1,6 +1,8 @@
 /* Longkai — viste/impostazioni.js: aspetto, allievi (gestione, CSV, regole), corsi, forme e tecniche, scadenze, associazione. Il resto arriva con le fasi. */
 import { el } from '../base.js';
-import { leggiLocale, impostazioni, salvaImpostazione, elencoAllieviCompleto, importaAllievi, corsiCompleti, soloLettura } from '../dati.js';
+import { leggiLocale, impostazioni, salvaImpostazione, elencoAllieviCompleto, importaAllievi, corsiCompleti, soloLettura, consumiMese } from '../dati.js';
+import { euro } from '../base.js';
+import { puoRegistrare, formatoSupportato } from '../voce.js';
 import { testata, sezione, riga, applicaAspetto, toast, avvisa, apriFoglio, statoVuoto } from '../ui.js';
 import { analizzaCsv, allieviDaCsv, csvDaAllievi } from '../../comune/csv.js';
 import { nomeCompleto } from '../../comune/allievi.js';
@@ -19,6 +21,8 @@ export async function vistaImpostazioni(main, parametri) {
   if (gruppo === 'forme') { testata('Forme e tecniche', { indietro: 'impostazioni' }); await disegnaArgomenti(main, ridisegna); return; }
   if (gruppo === 'scadenze') { testata('Scadenze e avvisi', { indietro: 'impostazioni' }); await gruppoScadenze(main, lettura, ridisegna); return; }
   if (gruppo === 'associazione') { testata('Associazione', { indietro: 'impostazioni' }); await gruppoAssociazione(main, lettura, ridisegna); return; }
+  if (gruppo === 'voce') { testata('Voce', { indietro: 'impostazioni' }); await gruppoVoce(main, lettura, ridisegna); return; }
+  if (gruppo === 'ia') { testata('Intelligenza artificiale', { indietro: 'impostazioni' }); await gruppoIa(main, lettura, ridisegna); return; }
   if (gruppo && gruppo !== 'aspetto') {
     testata(GRUPPI.find(([, k]) => k === gruppo)?.[0] || 'Impostazioni', { indietro: 'impostazioni' });
     main.append(statoVuoto('Questo gruppo arriva in una fase successiva.'));
@@ -122,6 +126,42 @@ async function gruppoScadenze(main, lettura, ridisegna) {
   const blocco = el('div', { class: 'blocco' }, [tastoCorreggi(), campo('Avvisi a (giorni prima)', soglie, 'es. 30, 15, 7 — e sempre allo scaduto'), el('div', { class: 'griglia-campi' }, [campo('Il certificato dura (mesi)', cert), campo('Il tesseramento dura (mesi)', tess)]), campo('“Da richiamare” dopo N lezioni di fila mancate', richiamo), lettura ? null : salva]);
   if (lettura) blocco.querySelectorAll('input').forEach((x) => { x.disabled = true; });
   main.append(sezione('Scadenze', blocco), el('p', { class: 'piccolo attenuato', testo: 'L\'ora degli avvisi, i canali (app, push, email) e il promemoria serale arrivano in fase 7.' }));
+}
+
+/* ---------- Voce ---------- */
+async function gruppoVoce(main, lettura, ridisegna) {
+  const imp = (await impostazioni().catch(() => ({}))).voce || {};
+  const modo = el('div', { class: 'chips' });
+  for (const [k, nome] of [['libera', 'Libera: tutto in una volta'], ['guidata', 'Guidata: una domanda alla volta']]) {
+    modo.append(el('button', { class: 'chip' + ((imp.modo || 'libera') === k ? ' scelto' : ''), testo: nome, disabled: lettura, onclick: async () => { try { await salvaImpostazione('voce', 'modo', k); toast('Salvato.'); ridisegna(); } catch (e) { avvisa(e.message); } } }));
+  }
+  const interr = (etichetta, campo, valore) => { const i = el('input', { type: 'checkbox' }); i.checked = valore; i.disabled = lettura; i.addEventListener('change', async () => { try { await salvaImpostazione('voce', campo, i.checked); toast('Salvato.'); } catch (e) { avvisa(e.message); } }); return el('label', { class: 'interruttore' }, [el('span', { testo: etichetta }), i]); };
+  const prossima = el('div', { class: 'chips' });
+  for (const [k, nome] of [['solo_se_manca', 'Solo se manca'], ['sempre', 'Sempre'], ['mai', 'Mai']]) prossima.append(el('button', { class: 'chip' + ((imp.chiedi_prossima_volta || 'solo_se_manca') === k ? ' scelto' : ''), testo: nome, disabled: lettura, onclick: async () => { try { await salvaImpostazione('voce', 'chiedi_prossima_volta', k); toast('Salvato.'); ridisegna(); } catch (e) { avvisa(e.message); } } }));
+  main.append(sezione('Dettatura', el('div', { class: 'blocco' }, [
+    el('p', { class: 'piccolo attenuato', testo: 'Modo di partenza' }), modo,
+    el('p', { class: 'piccolo attenuato', style: null, testo: 'In guidata, la domanda “La prossima volta?”' }), prossima,
+    interr('“Ricorda come lo dico” acceso', 'ricorda_pronunce', imp.ricorda_pronunce !== false),
+    interr('Aiuto sotto Detta per le prime tre dettature', 'aiuto_prime_dettature', imp.aiuto_prime_dettature !== false),
+    el('p', { class: 'piccolo attenuato', style: null, testo: `Dettature fatte: ${imp.dettature_fatte || 0}. Microfono: ${puoRegistrare() ? 'disponibile (' + (formatoSupportato() || 'formato di sistema') + ')' : 'non disponibile su questo browser'}.` }),
+  ])), el('p', { class: 'piccolo attenuato', testo: 'Le pronunce si vedono e si correggono in Forme e tecniche. La calibrazione della voce arriva più avanti.' }));
+}
+
+/* ---------- Intelligenza artificiale ---------- */
+async function gruppoIa(main, lettura, ridisegna) {
+  const [impTutte, consumi] = await Promise.all([impostazioni().catch(() => ({})), consumiMese().catch(() => [])]);
+  const imp = impTutte.ia || {};
+  const accesa = el('input', { type: 'checkbox' }); accesa.checked = imp.accesa !== false; accesa.disabled = lettura;
+  accesa.addEventListener('change', async () => { try { await salvaImpostazione('ia', 'accesa', accesa.checked); toast(accesa.checked ? 'Accesa.' : 'Spenta: la dettatura si ferma, “A mano” funziona.'); } catch (e) { avvisa(e.message); } });
+  const tetto = el('input', { type: 'number', min: '0', step: '1', value: ((imp.tetto_mensile_cent ?? 500) / 100).toFixed(0), inputmode: 'numeric' });
+  const salva = el('button', { class: 'tasto pieno', testo: 'Salva il tetto', onclick: async () => { try { await salvaImpostazione('ia', 'tetto_mensile_cent', Math.round(Number(tetto.value) * 100) || 0); toast('Salvato.'); ridisegna(); } catch (e) { avvisa(e.message); } } });
+  const speso = consumi.reduce((t, c) => t + (c.spesa_cent || 0), 0);
+  const elenco = el('div', { class: 'elenco' });
+  for (const c of consumi) elenco.append(riga({ principale: c.funzione === 'trascrivi' ? 'Trascrizione' : c.funzione === 'riordina' ? 'Riordino' : c.funzione, secondaria: [c.chiamate ? `${c.chiamate} chiamate` : null, c.secondi_audio ? `${Math.round(c.secondi_audio / 60)} minuti di audio` : null, c.token_in ? `${c.token_in + c.token_out} token` : null].filter(Boolean).join(' · '), destra: euro(c.spesa_cent) }));
+  if (!consumi.length) elenco.append(statoVuoto('Nessun consumo questo mese.'));
+  main.append(sezione('Questo mese', el('div', { class: 'blocco' }, [el('div', { class: 'principale', testo: `Speso: ${euro(speso)} su ${euro(imp.tetto_mensile_cent ?? 500)}` }), el('div', { class: 'copertura', style: null }, [(() => { const s = el('span'); s.style.width = `${Math.min(100, Math.round((speso / Math.max(1, imp.tetto_mensile_cent ?? 500)) * 100))}%`; return s; })()])])), sezione('Consumi', elenco));
+  main.append(sezione('Regole', el('div', { class: 'blocco' }, [el('label', { class: 'interruttore' }, [el('span', { testo: 'Intelligenza artificiale accesa' }), accesa]), campo('Tetto mensile di spesa (€)', tetto, 'Raggiunto il tetto, la dettatura si ferma e “A mano” continua a funzionare.'), lettura ? null : salva])));
+  main.append(el('p', { class: 'piccolo attenuato', testo: 'I costi sono stime prudenti (Groq per la voce, Claude per il riordino). Le chiavi stanno sul server, mai nell\'app.' }));
 }
 
 /* ---------- Associazione ---------- */

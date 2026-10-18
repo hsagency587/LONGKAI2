@@ -2,7 +2,8 @@
 
 import { registraPassaggio } from './base.js';
 import { configurato, sessione, profilo, suCambioAccesso, esci } from './dati.js';
-import { registraVista, disegna, striscia, togliStriscia, avviaTocchi, applicaSolaLettura, applicaAspetto, mostraNav, toast, avvisa, vai, statoErrore } from './ui.js';
+import { registraVista, disegna, striscia, togliStriscia, avviaTocchi, applicaSolaLettura, applicaAspetto, mostraNav, toast, avvisa, vai, statoErrore, mostraBolla, apriFoglio, riga } from './ui.js';
+import { el } from './base.js';
 import { avviaCoda } from './coda.js';
 import { vistaAccesso } from './viste/accesso.js';
 import { vistaOggi } from './viste/oggi.js';
@@ -19,6 +20,10 @@ import { vistaCassetta } from './viste/cassetta.js';
 import { vistaCorsi } from './viste/corsi.js';
 import { vistaArgomenti } from './viste/argomenti.js';
 import { vistaSessione } from './viste/sessione.js';
+import { vistaDetta } from './viste/detta.js';
+import './dettatura.js';
+import { sessioniDelGiorno } from './dati.js';
+import { oggiRoma, formattaOra } from '../comune/date.js';
 
 registraVista('accesso', vistaAccesso);
 registraVista('oggi', vistaOggi);
@@ -32,6 +37,7 @@ registraVista('impostazioni', vistaImpostazioni);
 registraVista('nuova-password', vistaNuovaPassword);
 registraVista('scadenze', vistaScadenze);
 registraVista('sessione', vistaSessione);
+registraVista('detta', vistaDetta);
 registraVista('cassetta', vistaCassetta);
 registraVista('corsi', vistaCorsi);
 registraVista('argomenti', (main, p) => vistaArgomenti(main, p, { indietro: 'allenamenti/argomenti', titolo: 'Argomenti' }));
@@ -88,8 +94,22 @@ async function instrada() {
     }
     applicaSolaLettura();
     mostraNav(true);
+    mostraBolla(p?.ruolo === 'sifu', bollaAzione);
   }
+  document.body.classList.toggle('senza-bolla', ['detta', 'accesso', 'nuova-password', 'sessione'].includes(rotta));
   await disegna();
+}
+
+/** La bolla: un tocco e si detta. Se oggi c'è una sola sessione da fare ci va dritta; se ce ne sono di più chiede quale; se non ce ne sono lo dice. */
+async function bollaAzione() {
+  const oggi = oggiRoma();
+  let sessioni = [];
+  try { sessioni = (await sessioniDelGiorno(oggi)).filter((s) => s.stato === 'prevista'); } catch (e) { avvisa(e.message); return; }
+  if (sessioni.length === 1) { vai(`detta/${sessioni[0].id}`); return; }
+  const elenco = el('div', { class: 'elenco' });
+  for (const s of sessioni) elenco.append(riga({ principale: s.tipo === 'privata' ? `${formattaOra(s.ora)} · Privata · ${s.allievo_nome || ''} ${s.allievo_cognome || ''}`.trim() : `${formattaOra(s.ora)} · ${s.corso_nome || 'Corso'} · ${s.citta || ''}`, secondaria: s.in_revisione ? 'bozza pronta' : 'da fare', pallino: s.in_revisione ? 'ok' : 'attenzione', onclick: () => { chiudi(); vai(`detta/${s.id}`); } }));
+  if (!sessioni.length) elenco.append(el('div', { class: 'vuoto' }, [el('p', { testo: 'Oggi non c\'è niente da dettare.' }), el('a', { class: 'tasto bordo', href: '#/oggi', onclick: () => chiudi(), testo: 'Vai a Oggi' })]));
+  const chiudi = apriFoglio('Cosa detti?', el('div', {}, [elenco, el('div', { class: 'spazio' }), el('a', { class: 'tasto', href: '#/segnala', onclick: () => chiudi(), testo: 'Segnala un problema' })]));
 }
 
 function avviaRete() {
@@ -140,7 +160,7 @@ async function avvio() {
   registraPassaggio('avvio');
   addEventListener('hashchange', instrada);
   suCambioAccesso((evento) => {
-    if (evento === 'SIGNED_OUT') { applicaSolaLettura(true); mostraNav(false); vai('accesso'); }
+    if (evento === 'SIGNED_OUT') { applicaSolaLettura(true); mostraNav(false); mostraBolla(false); vai('accesso'); }
     if (evento === 'PASSWORD_RECOVERY') { recuperoInCorso = true; vai('nuova-password'); }
   });
   await instrada();

@@ -397,7 +397,7 @@ export async function sessioneCompleta(id) {
   const s = await sb().from('v_sessioni_diario').select('*').eq('id', id).maybeSingle();
   controlla(s);
   if (!s.data) return null;
-  const [pres, cont, oss, forme, pag, prog, prossima] = await Promise.all([
+  const [pres, cont, oss, forme, pag, prog, prossima, grezzo] = await Promise.all([
     sb().from('presenze').select('allievo_id, minuti, tipo, origine, allievi(nome, cognome, soprannomi)').eq('sessione_id', id),
     sb().from('contenuti').select('id, allievo_id, nota, contenuti_argomenti(argomento_id)').eq('sessione_id', id),
     sb().from('osservazioni').select('allievo_id, testo').eq('sessione_id', id),
@@ -405,15 +405,16 @@ export async function sessioneCompleta(id) {
     sb().from('pagamenti').select('id, allievo_id, importo_cent, metodo, nota, creato_il').eq('sessione_id', id).is('annullato_il', null).order('creato_il'),
     sb().from('programma').select('id, nota, programma_argomenti(argomento_id, ordine, fatto_il)').eq('sessione_id', id).maybeSingle(),
     s.data.corso_id ? sb().from('sessioni').select('id, data, ora').eq('corso_id', s.data.corso_id).eq('tipo', 'corso').eq('stato', 'prevista').gt('data', s.data.data).order('data').limit(1) : Promise.resolve({ data: [] }),
+    sb().from('sessioni').select('testo_grezzo, risposta_grezza, stato_revisione').eq('id', id).maybeSingle(),
   ]);
-  controlla(pres, cont, oss, forme, pag, prog, prossima);
+  controlla(pres, cont, oss, forme, pag, prog, prossima, grezzo);
   let programmaProssima = null;
   if (prossima.data?.[0]) {
     const p = await sb().from('programma').select('id, nota, programma_argomenti(argomento_id, ordine, fatto_il)').eq('sessione_id', prossima.data[0].id).maybeSingle();
     controlla(p);
     programmaProssima = p.data;
   }
-  return { sessione: s.data, presenze: pres.data || [], contenuti: cont.data || [], osservazioni: oss.data || [], forme: forme.data || [], pagamenti: pag.data || [], programma: prog.data, prossima: prossima.data?.[0] || null, programmaProssima };
+  return { sessione: s.data, presenze: pres.data || [], contenuti: cont.data || [], osservazioni: oss.data || [], forme: forme.data || [], pagamenti: pag.data || [], programma: prog.data, prossima: prossima.data?.[0] || null, programmaProssima, bozza: grezzo.data?.stato_revisione === 'bozza' ? grezzo.data.risposta_grezza : null, testoGrezzo: grezzo.data?.testo_grezzo || null };
 }
 export async function attesiSessione(id) {
   const r = await sb().rpc('attesi_sessione', { p_sessione: id });
@@ -581,6 +582,54 @@ export async function movimentiAllievo(id) {
   return { addebiti: ad.data || [], pagamenti: pg.data || [] };
 }
 export async function generaAddebitiInArrivo(giorni = 7) { const r = await sb().rpc('genera_addebiti_in_arrivo', { p_giorni: giorni }); controlla(r); return r.data; }
+
+/* ============================================================
+   FASE 4 — la voce: trascrizione, riordino, bozza della sessione, consumi, "ricorda come lo dico"
+   ============================================================ */
+export function trascrivi(blob, { etichetta = '', nomeFile = 'audio.webm' } = {}) {
+  const fd = new FormData();
+  fd.append('audio', blob, nomeFile);
+  fd.append('etichetta', etichetta);
+  return chiamaFunzione('trascrivi', fd);
+}
+export const riordina = (corpo) => chiamaFunzione('riordina', corpo);
+export async function salvaBozzaSessione(id, { testo_grezzo, risposta_grezza }) {
+  const r = await sb().from('sessioni').update({ testo_grezzo, risposta_grezza, stato_revisione: 'bozza' }).eq('id', id).select('id');
+  controlla(r);
+}
+export async function bozzaSessione(id) {
+  const r = await sb().from('sessioni').select('testo_grezzo, risposta_grezza, stato_revisione').eq('id', id).maybeSingle();
+  controlla(r);
+  return r.data;
+}
+export async function consumiMese() {
+  const mese = oggi().slice(0, 7) + '-01';
+  const r = await sb().from('consumi_ia').select('*').eq('mese', mese);
+  controlla(r);
+  return r.data || [];
+}
+/** "Ricorda come lo dico": il nome sentito diventa un soprannome dell'allievo. */
+export async function aggiungiSoprannome(allievoId, sentito) {
+  const s = String(sentito || '').trim();
+  if (!s) return;
+  const r = await sb().from('allievi').select('soprannomi').eq('id', allievoId).maybeSingle();
+  controlla(r);
+  const lista = r.data?.soprannomi || [];
+  if (lista.some((x) => x.toLowerCase() === s.toLowerCase())) return;
+  const u = await sb().from('allievi').update({ soprannomi: [...lista, s] }).eq('id', allievoId).select('id');
+  controlla(u);
+}
+/** "Ricorda come lo dico": il termine sentito diventa una pronuncia dell'argomento, con la versione. */
+export async function aggiungiPronuncia(argomentoId, sentito) {
+  const s = String(sentito || '').trim();
+  if (!s) return;
+  const r = await sb().from('argomenti').select('nome, area, sinonimi, pronunce, attivo, sezioni').eq('id', argomentoId).maybeSingle();
+  controlla(r);
+  const lista = r.data?.pronunce || [];
+  if (lista.some((x) => x.toLowerCase() === s.toLowerCase())) return;
+  await salvaArgomento(argomentoId, { pronunce: [...lista, s] }, r.data, `“${s}”`);
+  cacheArgomenti = { quando: 0, dati: [] };
+}
 
 /* ---------- impostazioni: un campo alla volta, con la cronologia ---------- */
 export async function salvaImpostazione(gruppo, campo, valore, testoDetto = null) {

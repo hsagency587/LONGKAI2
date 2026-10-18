@@ -1,8 +1,8 @@
 /* Longkai — service worker
    Tiene i file dell'app per aprirla senza rete. Il numero di versione lo scrive l'azione di rilascio
-   al posto di 2026-10-18-f244769; in locale resta così e la cache si chiama "locale".
+   al posto di 2026-10-18-dd4419d; in locale resta così e la cache si chiama "locale".
    Niente di Supabase va in cache: una risposta vecchia sarebbe un errore silenzioso. */
-const VERSIONE = '2026-10-18-f244769';
+const VERSIONE = '2026-10-18-dd4419d';
 const LOCALE = VERSIONE.startsWith('__');
 const CACHE = 'longkai|' + (LOCALE ? 'locale' : VERSIONE) + '|' + self.registration.scope;
 
@@ -11,11 +11,11 @@ const FILE_BASE = [
   './vendor/supabase.js',
   './font/cinzel.woff2', './font/cinzel-ext.woff2',
   './icone/icon-192.png', './icone/icon-512.png', './icone/logo-oro.png', './icone/logo-inchiostro.png', './icone/favicon-32.png',
-  './js/avvio.js', './js/base.js', './js/dati.js', './js/coda.js', './js/ui.js',
+  './js/avvio.js', './js/base.js', './js/dati.js', './js/coda.js', './js/ui.js', './js/voce.js', './js/audio-store.js', './js/dettatura.js',
   './js/viste/accesso.js', './js/viste/oggi.js', './js/viste/allievi.js', './js/viste/allenamenti.js', './js/viste/quote.js',
   './js/viste/altro.js', './js/viste/diagnostica.js', './js/viste/segnala.js', './js/viste/impostazioni.js', './js/viste/nuova-password.js',
   './js/viste/allievo-modulo.js', './js/viste/scadenze.js', './js/viste/cassetta.js', './js/viste/corsi.js', './js/viste/argomenti.js',
-  './js/viste/sessione.js', './js/viste/scegli-argomenti.js', './js/viste/progressi.js', './js/viste/diario.js', './js/viste/programma.js', './js/viste/quote-fogli.js',
+  './js/viste/sessione.js', './js/viste/scegli-argomenti.js', './js/viste/progressi.js', './js/viste/diario.js', './js/viste/programma.js', './js/viste/quote-fogli.js', './js/viste/detta.js',
   './comune/fonetica.js', './comune/ore.js', './comune/date.js', './comune/scadenze.js', './comune/schema-sessione.js', './comune/allievi.js', './comune/csv.js', './comune/sessione.js', './comune/quote.js',
   './password.html', './js/password.js',
 ];
