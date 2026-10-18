@@ -5,6 +5,7 @@ import { testata, riga, sezione, scheletri, statoVuoto, toast, avvisa, apriFogli
 import { oggiRoma, formattaData } from '../../comune/date.js';
 import { giorniMancanti } from '../../comune/scadenze.js';
 import { scadenzaProposta } from '../../comune/allievi.js';
+import { messaggioPromemoria, linkWhatsApp, linkChiama, TESTI_PREDEFINITI } from '../../comune/promemoria.js';
 import { campo } from './allievo-modulo.js';
 
 const ETICHETTE = { certificato: 'Certificato medico', tesseramento: 'Tesseramento', quota: 'Quota' };
@@ -35,17 +36,18 @@ export async function vistaScadenze(main, parametri) {
     for (const s of elenco) {
       const nome = `${s.allievi?.nome || ''} ${s.allievi?.cognome || ''}`.trim();
       const quando = s.giorni < 0 ? `scaduto ${-s.giorni} giorni fa` : s.giorni === 0 ? 'scade oggi' : `fra ${s.giorni} giorni`;
-      box.append(riga({ principale: nome, secondaria: `${ETICHETTE[s.tipo] || s.tipo} · ${formattaData(s.data, 'numerico')} · ${quando}`, pallino, onclick: () => foglioScadenza(s, nome, imp.scadenze || {}, lettura, ridisegna) }));
+      box.append(riga({ principale: nome, secondaria: `${ETICHETTE[s.tipo] || s.tipo} · ${formattaData(s.data, 'numerico')} · ${quando}`, pallino, onclick: () => foglioScadenza(s, nome, imp, lettura, ridisegna) }));
     }
     main.append(sezione(`${titolo} · ${elenco.length}`, box));
   }
 }
 
-function foglioScadenza(s, nome, impScadenze, lettura, ridisegna) {
+function foglioScadenza(s, nome, imp, lettura, ridisegna) {
   const oggi = oggiRoma();
+  const impScadenze = imp.scadenze || {};
   const figli = [el('p', { class: 'attenuato', testo: `${ETICHETTE[s.tipo] || s.tipo} · ${formattaData(s.data, 'numerico')}` })];
   figli.push(el('a', { class: 'tasto bordo', href: `#/allievi/${s.allievo_id}/documenti`, testo: 'Apri la scheda', onclick: () => chiudi() }));
-  if (s.allievi?.telefono) figli.push(el('a', { class: 'tasto bordo', href: 'tel:' + s.allievi.telefono.replace(/\s+/g, ''), testo: 'Chiama' }));
+  if (linkChiama(s.allievi?.telefono)) figli.push(el('a', { class: 'tasto bordo', href: linkChiama(s.allievi.telefono), testo: 'Chiama' }));
   if (!lettura && s.tipo !== 'quota') {
     const data = el('input', { type: 'date', value: scadenzaProposta(s.tipo, oggi, impScadenze) || oggi });
     const segna = el('button', { class: 'tasto pieno', testo: 'Segna rinnovata', onclick: async () => {
@@ -53,7 +55,13 @@ function foglioScadenza(s, nome, impScadenze, lettura, ridisegna) {
       try { await rinnovaScadenza(s.allievo_id, s.tipo, data.value || oggi); chiudi(); toast('Rinnovata.'); ridisegna(); } catch (e) { avvisa(e.message); } finally { segna.disabled = false; }
     } });
     figli.push(el('div', { class: 'blocco' }, [el('p', { class: 'piccolo attenuato', testo: 'Se hai il documento nuovo, caricalo dalla scheda: la scadenza si rinnova da sola. Qui la segni a mano.' }), campo('Nuova scadenza', data), segna]));
-    figli.push(el('button', { class: 'tasto', testo: 'Ricorda all\'allievo', onclick: () => toast('I promemoria agli allievi arrivano in fase 9.') }));
+    // il promemoria all'allievo: un tocco, si apre WhatsApp con il testo già scritto, lo manda il Sifu
+    const testi = { ...TESTI_PREDEFINITI, ...(imp.promemoria?.testi || {}) };
+    const messaggio = messaggioPromemoria(testi[s.tipo], { nome: s.allievi?.nome || '', tipo: (ETICHETTE[s.tipo] || s.tipo).toLowerCase(), data: s.data });
+    const link = linkWhatsApp(s.allievi?.telefono, messaggio);
+    figli.push(link
+      ? el('a', { class: 'tasto', href: link, target: '_blank', rel: 'noopener', testo: 'Ricorda su WhatsApp', onclick: () => chiudi() })
+      : el('p', { class: 'piccolo attenuato', testo: s.allievi?.telefono ? 'Il numero in scheda non sembra un cellulare: niente WhatsApp.' : 'Manca il cellulare nella scheda: niente WhatsApp.' }));
   }
   if (s.tipo === 'quota') figli.push(el('a', { class: 'tasto pieno', href: `#/allievi/${s.allievo_id}/quote`, testo: 'Vai alle quote', onclick: () => chiudi() }));
   const chiudi = apriFoglio(nome, el('div', { class: 'tasti-colonna' }, figli));

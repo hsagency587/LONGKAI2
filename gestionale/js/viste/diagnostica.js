@@ -3,6 +3,7 @@ import { el, VERSIONE_APP, ultimiPassaggi, dispositivo } from '../base.js';
 import { configurato, salute } from '../dati.js';
 import { testata, riga, sezione, statoVuoto } from '../ui.js';
 import { lavori, riprova, scarta, suCambioCoda } from '../coda.js';
+import { statoPush } from '../push.js';
 
 export async function vistaDiagnostica(main) {
   testata('Diagnostica', { indietro: 'altro' });
@@ -16,6 +17,11 @@ export async function vistaDiagnostica(main) {
     riga({ principale: 'Dispositivo', secondaria: dispositivo() }),
     riga({ principale: 'Service worker', destra: navigator.serviceWorker?.controller ? 'attivo' : 'non attivo' }),
     riga({ principale: 'Progetto Supabase', destra: configurato() ? 'configurato' : 'non configurato', pallino: configurato() ? 'ok' : 'attenzione' }),
+  );
+  const push = await statoPush();
+  info.append(
+    riga({ principale: 'Notifiche su questo telefono', destra: { attivo: 'attive', spento: 'spente', negato: 'bloccate', non_supportato: 'non disponibili' }[push], pallino: push === 'attivo' ? 'ok' : push === 'spento' ? 'neutro' : 'attenzione', href: '#/impostazioni/scadenze' }),
+    riga({ principale: 'Segnalazioni', secondaria: 'nuove, viste, risolte', href: '#/impostazioni/segnalazioni' }),
   );
   main.append(sezione('App', info));
 

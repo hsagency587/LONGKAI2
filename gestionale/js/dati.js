@@ -631,6 +631,47 @@ export async function aggiungiPronuncia(argomentoId, sentito) {
   cacheArgomenti = { quando: 0, dati: [] };
 }
 
+/* ---------- avvisi e notifiche (fase 7) ---------- */
+export async function avvisiAperti() {
+  const s = await sessione();
+  if (!s) return [];
+  const r = await sb().from('avvisi').select('id, tipo, soglia, testo, allievo_id, scadenza_id, creato_il, stato').eq('canale', 'app').eq('profilo_id', s.user.id).in('stato', ['mandato', 'da_mandare']).order('creato_il', { ascending: false }).limit(50);
+  controlla(r);
+  return r.data || [];
+}
+export async function segnaAvvisiLetti(ids) {
+  if (!ids?.length) return;
+  const r = await sb().from('avvisi').update({ stato: 'letto', letto_il: new Date().toISOString() }).in('id', ids).select('id');
+  controlla(r);
+}
+export async function dispositiviPush() {
+  const s = await sessione();
+  if (!s) return [];
+  const r = await sb().from('dispositivi_push').select('id, endpoint, creato_il, ultimo_uso').eq('profilo_id', s.user.id);
+  controlla(r);
+  return r.data || [];
+}
+export async function iscriviPush(abbonamento) {
+  const s = await sessione();
+  const j = abbonamento.toJSON ? abbonamento.toJSON() : abbonamento;
+  const r = await sb().from('dispositivi_push').upsert({ profilo_id: s.user.id, endpoint: j.endpoint, chiavi: j.keys }, { onConflict: 'endpoint' }).select('id');
+  controlla(r);
+}
+export async function togliPush(endpoint) {
+  const r = await sb().from('dispositivi_push').delete().eq('endpoint', endpoint);
+  controlla(r);
+}
+export const provaPush = () => chiamaFunzione('avvisi', { azione: 'prova' });
+export async function segnalazioniTutte() {
+  const r = await sb().from('segnalazioni').select('id, titolo, testo, schermata, versione_app, dispositivo, stato, risolta_versione, creato_il, profili(nome)').order('creato_il', { ascending: false }).limit(100);
+  controlla(r);
+  return r.data || [];
+}
+export async function aggiornaSegnalazione(id, dati) {
+  const r = await sb().from('segnalazioni').update(dati).eq('id', id).select('id');
+  controlla(r);
+}
+
 /* ---------- rapporti (fase 6) ---------- */
 export async function rapportiMensili() {
   const r = await sb().from('rapporti_mensili').select('id, mese, pdf_percorso, generato_il, totali, riassunto, riassunto_corretto_il').order('mese', { ascending: false });

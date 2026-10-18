@@ -1,6 +1,9 @@
-/* Longkai — viste/impostazioni.js: aspetto, allievi (gestione, CSV, regole), corsi, forme e tecniche, scadenze, associazione. Il resto arriva con le fasi. */
-import { el } from '../base.js';
-import { leggiLocale, impostazioni, salvaImpostazione, elencoAllieviCompleto, importaAllievi, corsiCompleti, soloLettura, consumiMese } from '../dati.js';
+/* Longkai — viste/impostazioni.js: aspetto, allievi (gestione, CSV, regole), corsi, forme e tecniche, scadenze e avvisi (con le notifiche di questo telefono), promemoria agli allievi, segnalazioni, associazione, voce, IA, rapporti. */
+import { el, VERSIONE_APP } from '../base.js';
+import { leggiLocale, impostazioni, salvaImpostazione, elencoAllieviCompleto, importaAllievi, corsiCompleti, soloLettura, consumiMese, segnalazioniTutte, aggiornaSegnalazione, provaPush, profilo } from '../dati.js';
+import { statoPush, attivaPush, disattivaPush, iphoneNonInstallata } from '../push.js';
+import { TESTI_PREDEFINITI, messaggioPromemoria } from '../../comune/promemoria.js';
+import { formattaData } from '../../comune/date.js';
 import { euro } from '../base.js';
 import { puoRegistrare, formatoSupportato } from '../voce.js';
 import { testata, sezione, riga, applicaAspetto, toast, avvisa, apriFoglio, statoVuoto } from '../ui.js';
@@ -24,6 +27,8 @@ export async function vistaImpostazioni(main, parametri) {
   if (gruppo === 'voce') { testata('Voce', { indietro: 'impostazioni' }); await gruppoVoce(main, lettura, ridisegna); return; }
   if (gruppo === 'ia') { testata('Intelligenza artificiale', { indietro: 'impostazioni' }); await gruppoIa(main, lettura, ridisegna); return; }
   if (gruppo === 'rapporti') { testata('Rapporti', { indietro: 'impostazioni' }); await gruppoRapporti(main, lettura, ridisegna); return; }
+  if (gruppo === 'promemoria') { testata('Promemoria agli allievi', { indietro: 'impostazioni' }); await gruppoPromemoria(main, lettura, ridisegna); return; }
+  if (gruppo === 'segnalazioni') { testata('Segnalazioni', { indietro: 'impostazioni' }); await gruppoSegnalazioni(main, ridisegna); return; }
   if (gruppo && gruppo !== 'aspetto') {
     testata(GRUPPI.find(([, k]) => k === gruppo)?.[0] || 'Impostazioni', { indietro: 'impostazioni' });
     main.append(statoVuoto('Questo gruppo arriva in una fase successiva.'));
@@ -113,6 +118,9 @@ async function gruppoScadenze(main, lettura, ridisegna) {
   const cert = el('input', { type: 'number', min: '1', max: '36', value: imp.certificato_mesi ?? 12, inputmode: 'numeric' });
   const tess = el('input', { type: 'number', min: '1', max: '36', value: imp.tesseramento_mesi ?? 12, inputmode: 'numeric' });
   const richiamo = el('input', { type: 'number', min: '1', max: '10', value: imp.da_richiamare_lezioni ?? 3, inputmode: 'numeric' });
+  const ora = el('input', { type: 'time', value: imp.ora_avvisi || '08:00', step: '3600' });
+  const serale = el('input', { type: 'time', value: imp.promemoria_serale || '21:00', step: '3600' });
+  const seraleAcceso = el('input', { type: 'checkbox' }); seraleAcceso.checked = imp.promemoria_serale_acceso !== false;
   const salva = el('button', { class: 'tasto pieno', testo: 'Salva', onclick: async () => {
     const s = soglie.value.split(/[,\s]+/).map((x) => Number(x)).filter((x) => x > 0);
     if (!s.length) { avvisa('Le soglie sono numeri di giorni, separati da virgola.'); return; }
@@ -121,12 +129,91 @@ async function gruppoScadenze(main, lettura, ridisegna) {
       await salvaImpostazione('scadenze', 'certificato_mesi', Number(cert.value) || 12);
       await salvaImpostazione('scadenze', 'tesseramento_mesi', Number(tess.value) || 12);
       await salvaImpostazione('scadenze', 'da_richiamare_lezioni', Number(richiamo.value) || 3);
+      await salvaImpostazione('scadenze', 'ora_avvisi', /^\d{2}:\d{2}$/.test(ora.value) ? ora.value : '08:00');
+      await salvaImpostazione('scadenze', 'promemoria_serale', /^\d{2}:\d{2}$/.test(serale.value) ? serale.value : '21:00');
+      await salvaImpostazione('scadenze', 'promemoria_serale_acceso', seraleAcceso.checked);
       toast('Salvato.'); ridisegna();
     } catch (e) { avvisa(e.message); }
   } });
-  const blocco = el('div', { class: 'blocco' }, [tastoCorreggi(), campo('Avvisi a (giorni prima)', soglie, 'es. 30, 15, 7 — e sempre allo scaduto'), el('div', { class: 'griglia-campi' }, [campo('Il certificato dura (mesi)', cert), campo('Il tesseramento dura (mesi)', tess)]), campo('“Da richiamare” dopo N lezioni di fila mancate', richiamo), lettura ? null : salva]);
+  const blocco = el('div', { class: 'blocco' }, [tastoCorreggi(), campo('Avvisi a (giorni prima)', soglie, 'es. 30, 15, 7 — e sempre allo scaduto'), el('div', { class: 'griglia-campi' }, [campo('Il certificato dura (mesi)', cert), campo('Il tesseramento dura (mesi)', tess)]), campo('“Da richiamare” dopo N lezioni di fila mancate', richiamo),
+    el('div', { class: 'griglia-campi' }, [campo('Ora degli avvisi', ora, 'l\'orologio passa a ogni ora piena'), campo('Promemoria serale alle', serale)]),
+    el('label', { class: 'interruttore' }, [el('span', { testo: 'Promemoria serale se la lezione di oggi non è chiusa' }), seraleAcceso]),
+    lettura ? null : salva]);
   if (lettura) blocco.querySelectorAll('input').forEach((x) => { x.disabled = true; });
-  main.append(sezione('Scadenze', blocco), el('p', { class: 'piccolo attenuato', testo: 'L\'ora degli avvisi, i canali (app, push, email) e il promemoria serale arrivano in fase 7.' }));
+  main.append(sezione('Scadenze', blocco));
+  main.append(sezione('Notifiche su questo telefono', await bloccoNotifiche(ridisegna)));
+  main.append(el('p', { class: 'piccolo attenuato', testo: 'Al massimo due notifiche al giorno: al mattino solo se c\'è qualcosa di nuovo (un riassunto, mai una per cosa), la sera solo se la lezione di oggi è ancora da chiudere. Il giorno 1 del mese, il rapporto. Mai fra le 22 e le 7. Gli avvisi per intero stanno in Oggi.' }));
+}
+
+/** Lo stato delle notifiche di questo telefono, con Attiva / Spegni / Manda una prova. Vale per tutti e due i ruoli: a Simone arrivano le segnalazioni. */
+async function bloccoNotifiche(ridisegna) {
+  const stato = await statoPush();
+  const TESTI = {
+    non_supportato: iphoneNonInstallata() ? 'Su iPhone le notifiche funzionano solo con l\'app aggiunta alla schermata Home: Condividi → Aggiungi alla schermata Home, poi torna qui.' : 'Questo browser non ha le notifiche.',
+    negato: 'Bloccate dal telefono: si riattivano nelle impostazioni del telefono, alla voce di questo sito.',
+    attivo: 'Attive su questo telefono.',
+    spento: 'Spente su questo telefono.',
+  };
+  const figli = [el('div', { class: 'riga statica' }, [el('span', { class: 'pallino ' + (stato === 'attivo' ? 'ok' : stato === 'spento' ? 'neutro' : 'attenzione') }), el('div', {}, [el('div', { class: 'principale', testo: TESTI[stato] })])])];
+  const tasti = [];
+  if (stato === 'spento') tasti.push(el('button', { class: 'tasto pieno', testo: 'Attiva', onclick: async (e) => { e.target.disabled = true; try { await attivaPush(); toast('Notifiche attive.'); ridisegna(); } catch (err) { avvisa(err.message); e.target.disabled = false; } } }));
+  if (stato === 'attivo') {
+    tasti.push(el('button', { class: 'tasto bordo', testo: 'Manda una prova', onclick: async (e) => { e.target.disabled = true; try { await provaPush(); toast('Mandata: arriva fra pochi secondi.'); } catch (err) { avvisa(err.message); } finally { e.target.disabled = false; } } }));
+    tasti.push(el('button', { class: 'tasto', testo: 'Spegni', onclick: async () => { try { await disattivaPush(); toast('Spente su questo telefono.'); ridisegna(); } catch (err) { avvisa(err.message); } } }));
+  }
+  if (tasti.length) figli.push(el('div', { class: 'tasti' }, tasti));
+  return el('div', { class: 'blocco' }, figli);
+}
+
+/* ---------- Promemoria agli allievi: i testi, mandati con un tocco su WhatsApp ---------- */
+async function gruppoPromemoria(main, lettura, ridisegna) {
+  const imp = (await impostazioni().catch(() => ({}))).promemoria || {};
+  const testi = { ...TESTI_PREDEFINITI, ...(imp.testi || {}) };
+  const ETICHETTE = { certificato: 'Certificato medico', tesseramento: 'Tesseramento', quota: 'Quota' };
+  const ESEMPI = { certificato: { nome: 'Allievo Uno', tipo: 'certificato medico', data: '2026-11-30' }, tesseramento: { nome: 'Allievo Uno', tipo: 'tesseramento', data: '2026-11-30' }, quota: { nome: 'Allievo Uno', tipo: 'il mensile di novembre', data: '2026-11-05', importo: '70,00 €' } };
+  const aree = {}; const anteprime = {};
+  const figli = [tastoCorreggi(), el('p', { class: 'piccolo attenuato', testo: 'Parole che si riempiono da sole: {nome} {tipo} {data} {importo}.' })];
+  for (const k of ['certificato', 'tesseramento', 'quota']) {
+    aree[k] = el('textarea', { rows: '3', maxlength: '500' }); aree[k].value = testi[k]; aree[k].disabled = lettura;
+    anteprime[k] = el('p', { class: 'piccolo attenuato', testo: 'Esempio: ' + messaggioPromemoria(testi[k], ESEMPI[k]) });
+    aree[k].addEventListener('input', () => { anteprime[k].textContent = 'Esempio: ' + messaggioPromemoria(aree[k].value, ESEMPI[k]); });
+    figli.push(campo(ETICHETTE[k], aree[k]), anteprime[k]);
+  }
+  if (!lettura) figli.push(el('button', { class: 'tasto pieno', testo: 'Salva', onclick: async () => { try { const nuovi = {}; for (const k of Object.keys(aree)) nuovi[k] = aree[k].value.trim() || TESTI_PREDEFINITI[k]; await salvaImpostazione('promemoria', 'testi', nuovi); toast('Salvato.'); ridisegna(); } catch (e) { avvisa(e.message); } } }));
+  main.append(sezione('I testi', el('div', { class: 'blocco' }, figli)));
+  main.append(el('p', { class: 'piccolo attenuato', testo: 'I promemoria non partono da soli. Da una scadenza (Altro → Scadenze) o da una quota aperta tocchi «Ricorda su WhatsApp»: si apre WhatsApp con il messaggio già scritto e lo mandi tu. Serve il cellulare nella scheda dell\'allievo.' }));
+}
+
+/* ---------- Segnalazioni: l'elenco con lo stato (le gestisce Simone) ---------- */
+async function gruppoSegnalazioni(main, ridisegna) {
+  let tutte = [];
+  try { tutte = await segnalazioniTutte(); } catch (e) { avvisa(e.message); }
+  const p = await profilo().catch(() => null);
+  const STATI = { nuova: ['nuova', 'attenzione'], vista: ['vista', 'info'], risolta: ['risolta', 'ok'] };
+  const elenco = el('div', { class: 'elenco' });
+  if (!tutte.length) elenco.append(statoVuoto('Nessuna segnalazione. Si manda da Altro → Segnala un problema.'));
+  for (const s of tutte) {
+    const [nomeStato, pallino] = STATI[s.stato] || [s.stato, 'neutro'];
+    elenco.append(riga({ principale: s.titolo || s.testo.slice(0, 80), secondaria: [formattaData(s.creato_il.slice(0, 10), 'numerico'), s.profili?.nome, s.schermata, s.versione_app ? 'v' + s.versione_app : null, nomeStato + (s.risolta_versione ? ' nella ' + s.risolta_versione : '')].filter(Boolean).join(' · '), pallino, onclick: () => foglioSegnalazione(s, Boolean(p), ridisegna) }));
+  }
+  main.append(sezione(`Segnalazioni · ${tutte.length}`, elenco));
+  main.append(el('p', { class: 'piccolo attenuato', testo: 'Ogni segnalazione arriva a Simone come notifica sul telefono. Qui si vede lo stato: nuova, vista, risolta (con la versione).' }));
+}
+
+function foglioSegnalazione(s, puoGestire, ridisegna) {
+  const figli = [
+    el('p', { class: 'attenuato', testo: [formattaData(s.creato_il.slice(0, 10), 'numerico'), s.profili?.nome, s.schermata, s.versione_app ? 'versione ' + s.versione_app : null].filter(Boolean).join(' · ') }),
+    el('p', { testo: s.testo }),
+    s.dispositivo ? el('p', { class: 'piccolo attenuato', testo: s.dispositivo }) : null,
+  ];
+  if (puoGestire) {
+    const versione = el('input', { type: 'text', value: s.risolta_versione || '', placeholder: 'es. ' + VERSIONE_APP });
+    const aggiorna = async (dati, msg) => { try { await aggiornaSegnalazione(s.id, dati); chiudi(); toast(msg); ridisegna(); } catch (e) { avvisa(e.message); } };
+    if (s.stato === 'nuova') figli.push(el('button', { class: 'tasto bordo', testo: 'Segna vista', onclick: () => aggiorna({ stato: 'vista' }, 'Vista.') }));
+    if (s.stato !== 'risolta') figli.push(campo('Risolta nella versione', versione), el('button', { class: 'tasto pieno', testo: 'Segna risolta', onclick: () => aggiorna({ stato: 'risolta', risolta_versione: versione.value.trim() || VERSIONE_APP }, 'Risolta.') }));
+    else figli.push(el('button', { class: 'tasto', testo: 'Riapri', onclick: () => aggiorna({ stato: 'vista', risolta_versione: null }, 'Riaperta.') }));
+  }
+  const chiudi = apriFoglio(s.titolo || 'Segnalazione', el('div', { class: 'tasti-colonna' }, figli.filter(Boolean)));
 }
 
 /* ---------- Voce ---------- */
@@ -213,16 +300,14 @@ async function gruppoAssociazione(main, lettura, ridisegna) {
   const imp = (await impostazioni().catch(() => ({}))).associazione || {};
   const nome = el('input', { type: 'text', value: imp.nome || 'Longkai' });
   const sedi = el('input', { type: 'text', value: (imp.sedi || []).join(', ') });
-  const email = el('input', { type: 'email', value: imp.email_mittente || '', inputmode: 'email' });
   const salva = el('button', { class: 'tasto pieno', testo: 'Salva', onclick: async () => {
     try {
       await salvaImpostazione('associazione', 'nome', nome.value.trim() || 'Longkai');
       await salvaImpostazione('associazione', 'sedi', sedi.value.split(',').map((x) => x.trim()).filter(Boolean));
-      await salvaImpostazione('associazione', 'email_mittente', email.value.trim());
       toast('Salvato.'); ridisegna();
     } catch (e) { avvisa(e.message); }
   } });
-  const blocco = el('div', { class: 'blocco' }, [tastoCorreggi(), campo('Nome', nome), campo('Sedi', sedi, 'separate da virgola'), campo('Email mittente per gli avvisi', email, 'si usa dalla fase 7'), lettura ? null : salva]);
+  const blocco = el('div', { class: 'blocco' }, [tastoCorreggi(), campo('Nome', nome), campo('Sedi', sedi, 'separate da virgola'), lettura ? null : salva]);
   if (lettura) blocco.querySelectorAll('input').forEach((x) => { x.disabled = true; });
   main.append(sezione('Associazione', blocco));
 }

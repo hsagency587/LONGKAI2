@@ -24,6 +24,7 @@ import { vistaDetta } from './viste/detta.js';
 import { vistaCorreggi } from './viste/correggi.js';
 import { vistaRapporti } from './viste/rapporti.js';
 import './dettatura.js';
+import { sincronizzaPush } from './push.js';
 import { sessioniDelGiorno } from './dati.js';
 import { oggiRoma, formattaOra } from '../comune/date.js';
 
@@ -99,10 +100,13 @@ async function instrada() {
     applicaSolaLettura();
     mostraNav(true);
     mostraBolla(p?.ruolo === 'sifu', bollaAzione);
+    if (!pushSincronizzato) { pushSincronizzato = true; sincronizzaPush(); }
   }
   document.body.classList.toggle('senza-bolla', ['detta', 'accesso', 'nuova-password', 'sessione', 'correggi'].includes(rotta));
   await disegna();
 }
+
+let pushSincronizzato = false;
 
 /** La bolla: un tocco e si detta. Se oggi c'è una sola sessione da fare ci va dritta; se ce ne sono di più chiede quale; se non ce ne sono lo dice. */
 async function bollaAzione() {

@@ -1,7 +1,8 @@
 /* Longkai — viste/quote-fogli.js: i fogli delle quote, usati da Quote, dalla scheda dell'allievo e da Oggi:
    registra un pagamento, un rimborso, un addebito a mano; annulla; sconto. */
 import { el, euro } from '../base.js';
-import { registraPagamento, registraRimborso, nuovoAddebito, annullaPagamento, annullaAddebito, scontaAddebito, allieviAttivi, leggiLocale, salvaLocale } from '../dati.js';
+import { registraPagamento, registraRimborso, nuovoAddebito, annullaPagamento, annullaAddebito, scontaAddebito, allieviAttivi, leggiLocale, salvaLocale, impostazioni } from '../dati.js';
+import { messaggioPromemoria, linkWhatsApp, linkChiama, TESTI_PREDEFINITI } from '../../comune/promemoria.js';
 import { riga, statoVuoto, toast, avvisa, apriFoglio, chiedi } from '../ui.js';
 import { normalizza } from '../../comune/fonetica.js';
 import { oggiRoma, formattaData } from '../../comune/date.js';
@@ -99,8 +100,8 @@ export function foglioAddebitoAzioni(d, dopo = () => {}) {
       const ok = el('button', { class: 'tasto pieno grande', testo: 'Applica', onclick: async () => { const cent = centesimiDa(sc.value); if (cent === null) { avvisa('Un importo.'); return; } try { await scontaAddebito(d.id, cent); chiudi2(); chiudi(); toast('Sconto applicato.'); dopo(); } catch (e) { avvisa(e.message); } } });
       const chiudi2 = apriFoglio('Sconto', el('div', {}, [campo('Sconto (€)', sc), ok]));
     } }),
-    d.telefono ? el('a', { class: 'tasto bordo', href: 'tel:' + String(d.telefono).replace(/\s+/g, ''), testo: 'Chiama' }) : null,
-    el('button', { class: 'tasto', testo: 'Ricorda all\'allievo', onclick: () => toast('I promemoria agli allievi arrivano in fase 9.') }),
+    linkChiama(d.telefono) ? el('a', { class: 'tasto bordo', href: linkChiama(d.telefono), testo: 'Chiama' }) : null,
+    tastoWhatsApp(d),
     el('a', { class: 'tasto', href: `#/allievi/${d.allievo_id}/quote`, testo: 'Apri la scheda', onclick: () => chiudi() }),
     el('button', { class: 'tasto pericolo', testo: 'Annulla l\'addebito', onclick: async () => {
       const ok = await chiedi('Annullare?', 'Resta nello storico come annullato. Se è stato pagato in parte, prima si annulla il pagamento.', [{ testo: 'Annulla l\'addebito', valore: true, classe: 'terracotta' }, { testo: 'Lascia', valore: false }]);
@@ -109,6 +110,16 @@ export function foglioAddebitoAzioni(d, dopo = () => {}) {
     } }),
   ];
   const chiudi = apriFoglio(`${nomeDi(d)} · ${euro(residuo(d))}`, el('div', { class: 'tasti-colonna' }, figli));
+}
+
+/** «Ricorda su WhatsApp»: il testo dal modello (quello predefinito subito, quello del Sifu appena arriva), il numero dalla scheda. */
+function tastoWhatsApp(d) {
+  const testoDa = (modello) => messaggioPromemoria(modello, { nome: d.nome || '', tipo: d.descrizione || MOTIVI[d.motivo] || d.motivo, data: d.scadenza || d.data || '', importo: euro(residuo(d)) });
+  const link = linkWhatsApp(d.telefono, testoDa(TESTI_PREDEFINITI.quota));
+  if (!link) return el('p', { class: 'piccolo attenuato', testo: d.telefono ? 'Il numero in scheda non sembra un cellulare: niente WhatsApp.' : 'Manca il cellulare nella scheda: niente WhatsApp.' });
+  const a = el('a', { class: 'tasto', href: link, target: '_blank', rel: 'noopener', testo: 'Ricorda su WhatsApp' });
+  impostazioni().then((imp) => { const m = imp.promemoria?.testi?.quota; if (m) a.href = linkWhatsApp(d.telefono, testoDa(m)) || a.href; }).catch(() => { /* resta il testo predefinito */ });
+  return a;
 }
 
 /** Le azioni su un pagamento: annulla con motivo. */

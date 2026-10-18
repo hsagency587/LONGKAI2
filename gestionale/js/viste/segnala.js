@@ -1,4 +1,4 @@
-/* Longkai — viste/segnala.js: il Sifu (o Simone) dice cosa non va. In fase 0 si scrive; la dettatura arriva in fase 4. */
+/* Longkai — viste/segnala.js: il Sifu (o Simone) dice cosa non va. Si salva nell'app e a Simone arriva una notifica sul telefono. */
 import { el, VERSIONE_APP, ultimiPassaggi, dispositivo } from '../base.js';
 import { segnala, leggiLocale } from '../dati.js';
 import { testata, toast, avvisa, vai } from '../ui.js';
@@ -17,8 +17,8 @@ export function vistaSegnala(main) {
     if (!testo.value.trim()) { testo.focus(); return; }
     tasto.disabled = true;
     try {
-      await segnala({ testo: testo.value.trim(), schermata: leggiLocale().ultimaVista || 'altro', versione_app: VERSIONE_APP, dispositivo: dispositivo(), ultimi_passaggi: ultimiPassaggi() });
-      toast('Segnalazione salvata. Grazie.');
+      const r = await segnala({ testo: testo.value.trim(), schermata: leggiLocale().ultimaVista || 'altro', versione_app: VERSIONE_APP, dispositivo: dispositivo(), ultimi_passaggi: ultimiPassaggi() });
+      toast(r?.notifiche ? 'Segnalazione mandata: Simone ha la notifica. Grazie.' : 'Segnalazione salvata. Grazie.');
       vai('altro');
     } catch (err) { avvisa(err.message || 'Non sono riuscito a mandarla.'); }
     finally { tasto.disabled = false; }

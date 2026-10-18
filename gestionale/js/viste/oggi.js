@@ -1,6 +1,7 @@
 /* Longkai — viste/oggi.js: la prima schermata. Il corso di oggi con il previsto, le private, Da fare, Scadenze, la giornata. */
 import { el, icona, euro } from '../base.js';
-import { sessioniDelGiorno, contiDaFare, contiScadenze, profilo, corsiCompleti, programmiMesi, argomentiAttivi, allieviAttivi, creaStraordinaria, creaPrivate, saltaSessione, riapriSessione, apriGiornata, chiudiGiornata, giornata, sessioniAperteIeri, pianiAttivi, impostazioni, leggiLocale, salvaLocale, obiettiviAperti } from '../dati.js';
+import { sessioniDelGiorno, contiDaFare, contiScadenze, profilo, corsiCompleti, programmiMesi, argomentiAttivi, allieviAttivi, creaStraordinaria, creaPrivate, saltaSessione, riapriSessione, apriGiornata, chiudiGiornata, giornata, sessioniAperteIeri, pianiAttivi, impostazioni, leggiLocale, salvaLocale, obiettiviAperti, avvisiAperti, segnaAvvisiLetti } from '../dati.js';
+import { pushSupportato, iphoneNonInstallata, attivaPush, aggiornaBadge } from '../push.js';
 import { testata, sezione, riga, scheletri, statoVuoto, statoErrore, toast, avvisa, apriFoglio, striscia, togliStriscia, vai } from '../ui.js';
 import { oggiRoma, formattaData, formattaOra, primoDelMese, aggiungiGiorni } from '../../comune/date.js';
 import { formattaMinuti } from '../../comune/ore.js';
@@ -21,9 +22,9 @@ export async function vistaOggi(main) {
   const p = await profilo().catch(() => null);
   const sifu = p?.ruolo === 'sifu';
   if (sifu) { try { await apriGiornata(oggi); } catch { /* l'orologio ci pensa alle 8 */ } }
-  let sessioni, daFare, scad, piani, ieri, g, imp, obiettivi;
+  let sessioni, daFare, scad, piani, ieri, g, imp, obiettivi, avvisi;
   try {
-    [sessioni, daFare, scad, piani, ieri, g, imp, obiettivi] = await Promise.all([sessioniDelGiorno(oggi), contiDaFare(), contiScadenze(), pianiAttivi().catch(() => []), sifu ? sessioniAperteIeri(oggi) : Promise.resolve([]), giornata(oggi).catch(() => null), impostazioni().catch(() => ({})), obiettiviAperti().catch(() => [])]);
+    [sessioni, daFare, scad, piani, ieri, g, imp, obiettivi, avvisi] = await Promise.all([sessioniDelGiorno(oggi), contiDaFare(), contiScadenze(), pianiAttivi().catch(() => []), sifu ? sessioniAperteIeri(oggi) : Promise.resolve([]), giornata(oggi).catch(() => null), impostazioni().catch(() => ({})), obiettiviAperti().catch(() => []), avvisiAperti().catch(() => [])]);
   } catch (e) {
     main.replaceChildren(statoErrore(navigator.onLine ? e : new Error('Sei senza rete.'), () => vistaOggi(main)));
     return;
@@ -89,6 +90,17 @@ export async function vistaOggi(main) {
   }
   main.append(sezione('Corso di oggi', blocco));
 
+  // AVVISI: quelli nuovi, creati dall'orologio al mattino (la notifica ne porta il riassunto). Letti, spariscono.
+  aggiornaBadge(avvisi.length);
+  if (avvisi.length) {
+    const box = el('div', { class: 'elenco' });
+    const dove = (a) => a.tipo === 'cassetta' ? 'cassetta' : a.allievo_id ? `allievi/${a.allievo_id}` + (a.tipo === 'quota' ? '/quote' : a.tipo === 'certificato' || a.tipo === 'tesseramento' ? '/documenti' : '') : 'scadenze';
+    const pallinoDi = (a) => a.soglia === 'scaduto' ? 'errore' : a.tipo === 'da_richiamare' || a.tipo === 'cassetta' ? 'info' : 'attenzione';
+    for (const a of avvisi.slice(0, 10)) box.append(riga({ principale: a.testo, secondaria: formattaData(a.creato_il.slice(0, 10), 'breve'), pallino: pallinoDi(a), onclick: async () => { try { await segnaAvvisiLetti([a.id]); } catch { /* si rilegge la prossima volta */ } vai(dove(a)); } }));
+    if (avvisi.length > 10) box.append(riga({ principale: `… e altri ${avvisi.length - 10}` }));
+    main.append(sezione(`Avvisi · ${avvisi.length}`, box, el('button', { class: 'tasto azione', testo: 'Letti', onclick: async (e) => { e.target.disabled = true; try { await segnaAvvisiLetti(avvisi.map((a) => a.id)); aggiornaBadge(0); toast('Avvisi letti.'); ridisegna(); } catch (err) { avvisa(err.message); e.target.disabled = false; } } })));
+  }
+
   // PRIVATE
   const priv = sessioni.filter((s) => s.tipo === 'privata');
   const elenco = el('div', { class: 'elenco' });
@@ -116,6 +128,23 @@ export async function vistaOggi(main) {
   if (scad) {
     const testo = `${scad.scadute} scadute · ${scad.entro7} entro 7 giorni · ${scad.entro30} entro 30`;
     main.append(sezione('Scadenze', el('div', { class: 'elenco' }, riga({ principale: testo, pallino: scad.scadute ? 'errore' : scad.entro7 ? 'attenzione' : 'ok', href: '#/scadenze' }))));
+  }
+
+  // NOTIFICHE: la proposta, una volta sola, con la regola detta chiara
+  const loc = leggiLocale();
+  const iphone = iphoneNonInstallata();
+  if (sifu && !loc.pushProposto && (iphone || (pushSupportato() && globalThis.Notification?.permission === 'default'))) {
+    const segna = () => { const l = leggiLocale(); l.pushProposto = true; salvaLocale(l); };
+    const box = el('div', { class: 'blocco' }, [
+      el('p', { testo: iphone
+        ? 'Per avere le notifiche su iPhone aggiungi l\'app alla schermata Home (Condividi → Aggiungi alla schermata Home) e attivale da Impostazioni → Scadenze e avvisi.'
+        : 'Vuoi una notifica sul telefono? Al massimo due al giorno: al mattino solo se c\'è qualcosa da fare, la sera solo se la lezione è ancora da chiudere. Mai di notte.' }),
+      el('div', { class: 'tasti' }, iphone ? [el('button', { class: 'tasto bordo', testo: 'Capito', onclick: () => { segna(); ridisegna(); } })] : [
+        el('button', { class: 'tasto pieno', testo: 'Attiva', onclick: async (e) => { e.target.disabled = true; try { await attivaPush(); segna(); toast('Notifiche attive su questo telefono.'); ridisegna(); } catch (err) { avvisa(err.message); e.target.disabled = false; } } }),
+        el('button', { class: 'tasto bordo', testo: 'Non ora', onclick: () => { segna(); ridisegna(); } }),
+      ]),
+    ]);
+    main.append(sezione('Notifiche', box));
   }
 }
 

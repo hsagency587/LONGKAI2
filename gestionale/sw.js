@@ -1,8 +1,8 @@
 /* Longkai — service worker
    Tiene i file dell'app per aprirla senza rete. Il numero di versione lo scrive l'azione di rilascio
-   al posto di 2026-10-18-09ca36c; in locale resta così e la cache si chiama "locale".
+   al posto di 2026-10-18-c8e99a9; in locale resta così e la cache si chiama "locale".
    Niente di Supabase va in cache: una risposta vecchia sarebbe un errore silenzioso. */
-const VERSIONE = '2026-10-18-09ca36c';
+const VERSIONE = '2026-10-18-c8e99a9';
 const LOCALE = VERSIONE.startsWith('__');
 const CACHE = 'longkai|' + (LOCALE ? 'locale' : VERSIONE) + '|' + self.registration.scope;
 
@@ -11,12 +11,12 @@ const FILE_BASE = [
   './vendor/supabase.js',
   './font/cinzel.woff2', './font/cinzel-ext.woff2',
   './icone/icon-192.png', './icone/icon-512.png', './icone/logo-oro.png', './icone/logo-inchiostro.png', './icone/favicon-32.png',
-  './js/avvio.js', './js/base.js', './js/dati.js', './js/coda.js', './js/ui.js', './js/voce.js', './js/audio-store.js', './js/dettatura.js',
+  './js/avvio.js', './js/base.js', './js/dati.js', './js/coda.js', './js/ui.js', './js/voce.js', './js/audio-store.js', './js/dettatura.js', './js/push.js',
   './js/viste/accesso.js', './js/viste/oggi.js', './js/viste/allievi.js', './js/viste/allenamenti.js', './js/viste/quote.js',
   './js/viste/altro.js', './js/viste/diagnostica.js', './js/viste/segnala.js', './js/viste/impostazioni.js', './js/viste/nuova-password.js',
   './js/viste/allievo-modulo.js', './js/viste/scadenze.js', './js/viste/cassetta.js', './js/viste/corsi.js', './js/viste/argomenti.js',
   './js/viste/sessione.js', './js/viste/scegli-argomenti.js', './js/viste/progressi.js', './js/viste/diario.js', './js/viste/programma.js', './js/viste/quote-fogli.js', './js/viste/detta.js', './js/viste/correggi.js', './js/viste/rapporti.js',
-  './comune/fonetica.js', './comune/ore.js', './comune/date.js', './comune/scadenze.js', './comune/schema-sessione.js', './comune/allievi.js', './comune/csv.js', './comune/sessione.js', './comune/quote.js',
+  './comune/fonetica.js', './comune/ore.js', './comune/date.js', './comune/scadenze.js', './comune/schema-sessione.js', './comune/allievi.js', './comune/csv.js', './comune/sessione.js', './comune/quote.js', './comune/avvisi.js', './comune/promemoria.js',
   './password.html', './js/password.js',
 ];
 
@@ -38,6 +38,23 @@ self.addEventListener('activate', (e) => {
 
 self.addEventListener('message', (e) => {
   if (e.data && e.data.tipo === 'AGGIORNA') self.skipWaiting();
+});
+
+/* Le notifiche push: poche, con un tag per tipo (una nuova sostituisce la precedente dello stesso tipo); il tocco apre la schermata giusta. */
+self.addEventListener('push', (e) => {
+  let d = {};
+  try { d = e.data ? e.data.json() : {}; } catch { d = { corpo: e.data ? e.data.text() : '' }; }
+  e.waitUntil(self.registration.showNotification(d.titolo || 'Longkai', {
+    body: d.corpo || '', icon: './icone/icon-192.png', badge: './icone/icon-192.png', tag: d.tag || 'longkai', renotify: false, data: { url: d.url || './#/oggi' },
+  }));
+});
+self.addEventListener('notificationclick', (e) => {
+  e.notification.close();
+  const url = new URL(e.notification.data?.url || './#/oggi', self.registration.scope).href;
+  e.waitUntil(self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((finestre) => {
+    for (const f of finestre) { if (f.url.startsWith(self.registration.scope)) { if (f.navigate) f.navigate(url); return f.focus(); } }
+    return self.clients.openWindow(url);
+  }));
 });
 
 self.addEventListener('fetch', (e) => {
