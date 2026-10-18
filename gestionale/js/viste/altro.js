@@ -13,7 +13,6 @@ export async function vistaAltro(main, parametri) {
     ['Scadenze', 'avviso', '#/scadenze'],
     ['Corsi', 'calendario', '#/corsi'],
     ['Cassetta', 'documento', '#/cassetta'],
-    ['Impostazioni', 'impostazioni', '#/impostazioni'],
     ['Cambia password', 'esci', '#/nuova-password'],
     ['Correggi parlando', 'microfono', '#/correggi'],
     ['Segnala un problema', 'segnala', '#/segnala'],

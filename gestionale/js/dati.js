@@ -251,8 +251,13 @@ export async function unisciAllievi(tieni, togli) {
   const r = await sb().rpc('unisci_allievi', { p_tieni: tieni, p_togli: togli });
   controlla(r);
 }
-export async function eliminaAllievo(id) {
-  const r = await sb().rpc('elimina_allievo', { p_allievo: id });
+export async function contaPagamenti(allievoId) {
+  const r = await sb().from('pagamenti').select('id', { count: 'exact', head: true }).eq('allievo_id', allievoId);
+  controlla(r);
+  return r.count || 0;
+}
+export async function eliminaAllievo(id, anchePagamenti = false) {
+  const r = await sb().rpc('elimina_allievo', { p_allievo: id, p_anche_pagamenti: anchePagamenti });
   controlla(r);
 }
 /** Importa gli allievi da un CSV già letto: inserisce le schede e, se il corso è riconosciuto, l'iscrizione. */

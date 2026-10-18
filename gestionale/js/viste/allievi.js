@@ -1,7 +1,7 @@
 /* Longkai — viste/allievi.js: l'elenco con ricerca e filtri, la scheda (Panoramica · Progressi · Presenze · Quote · Documenti · Dati).
    Il modulo dei dati, l'abbonamento e il caricamento dei documenti stanno in allievo-modulo.js. */
 import { el, icona, euro } from '../base.js';
-import { elencoAllieviCompleto, allievoCompleto, cambiaStatoAllievo, mettiFuori, esportaAllievo, unisciAllievi, eliminaAllievo, apriDocumento, rinnovaScadenza, annullaScadenza, salvaAllievo, soloLettura, impostazioni } from '../dati.js';
+import { elencoAllieviCompleto, allievoCompleto, cambiaStatoAllievo, mettiFuori, esportaAllievo, unisciAllievi, eliminaAllievo, contaPagamenti, apriDocumento, rinnovaScadenza, annullaScadenza, salvaAllievo, soloLettura, impostazioni } from '../dati.js';
 import { testata, riga, sezione, scheletri, statoVuoto, toast, avvisa, apriFoglio, chiedi, vai } from '../ui.js';
 import { normalizza } from '../../comune/fonetica.js';
 import { FILTRI, nomeCompleto, filtraAllievi, secondaRiga, pallinoAllievo, eta, eMinorenne, scadenzaProposta } from '../../comune/allievi.js';
@@ -173,10 +173,16 @@ function disegnaPanoramica(box, { id, d, a, lettura, ridisegna, oggi }) {
     } catch (e) { avvisa(e.message); }
   } }));
   tasti.append(el('button', { class: 'tasto bordo', testo: 'Unisci con un\'altra scheda', onclick: () => foglioUnisci(id, a, ridisegna) }));
-  if (a.stato === 'uscito') tasti.append(el('button', { class: 'tasto pericolo', testo: 'Elimina', onclick: async () => {
-    const ok = await chiedi('Eliminare la scheda?', 'Sparisce tutto quello che lo riguarda: presenze, contenuti, documenti. Non si torna indietro. Se ha pagamenti registrati non si può.', [{ testo: 'Elimina', valore: true, classe: 'terracotta' }, { testo: 'Lascia', valore: false }]);
+  if (a.protetto) tasti.append(el('p', { class: 'piccolo attenuato', testo: 'Questa scheda è protetta: non si elimina e non si unisce ad altre.' }));
+  else tasti.append(el('button', { class: 'tasto pericolo', testo: 'Elimina', onclick: async () => {
+    let pagamenti = 0;
+    try { pagamenti = await contaPagamenti(id); } catch (e) { avvisa(e.message); return; }
+    const testo = pagamenti
+      ? `Sparisce tutto quello che lo riguarda: presenze, contenuti, documenti, e anche i suoi ${pagamenti === 1 ? 'pagamento registrato' : pagamenti + ' pagamenti registrati'} (spariscono dai totali e dai rapporti). Non si torna indietro.`
+      : 'Sparisce tutto quello che lo riguarda: presenze, contenuti, documenti. Non si torna indietro.';
+    const ok = await chiedi('Eliminare la scheda?', testo, [{ testo: pagamenti ? 'Elimina tutto' : 'Elimina', valore: true, classe: 'terracotta' }, { testo: 'Lascia', valore: false }]);
     if (!ok) return;
-    try { await eliminaAllievo(id); toast('Scheda eliminata.'); vai('allievi'); } catch (e) { avvisa(e.message); }
+    try { await eliminaAllievo(id, pagamenti > 0); toast('Scheda eliminata.'); vai('allievi'); } catch (e) { avvisa(e.message); }
   } }));
   box.append(sezione('Azioni', el('div', { class: 'blocco' }, tasti)));
 }
@@ -189,7 +195,7 @@ function foglioUnisci(id, a, ridisegna) {
   const mostra = () => {
     elenco.replaceChildren();
     const q = normalizza(cerca.value);
-    const righe = tutti.filter((x) => x.id !== id && (!q || normalizza(nomeCompleto(x)).includes(q) || (x.soprannomi || []).some((s) => normalizza(s).includes(q)))).slice(0, 8);
+    const righe = tutti.filter((x) => x.id !== id && !x.protetto && (!q || normalizza(nomeCompleto(x)).includes(q) || (x.soprannomi || []).some((s) => normalizza(s).includes(q)))).slice(0, 8);
     if (!righe.length) elenco.append(statoVuoto('Nessuna scheda.'));
     for (const x of righe) elenco.append(riga({ principale: nomeCompleto(x), secondaria: secondaRiga(x), pallino: pallinoAllievo(x), onclick: async () => {
       const ok = await chiedi('Unire?', `${nomeCompleto(x)} viene unito a ${nomeCompleto(a)}. La scheda di ${nomeCompleto(x)} esce con una nota.`, [{ testo: 'Unisci', valore: true, classe: 'pieno' }, { testo: 'No', valore: false }]);

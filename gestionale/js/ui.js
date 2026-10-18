@@ -60,6 +60,8 @@ export function testata(titolo, { indietro = null, azione = null } = {}) {
   }
   barra.append(el('h1', { testo: titolo }));
   if (azione) barra.append(azione);
+  // la rotellina: nelle schermate principali (senza Indietro) porta alle impostazioni
+  if (!indietro) barra.append(el('a', { class: 'tasto icona rotellina', href: '#/impostazioni', 'aria-label': 'Impostazioni', title: 'Impostazioni' }, icona('impostazioni')));
 }
 
 /* ---------- navigazione ---------- */

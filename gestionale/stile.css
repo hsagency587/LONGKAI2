@@ -132,6 +132,9 @@ img { max-width: 100%; display: block; }
 .barra-alto .logo { width: 28px; height: 28px; border-radius: 50%; object-fit: cover; }
 .barra-alto h1 { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .barra-alto .azione { margin-left: auto; }
+.barra-alto .rotellina { flex: none; color: var(--oro); }
+.barra-alto .azione + .rotellina { margin-left: 0; }
+.barra-alto h1 + .rotellina { margin-left: auto; }
 .contenuto { grid-area: contenuto; padding: var(--s-4); max-width: var(--larghezza-max); width: 100%; min-width: 0; margin: 0 auto; }
 .vista { min-width: 0; }
 
