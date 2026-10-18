@@ -40,11 +40,11 @@ export async function vistaOggi(main) {
   // PER INIZIARE: i primi passi, finché mancano listino, allievi o abbonamenti (si può nascondere)
   if (sifu && !leggiLocale().guidaNascosta) {
     const st = await statoAvvio().catch(() => null);
-    if (st && (!st.tariffe || !st.allievi || !st.abbonamenti)) {
+    if (st && (!st.allievi || !st.abbonamenti || !st.documenti)) {
       const passi = [
-        [st.tariffe > 0, 'Scrivi il listino', 'le tariffe: mensile, trimestrale, tessera…', '#/quote/tariffe'],
-        [st.allievi > 0, 'Aggiungi gli allievi', 'uno alla volta con + Allievo, o tutti insieme da un foglio', '#/allievi'],
-        [st.abbonamenti > 0, 'Dai a ognuno il suo abbonamento', 'nella scheda → Quote → + Abbonamento; e il certificato in Documenti', '#/allievi'],
+        [st.allievi > 0, 'Aggiungi gli allievi', 'con + Allievo, o da un foglio', '#/allievi'],
+        [st.abbonamenti > 0, 'Metti la quota a ognuno', 'scheda → Quote: quanto paga e quando ha pagato', '#/allievi'],
+        [st.documenti > 0, 'Carica i certificati', 'scheda → Documenti', '#/allievi'],
       ];
       main.append(sezione('Per iniziare', el('div', { class: 'blocco guida' }, [
         ...passi.map(([fatto, titolo, sotto, href], i) => el('a', { class: 'passo' + (fatto ? ' fatto' : ''), href }, [el('span', { class: 'numero', testo: fatto ? '✓' : String(i + 1) }), el('div', {}, [el('div', { class: 'principale', testo: titolo }), el('div', { class: 'secondaria attenuato', testo: sotto })])])),

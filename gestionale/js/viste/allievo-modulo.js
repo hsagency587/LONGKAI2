@@ -1,6 +1,6 @@
 /* Longkai — viste/allievo-modulo.js: il modulo dei dati di un allievo (nuovo o modifica), l'abbonamento, il caricamento di un documento. */
-import { el, euro } from '../base.js';
-import { nuovoAllievo, salvaAllievo, iscrivi, chiudiIscrizione, corsiCompleti, impostazioni, tariffeTutte, salvaAbbonamento, chiudiAbbonamento, caricaDocumento } from '../dati.js';
+import { el } from '../base.js';
+import { nuovoAllievo, salvaAllievo, iscrivi, chiudiIscrizione, corsiCompleti, impostazioni, salvaQuota, caricaDocumento } from '../dati.js';
 import { toast, avvisa, apriFoglio, vai, statoVuoto } from '../ui.js';
 import { validaAllievo, eMinorenne, scadenzaProposta } from '../../comune/allievi.js';
 import { oggiRoma, aggiungiGiorni } from '../../comune/date.js';
@@ -56,7 +56,7 @@ export async function moduloAllievo(box, contesto) {
     i.corso = c; return i;
   });
 
-  const bloccoTutore = el('div', { class: 'blocco' }, [el('p', { class: 'piccolo attenuato', testo: 'Sotto i 18 anni serve un genitore o tutore.' }), campo('Nome del tutore', tutoreNome), campo('Telefono del tutore', tutoreTel), campo('Email del tutore', tutoreEmail)]);
+  const bloccoTutore = el('div', { class: 'blocco' }, [campo('Nome del tutore', tutoreNome), campo('Telefono del tutore', tutoreTel), campo('Email del tutore', tutoreEmail)]);
   const aggiornaTutore = () => { bloccoTutore.classList.toggle('nascosto', !(eMinorenne(nascita.value, oggi) || tutoreNome.value || tutoreTel.value)); };
   nascita.addEventListener('change', aggiornaTutore);
 
@@ -112,39 +112,28 @@ export async function moduloAllievo(box, contesto) {
   });
 }
 
-/* ---------- l'abbonamento ---------- */
-export async function foglioAbbonamento(allievoId, ab, ridisegna) {
+/* ---------- la quota: quanto paga, ogni quanto, quando ha pagato l'ultima volta ---------- */
+export const PERIODI = [['mensile', 'ogni mese'], ['trimestrale', 'ogni 3 mesi'], ['annuale', 'ogni anno']];
+export function foglioQuota(allievoId, attuale, ridisegna) {
   const oggi = oggiRoma();
-  let tariffe = [];
-  try { tariffe = (await tariffeTutte()).filter((t) => t.attiva || t.id === ab?.tariffa_id); } catch (e) { avvisa(e.message); return; }
-  if (!tariffe.length) {
-    apriFoglio('Abbonamento', el('div', {}, [el('p', { testo: 'Prima servono le tariffe: scrivile in Quote → Tariffe, poi torna qui.' }), el('a', { class: 'tasto pieno', href: '#/quote/tariffe', testo: 'Vai alle tariffe' })]));
-    return;
-  }
-  const tariffa = el('select', {}, tariffe.map((t) => el('option', { value: t.id, testo: `${t.nome} · ${euro(t.importo_cent)}` })));
-  if (ab) tariffa.value = ab.tariffa_id;
-  const dal = el('input', { type: 'date', value: ab?.dal || oggi });
-  const al = el('input', { type: 'date', value: ab?.al || '' });
-  const importo = el('input', { type: 'number', step: '0.01', min: '0', inputmode: 'decimal', placeholder: 'come da tariffa', value: ab?.importo_personalizzato_cent != null ? (ab.importo_personalizzato_cent / 100).toFixed(2) : '' });
-  const rinnovo = interruttore('Si rinnova da solo a ogni periodo', ab ? ab.rinnovo_automatico : true);
-  const nota = testo(ab?.nota, { placeholder: 'es. sconto fratelli' });
+  const quanto = el('input', { type: 'number', step: '0.01', min: '0', inputmode: 'decimal', value: attuale ? String(attuale.importo_cent / 100) : '' });
+  const ogni = el('select', {}, PERIODI.map(([v, t]) => el('option', { value: v, testo: t })));
+  ogni.value = attuale?.tipo || 'mensile';
+  const ultimo = el('input', { type: 'date', value: oggi, max: oggi });
+  const errore = el('p', { class: 'errore-campo', role: 'alert' });
   const salva = el('button', { class: 'tasto pieno grande', testo: 'Salva', onclick: async () => {
+    errore.textContent = '';
+    const cent = Math.round(parseFloat(String(quanto.value).replace(',', '.')) * 100);
+    if (!(cent > 0)) { errore.textContent = 'Quanto paga?'; return; }
     salva.disabled = true;
-    try {
-      const dati = { tariffa_id: tariffa.value, dal: dal.value || oggi, al: al.value || null, rinnovo_automatico: rinnovo.controllo.checked, importo_personalizzato_cent: importo.value ? Math.round(parseFloat(importo.value.replace(',', '.')) * 100) : null, nota: nota.value.trim() || null };
-      if (ab && ab.tariffa_id !== dati.tariffa_id) {
-        // tariffa diversa = abbonamento nuovo: il vecchio si chiude il giorno prima
-        await chiudiAbbonamento(ab.id, aggiungiGiorni(dati.dal, -1) < ab.dal ? ab.dal : aggiungiGiorni(dati.dal, -1));
-        await salvaAbbonamento(allievoId, dati, null);
-      } else {
-        await salvaAbbonamento(allievoId, dati, ab?.id || null);
-      }
-      chiudi(); toast('Abbonamento salvato.'); ridisegna();
-    } catch (e) { avvisa(e.message); } finally { salva.disabled = false; }
+    try { await salvaQuota(allievoId, { importoCent: cent, tipo: ogni.value, ultimoPagamento: attuale ? null : (ultimo.value || oggi), attuale }); chiudi(); toast('Quota salvata.'); ridisegna(); }
+    catch (e) { errore.textContent = e.message || 'Non sono riuscito a salvare.'; salva.disabled = false; }
   } });
-  const figli = [campo('Tariffa', tariffa), el('div', { class: 'griglia-campi' }, [campo('Dal', dal), campo('Fino al', al, 'vuoto = finché non si chiude')]), campo('Importo personalizzato (€)', importo, 'Lascia vuoto per usare quello della tariffa.'), rinnovo.riga, campo('Nota', nota), salva];
-  if (ab) figli.push(el('button', { class: 'tasto pericolo', testo: 'Chiudi l\'abbonamento da oggi', onclick: async () => { try { await chiudiAbbonamento(ab.id, oggi); chiudi(); toast('Abbonamento chiuso.'); ridisegna(); } catch (e) { avvisa(e.message); } } }));
-  const chiudi = apriFoglio(ab ? 'Cambia abbonamento' : 'Nuovo abbonamento', el('div', {}, figli));
+  const chiudi = apriFoglio(attuale ? 'Cambia la quota' : 'La quota', el('div', {}, [
+    el('div', { class: 'griglia-campi' }, [campo('Paga (€)', quanto), campo('Ogni', ogni)]),
+    attuale ? null : campo('Ultimo pagamento', ultimo),
+    errore, salva,
+  ]));
 }
 
 /* ---------- il caricamento di un documento ---------- */
@@ -169,5 +158,5 @@ export function foglioCaricaDocumento(allievoId, impScadenze, ridisegna, tipoIni
       chiudi(); toast(scadenza.value ? 'Documento caricato, scadenza aggiornata.' : 'Documento caricato.'); ridisegna();
     } catch (e) { stato.textContent = ''; avvisa(e.message || 'Non sono riuscito a caricare il file.'); } finally { salva.disabled = false; }
   } });
-  const chiudi = apriFoglio('Carica un documento', el('div', {}, [campo('File', file, 'PDF o foto, fino a 15 MB.'), campo('Cosa è', tipo), el('div', { class: 'griglia-campi' }, [campo('Data del documento', data), campo('Scade il', scadenza, 'proposta: 12 mesi; cambiala se serve')]), stato, salva]));
+  const chiudi = apriFoglio('Carica un documento', el('div', {}, [campo('File', file), campo('Cosa è', tipo), el('div', { class: 'griglia-campi' }, [campo('Data del documento', data), campo('Scade il', scadenza)]), stato, salva]));
 }

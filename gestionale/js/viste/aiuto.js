@@ -4,9 +4,8 @@ import { testata, sezione } from '../ui.js';
 
 const CAPITOLI = [
   ['Il primo giorno', [
-    'Quote → Listino: scrivi le tariffe (mensile, trimestrale, tessera…). Puoi partire dal listino proposto e mettere solo i prezzi.',
-    'Allievi → + Allievo: nome, cognome, data di nascita, cellulare, il corso. Oppure Impostazioni → Allievi → Importa da un foglio.',
-    'Nella scheda di ogni allievo → Quote → + Abbonamento: la tariffa e da quando. Da lì le quote nascono da sole.',
+    'Allievi → + Allievo: nome, cognome, data di nascita, cellulare, il corso. Oppure dalla rotellina → Allievi → Importa da un foglio.',
+    'Nella scheda di ogni allievo → Quote: quanto paga, ogni quanto, quando ha pagato l\'ultima volta. Da lì l\'app sa entro quando devono arrivare i soldi.',
     'Nella scheda → Documenti → + Carica: il certificato medico. La scadenza si calcola da sola e la vedi in Oggi.',
   ]],
   ['Ogni lezione, tre tocchi', [
@@ -25,8 +24,8 @@ const CAPITOLI = [
     'Un piano personale è per chi segue un percorso suo (cosa sta facendo, il prossimo passo, dove vuole arrivare). Non è obbligatorio.',
   ]],
   ['Le quote', [
-    'Ogni abbonamento crea la sua quota a ogni periodo. Quote → Da incassare mostra chi deve cosa; un tocco e registri (tutto o una parte).',
-    'Un pagamento che avanza copre i periodi dopo o resta come credito. Un pagamento si annulla con motivo, mai si cancella.',
+    'Quote → Da incassare: chi deve pagare, quanto, entro quando. Un tocco e segni che ha pagato. Sotto, chi è in regola e fino a quando.',
+    'Nella scheda dell\'allievo: «Ha pagato oggi» con la sua quota, o un\'altra data e importo. Un pagamento che avanza copre i mesi dopo; si annulla con motivo, mai si cancella.',
     'Chi non è iscritto al corso e viene lo stesso è una lezione in più da pagare (si cambia in recupero con un tocco).',
   ]],
   ['Gli avvisi e le notifiche', [

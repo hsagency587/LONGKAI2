@@ -83,7 +83,7 @@ export async function disegnaProgressi(box, { id, lettura, ridisegna, oggi = ogg
       lettura ? null : el('div', { class: 'tasti' }, [el('button', { class: 'tasto bordo', testo: 'Modifica', onclick: () => foglioPiano(id, piano, ridisegna) }), el('button', { class: 'tasto', testo: 'Chiudi il piano', onclick: async () => { const ok = await chiedi('Chiudere il piano?', 'Resta nella cronologia. Se ne può aprire un altro quando vuoi.', [{ testo: 'Chiudi', valore: true, classe: 'pieno' }, { testo: 'Lascia', valore: false }]); if (!ok) return; try { await chiudiPiano(piano.id); toast('Piano chiuso.'); ridisegna(); } catch (e) { avvisa(e.message); } } })]),
     );
   } else {
-    pianoBox.append(el('p', { class: 'attenuato', testo: 'Nessun piano personale. Serve per chi segue un percorso suo: cosa sta facendo, il prossimo passo, dove vuole arrivare. Non è obbligatorio.' }), lettura ? null : el('button', { class: 'tasto pieno', 'data-scrittura': '', testo: '+ Piano personale', onclick: () => foglioPiano(id, null, ridisegna) }));
+    pianoBox.append(el('p', { class: 'attenuato', testo: 'Nessun piano personale.' }), lettura ? null : el('button', { class: 'tasto pieno', 'data-scrittura': '', testo: '+ Piano personale', onclick: () => foglioPiano(id, null, ridisegna) }));
   }
   box.append(sezione('Piano personale', pianoBox));
 }
@@ -122,7 +122,6 @@ export function foglioPiano(allievoId, piano, ridisegna) {
   const disegna = async () => { const tutti = await argomentiAttivi(); b1.replaceChildren(chipsArgomenti(sta, tutti, { vuoto: '—' })); b2.replaceChildren(chipsArgomenti(prossimo, tutti, { vuoto: '—' })); };
   disegna();
   const chiudi = apriFoglio(piano ? 'Piano personale' : 'Nuovo piano personale', el('div', {}, [
-    el('p', { class: 'attenuato', testo: 'Tre cose, tutte facoltative: su cosa sta lavorando, qual è il prossimo passo (le sue private lo ereditano come previsto), dove vuole arrivare.' }),
     el('p', { class: 'piccolo attenuato' , testo: 'Sta lavorando su' }), b1, el('button', { class: 'tasto bordo', testo: 'Scegli', onclick: async () => { const r = await scegliArgomenti({ scelti: sta, titolo: 'Sta lavorando su' }); if (r) { sta = r; disegna(); } } }),
     el('p', { class: 'piccolo attenuato', style: null, testo: 'Prossimo passo' }), b2, el('button', { class: 'tasto bordo', testo: 'Scegli', onclick: async () => { const r = await scegliArgomenti({ scelti: prossimo, titolo: 'Prossimo passo' }); if (r) { prossimo = r; disegna(); } } }),
     campo('Prossimo passo, a parole', nota, 'es. il Bong Sao con il passo'), campo('Dove vuole arrivare', obiettivo, 'es. finire il Chum Kiu entro primavera'),

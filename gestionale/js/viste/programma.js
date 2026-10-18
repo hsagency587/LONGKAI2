@@ -37,13 +37,12 @@ export async function disegnaProgramma(box, ridisegna) {
         el('div', { class: 'riga-stato' }, [el('strong', { testo: `${c.nome} · ${c.citta} · ${formattaMese(m)}` }), voci.length ? el('span', { class: 'piccolo attenuato', testo: `${fatti} di ${voci.length} fatti` }) : null]),
         pr?.nota ? el('p', { class: 'idea', testo: pr.nota }) : null,
         voci.length ? chips : null,
-        vuoto ? el('p', { class: 'attenuato idea', testo: lettura ? 'Niente in programma.' : 'Niente in programma: tocca qui e scrivi cosa vuoi fare questo mese.' }) : null,
-        !lettura && !vuoto ? el('span', { class: 'piccolo attenuato', testo: 'Tocca per cambiare' }) : null,
+        vuoto ? el('p', { class: 'attenuato idea', testo: lettura ? 'Niente in programma.' : 'Niente in programma: tocca e scrivi.' }) : null,
       ];
       mesiBox.append(lettura ? el('div', { class: 'card-mese' }, figli) : el('button', { class: 'card-mese toccabile', type: 'button', onclick: () => foglioMese(c, m, pr, argomenti, ridisegna) }, figli));
     }
   }
-  if (!mesiBox.childElementCount) mesiBox.append(statoVuoto('Nessun corso attivo: si creano dalla rotellina → Corsi e private.'));
+  if (!mesiBox.childElementCount) mesiBox.append(statoVuoto('Nessun corso attivo.'));
   box.append(sezione('Il programma dei mesi', mesiBox));
 
   /* ---------- PROSSIME SESSIONI: si tocca la sessione ---------- */
@@ -58,10 +57,10 @@ export async function disegnaProgramma(box, ridisegna) {
       if (ids.length) { previsto = ids.map(nome).join(', '); daDove = ' (dal mese)'; }
     }
     if (!previsto && s.tipo === 'privata') { const p = piani.find((x) => x.allievo_id === s.allievo_id); if (p?.prossimo_passo_argomenti?.length) { previsto = p.prossimo_passo_argomenti.map(nome).join(', '); daDove = ' (dal piano)'; } else if (p?.prossimo_passo_nota) { previsto = p.prossimo_passo_nota; daDove = ' (dal piano)'; } }
-    elenco.append(riga({ principale: `${formattaData(s.data, 'breve')} ${formattaOra(s.ora)} · ${chi}`, secondaria: previsto ? 'Previsto: ' + previsto + daDove + (s.previsto_nota ? ' · ' + s.previsto_nota : '') : (lettura ? 'niente di previsto' : 'niente di previsto: tocca e scrivi'), pallino: previsto ? 'ok' : 'neutro', onclick: lettura ? null : () => foglioPrevisto(s, argomenti, ridisegna) }));
+    elenco.append(riga({ principale: `${formattaData(s.data, 'breve')} ${formattaOra(s.ora)} · ${chi}`, secondaria: previsto ? 'Previsto: ' + previsto + daDove + (s.previsto_nota ? ' · ' + s.previsto_nota : '') : 'niente di previsto', pallino: previsto ? 'ok' : 'neutro', onclick: lettura ? null : () => foglioPrevisto(s, argomenti, ridisegna) }));
   }
-  if (!elenco.childElementCount) elenco.append(statoVuoto('Nessuna sessione nei prossimi 14 giorni: le lezioni nascono dagli orari dei corsi, le private da Oggi → + Privata.'));
-  box.append(sezione(`Prossime sessioni · ${imp.programma?.orizzonte_giorni || 14} giorni`, [lettura ? null : el('p', { class: 'piccolo attenuato', testo: 'Tocca una sessione per scrivere cosa fare proprio quel giorno. Senza niente di suo, eredita il mese.' }), elenco].filter(Boolean)));
+  if (!elenco.childElementCount) elenco.append(statoVuoto('Nessuna sessione nei prossimi 14 giorni.'));
+  box.append(sezione(`Prossime sessioni · ${imp.programma?.orizzonte_giorni || 14} giorni`, elenco));
 
   /* ---------- A CHE PUNTO SONO: ogni allievo, le forme in corso e le ultime cose fatte ---------- */
   const quadroBox = el('div', { class: 'elenco' });
@@ -75,18 +74,18 @@ export async function disegnaProgramma(box, ridisegna) {
     if (!forme.length && !ultime.length) continue;
     quadroBox.append(riga({ principale: nomeDi(a), secondaria: [forme.join(', '), ultime.length ? 'ultime cose: ' + ultime.map((u) => u.nome).join(', ') + (ultime[0].ultima_volta ? ` (${formattaData(ultime[0].ultima_volta, 'numerico')})` : '') : null].filter(Boolean).join(' — '), pallino: forme.length ? 'ok' : 'info', href: `#/allievi/${a.id}/progressi` }));
   }
-  if (!quadroBox.childElementCount) quadroBox.append(statoVuoto('Ancora niente: i progressi arrivano dalle lezioni confermate e dalla scheda di ogni allievo (Progressi).'));
+  if (!quadroBox.childElementCount) quadroBox.append(statoVuoto('Ancora niente.'));
   box.append(sezione('A che punto sono', quadroBox));
 
   /* ---------- OBIETTIVI E PIANI ---------- */
   const obBox = el('div', { class: 'elenco' });
   for (const o of ob) obBox.append(riga({ principale: nomeDi(o.allievi), secondaria: o.nota, pallino: 'attenzione', href: `#/allievi/${o.allievo_id}/progressi` }));
-  if (!ob.length) obBox.append(statoVuoto('Nessun obiettivo aperto. Un obiettivo è una cosa precisa da raggiungere, per un allievo.'));
+  if (!ob.length) obBox.append(statoVuoto('Nessun obiettivo aperto.'));
   box.append(sezione(`Obiettivi aperti · ${ob.length}`, obBox, lettura ? null : el('button', { class: 'tasto azione', 'data-scrittura': '', testo: '+ Obiettivo', onclick: () => scegliAllievo('Per chi è l\'obiettivo?', (a) => foglioObiettivo(a.id, null, ridisegna)) })));
   const piBox = el('div', { class: 'elenco' });
-  for (const p of piani) piBox.append(riga({ principale: nomeDi(p.allievi), secondaria: [(p.prossimo_passo_argomenti || []).map(nome).join(', '), p.prossimo_passo_nota, p.obiettivo ? 'obiettivo: ' + p.obiettivo : null].filter(Boolean).join(' · ') || 'senza prossimo passo: tocca e scrivilo', pallino: 'info', onclick: lettura ? null : () => foglioPiano(p.allievo_id, p, ridisegna), href: lettura ? `#/allievi/${p.allievo_id}/progressi` : null }));
+  for (const p of piani) piBox.append(riga({ principale: nomeDi(p.allievi), secondaria: [(p.prossimo_passo_argomenti || []).map(nome).join(', '), p.prossimo_passo_nota, p.obiettivo ? 'obiettivo: ' + p.obiettivo : null].filter(Boolean).join(' · ') || 'senza prossimo passo', pallino: 'info', onclick: lettura ? null : () => foglioPiano(p.allievo_id, p, ridisegna), href: lettura ? `#/allievi/${p.allievo_id}/progressi` : null }));
   if (!piani.length) piBox.append(statoVuoto('Nessun piano personale.'));
-  box.append(sezione(`Piani personali · ${piani.length}`, [el('p', { class: 'piccolo attenuato', testo: 'Per chi segue un percorso suo: cosa sta facendo, il prossimo passo, dove vuole arrivare. Le sue private lo ereditano come previsto. Non è obbligatorio.' }), piBox], lettura ? null : el('button', { class: 'tasto azione', 'data-scrittura': '', testo: '+ Piano', onclick: () => scegliAllievo('Per chi è il piano?', (a) => { const gia = piani.find((p) => p.allievo_id === a.id); foglioPiano(a.id, gia || null, ridisegna); }) })));
+  box.append(sezione(`Piani personali · ${piani.length}`, piBox, lettura ? null : el('button', { class: 'tasto azione', 'data-scrittura': '', testo: '+ Piano', onclick: () => scegliAllievo('Per chi è il piano?', (a) => { const gia = piani.find((p) => p.allievo_id === a.id); foglioPiano(a.id, gia || null, ridisegna); }) })));
 }
 
 /** Un foglio per scegliere un allievo attivo (ricerca anche sui soprannomi); poi `dopo(allievo)`. */
@@ -113,7 +112,7 @@ function foglioPrevisto(s, argomenti, ridisegna) {
   disegna();
   const nota = el('textarea', { rows: '2', placeholder: 'es. ripasso della prima sezione, poi Pak Sao in coppia' }); nota.value = s.previsto_nota || '';
   const salva = el('button', { class: 'tasto pieno grande', testo: 'Salva', onclick: async () => { try { await salvaProgramma({ sessioneId: s.id, nota: nota.value.trim() || null, argomenti: scelti }); chiudi(); toast('Previsto salvato.'); ridisegna(); } catch (e) { avvisa(e.message); } } });
-  const chiudi = apriFoglio(`${formattaData(s.data, 'breve')} · ${s.corso_nome || 'privata'}`, el('div', {}, [campo('Cosa fare quel giorno', nota), el('p', { class: 'piccolo attenuato', testo: 'Gli argomenti (facoltativi): a fine lezione si spuntano da soli.' }), chipsBox, el('button', { class: 'tasto bordo', testo: 'Scegli gli argomenti', onclick: async () => { const r = await scegliArgomenti({ scelti, titolo: 'Previsto per ' + formattaData(s.data, 'breve') }); if (r) { scelti = r; disegna(); } } }), salva]));
+  const chiudi = apriFoglio(`${formattaData(s.data, 'breve')} · ${s.corso_nome || 'privata'}`, el('div', {}, [campo('Cosa fare quel giorno', nota), chipsBox, el('button', { class: 'tasto bordo', testo: 'Scegli gli argomenti', onclick: async () => { const r = await scegliArgomenti({ scelti, titolo: 'Previsto per ' + formattaData(s.data, 'breve') }); if (r) { scelti = r; disegna(); } } }), salva]));
 }
 
 function foglioMese(corso, mese, pr, argomenti, ridisegna) {
@@ -124,8 +123,7 @@ function foglioMese(corso, mese, pr, argomenti, ridisegna) {
   const nota = el('textarea', { rows: '3', placeholder: 'es. chiudere la prima sezione del Siu Nim Tao, lavorare sul Pak Sao in coppia, iniziare i calci' }); nota.value = pr?.nota || '';
   const salva = el('button', { class: 'tasto pieno grande', testo: 'Salva', onclick: async () => { try { await salvaProgramma({ corsoId: corso.id, mese, nota: nota.value.trim() || null, argomenti: scelti }); chiudi(); toast('Mese programmato.'); ridisegna(); } catch (e) { avvisa(e.message); } } });
   const chiudi = apriFoglio(`${corso.nome} · ${corso.citta} · ${formattaMese(mese)}`, el('div', {}, [
-    campo('Cosa vuoi fare questo mese', nota, 'Scrivilo come lo diresti. Lo rivedi in Oggi, lezione per lezione.'),
-    el('p', { class: 'piccolo attenuato', testo: 'Gli argomenti, in ordine: le lezioni del mese li ereditano da soli, uno dopo l\'altro, e si spuntano quando sono fatti.' }),
+    campo('Cosa vuoi fare questo mese', nota),
     chipsBox,
     el('button', { class: 'tasto bordo', testo: 'Scegli gli argomenti', onclick: async () => { const r = await scegliArgomenti({ scelti, titolo: `Il mese di ${corso.nome} · ${corso.citta}` }); if (r) { scelti = r; disegna(); } } }),
     salva,

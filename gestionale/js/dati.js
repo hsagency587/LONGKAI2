@@ -636,17 +636,58 @@ export async function aggiungiPronuncia(argomentoId, sentito) {
   cacheArgomenti = { quando: 0, dati: [] };
 }
 
+/* ---------- la quota semplice: quanto paga, ogni quanto, quando ha pagato l'ultima volta ---------- */
+const NOMI_PERIODO = { mensile: 'Mensile', trimestrale: 'Trimestrale', annuale: 'Annuale' };
+function giornoPrima(d) { const [a, m, g] = d.split('-').map(Number); return new Date(Date.UTC(a, m - 1, g - 1, 12)).toISOString().slice(0, 10); }
+async function tariffaDiPeriodo(tipo) {
+  const r = await sb().from('tariffe').select('id').eq('tipo', tipo).eq('nome', NOMI_PERIODO[tipo]).limit(1);
+  controlla(r);
+  if (r.data?.[0]) return r.data[0].id;
+  const i = await sb().from('tariffe').insert({ nome: NOMI_PERIODO[tipo], importo_cent: 0, tipo, attiva: true, ordine: tipo === 'mensile' ? 1 : tipo === 'trimestrale' ? 2 : 3 }).select('id').single();
+  controlla(i);
+  return i.data.id;
+}
+/** La quota attiva di un allievo: { id, dal, importo_cent, tipo } o null. */
+export async function quotaAllievo(allievoId) {
+  const r = await sb().from('abbonamenti').select('id, dal, al, creato_il, importo_personalizzato_cent, tariffe(tipo, importo_cent)').eq('allievo_id', allievoId).or(`al.is.null,al.gte.${oggi()}`).order('dal', { ascending: false }).order('creato_il', { ascending: false }).limit(1);
+  controlla(r);
+  const ab = r.data?.[0];
+  return ab ? { id: ab.id, dal: ab.dal, importo_cent: ab.importo_personalizzato_cent ?? ab.tariffe?.importo_cent ?? 0, tipo: ab.tariffe?.tipo || 'mensile' } : null;
+}
+/** Imposta o cambia la quota. La prima volta anche l'ultimo pagamento: il primo periodo parte da lì e risulta pagato. */
+export async function salvaQuota(allievoId, { importoCent, tipo = 'mensile', ultimoPagamento = null, attuale = null }) {
+  if (attuale && attuale.tipo === tipo) {
+    const u = await sb().from('abbonamenti').update({ importo_personalizzato_cent: importoCent }).eq('id', attuale.id).select('id');
+    controlla(u);
+    const a = await sb().from('addebiti').update({ importo_cent: importoCent }).eq('abbonamento_id', attuale.id).eq('stato', 'da_pagare').eq('pagato_cent', 0).select('id');
+    controlla(a);
+    return attuale.id;
+  }
+  const tariffaId = await tariffaDiPeriodo(tipo);
+  const dal = !attuale && ultimoPagamento ? ultimoPagamento : oggi();
+  if (attuale) {
+    // cambia il periodo: i periodi non ancora pagati del vecchio si annullano, il vecchio si chiude
+    const aperti = await sb().from('addebiti').select('id').eq('abbonamento_id', attuale.id).eq('stato', 'da_pagare').eq('pagato_cent', 0);
+    controlla(aperti);
+    for (const x of aperti.data || []) await annullaAddebito(x.id, 'cambio di quota');
+    await chiudiAbbonamento(attuale.id, giornoPrima(dal) < attuale.dal ? attuale.dal : giornoPrima(dal));
+  }
+  const id = await salvaAbbonamento(allievoId, { tariffa_id: tariffaId, dal, al: null, rinnovo_automatico: true, importo_personalizzato_cent: importoCent, nota: null }, null);
+  if (!attuale && ultimoPagamento) await registraPagamento({ allievoId, importoCent, data: ultimoPagamento });
+  return id;
+}
+
 /* ---------- la guida di partenza e il quadro degli allievi ---------- */
 /** Quante cose ci sono: per la guida «Per iniziare» in Oggi e per gli stati vuoti che spiegano. */
 export async function statoAvvio() {
   const conta = async (q) => { const r = await q; controlla(r); return r.count || 0; };
-  const [tariffe, allievi, abbonamenti, corsi] = await Promise.all([
-    conta(sb().from('tariffe').select('id', { count: 'exact', head: true }).eq('attiva', true)),
+  const [allievi, abbonamenti, documenti, corsi] = await Promise.all([
     conta(sb().from('allievi').select('id', { count: 'exact', head: true }).eq('protetto', false).neq('stato', 'uscito')),
     conta(sb().from('abbonamenti').select('id', { count: 'exact', head: true }).or(`al.is.null,al.gte.${oggi()}`)),
+    conta(sb().from('documenti').select('id', { count: 'exact', head: true })),
     conta(sb().from('corsi').select('id', { count: 'exact', head: true }).eq('attivo', true)),
   ]);
-  return { tariffe, allievi, abbonamenti, corsi };
+  return { allievi, abbonamenti, documenti, corsi };
 }
 /** Per ogni allievo attivo: le forme in corso e le ultime cose fatte (per «A che punto sono» nel Programma). */
 export async function aChePunto() {

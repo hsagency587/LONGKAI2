@@ -1,7 +1,7 @@
 /* Longkai — viste/quote-fogli.js: i fogli delle quote, usati da Quote, dalla scheda dell'allievo e da Oggi:
    registra un pagamento, un rimborso, un addebito a mano; annulla; sconto. */
 import { el, euro } from '../base.js';
-import { registraPagamento, registraRimborso, nuovoAddebito, annullaPagamento, annullaAddebito, scontaAddebito, allieviAttivi, leggiLocale, salvaLocale, impostazioni } from '../dati.js';
+import { registraPagamento, registraRimborso, nuovoAddebito, annullaPagamento, annullaAddebito, scontaAddebito, allieviAttivi, leggiLocale, salvaLocale, impostazioni, quotaAllievo } from '../dati.js';
 import { messaggioPromemoria, linkWhatsApp, linkChiama, TESTI_PREDEFINITI } from '../../comune/promemoria.js';
 import { riga, statoVuoto, toast, avvisa, apriFoglio, chiedi } from '../ui.js';
 import { normalizza } from '../../comune/fonetica.js';
@@ -12,7 +12,7 @@ import { campo } from './allievo-modulo.js';
 const nomeDi = (a) => `${a?.nome || ''} ${a?.cognome || ''}`.trim();
 
 /** Un campo di ricerca dell'allievo con i recenti; risponde { campo, scelto: () => allievo }. */
-function cercaAllievo(iniziale = null) {
+function cercaAllievo(iniziale = null, onScelto = null) {
   let scelto = iniziale;
   let tutti = [];
   const cerca = el('input', { type: 'search', placeholder: 'Chi?', autocomplete: 'off', value: iniziale ? nomeDi(iniziale) : '' });
@@ -22,7 +22,7 @@ function cercaAllievo(iniziale = null) {
     const q = normalizza(cerca.value);
     const recenti = (leggiLocale().pagamentiRecenti || []).map((id) => tutti.find((a) => a.id === id)).filter(Boolean);
     const righe = (q ? tutti.filter((a) => normalizza(nomeDi(a)).includes(q) || normalizza(`${a.cognome} ${a.nome}`).includes(q) || (a.soprannomi || []).some((x) => normalizza(x).includes(q))) : recenti).slice(0, 6);
-    for (const a of righe) elenco.append(riga({ principale: nomeDi(a), secondaria: !q ? 'recente' : null, pallino: scelto?.id === a.id ? 'ok' : 'neutro', onclick: () => { scelto = a; cerca.value = nomeDi(a); elenco.replaceChildren(); } }));
+    for (const a of righe) elenco.append(riga({ principale: nomeDi(a), secondaria: !q ? 'recente' : null, pallino: scelto?.id === a.id ? 'ok' : 'neutro', onclick: () => { scelto = a; cerca.value = nomeDi(a); elenco.replaceChildren(); if (onScelto) onScelto(a); } }));
   };
   cerca.addEventListener('input', () => { scelto = null; mostra(); });
   if (!iniziale) allieviAttivi().then((t) => { tutti = t; mostra(); }).catch((e) => avvisa(e.message));
@@ -40,9 +40,11 @@ function campiImporto(importoIniziale = '') {
 }
 
 /** Registra un pagamento: da Oggi (nessun allievo), dalla scheda (allievo fisso) o da un addebito (allievo e importo già messi). */
-export function foglioRegistraPagamento({ allievo = null, addebito = null, dopo = () => {} } = {}) {
-  const chi = cercaAllievo(allievo || (addebito ? { id: addebito.allievo_id, nome: addebito.nome, cognome: addebito.cognome } : null));
-  const c = campiImporto(addebito ? (residuo(addebito) / 100).toFixed(2).replace('.', ',') : '');
+export function foglioRegistraPagamento({ allievo = null, addebito = null, importoCent = null, dopo = () => {} } = {}) {
+  // scelto l'allievo, l'importo è la sua quota (si può cambiare)
+  const chi = cercaAllievo(allievo || (addebito ? { id: addebito.allievo_id, nome: addebito.nome, cognome: addebito.cognome } : null), (a) => { quotaAllievo(a.id).then((q) => { if (q && !c.importo.value) c.importo.value = (q.importo_cent / 100).toFixed(2).replace('.', ','); }).catch(() => { /* niente */ }); });
+  const c = campiImporto(addebito ? (residuo(addebito) / 100).toFixed(2).replace('.', ',') : importoCent ? (importoCent / 100).toFixed(2).replace('.', ',') : '');
+  if (allievo && !addebito && !importoCent) quotaAllievo(allievo.id).then((q) => { if (q && !c.importo.value) c.importo.value = (q.importo_cent / 100).toFixed(2).replace('.', ','); }).catch(() => { /* niente */ });
   if (addebito?.descrizione) c.nota.value = addebito.descrizione;
   const salva = el('button', { class: 'tasto pieno grande', testo: 'Registra', onclick: async () => {
     const a = chi.scelto();
@@ -55,7 +57,7 @@ export function foglioRegistraPagamento({ allievo = null, addebito = null, dopo 
       chi.ricorda(); chiudi(); toast(`Registrato: ${euro(cent)} da ${nomeDi(a)}.`); dopo();
     } catch (e) { avvisa(e.message); salva.disabled = false; }
   } });
-  const chiudi = apriFoglio(addebito ? 'Registra il pagamento' : 'Pagamento', el('div', {}, [chi.box, c.griglia, el('p', { class: 'piccolo attenuato', testo: 'Si applica a quello che c\'è da pagare, dal più vecchio; se avanza, copre i periodi dopo o resta come credito.' }), salva]));
+  const chiudi = apriFoglio(addebito ? 'Registra il pagamento' : 'Pagamento', el('div', {}, [chi.box, c.griglia, salva]));
 }
 
 export function foglioRimborso({ allievo, creditoCent = 0, dopo = () => {} }) {

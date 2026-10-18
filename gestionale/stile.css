@@ -280,6 +280,12 @@ body.sola-lettura .bolla-azione { display: none; }
 .guida .numero { flex: none; width: 28px; height: 28px; border-radius: 50%; background: var(--c-oro); color: var(--c-oro-testo); display: flex; align-items: center; justify-content: center; font-weight: 700; }
 .guida .passo.fatto .numero { background: var(--c-ok); color: #fff; }
 .guida .passo.fatto .principale { text-decoration: line-through; opacity: 0.7; }
+.riga-quota { display: flex; align-items: center; gap: var(--s-2); flex-wrap: wrap; margin-bottom: var(--s-3); font-size: var(--t-18); }
+.riga-quota input { width: 96px; font-size: var(--t-18); font-weight: 700; text-align: right; }
+.riga-quota select { width: auto; }
+.rosso { color: var(--c-errore); }
+.blocco-link { display: block; text-decoration: none; color: inherit; }
+.blocco-link:hover { background: var(--c-superficie-2); }
 .aiuto-riga { margin: 0; padding: var(--s-2) 0; border-top: 1px solid var(--c-bordo); }
 .aiuto-riga.prima { border-top: 0; padding-top: 0; }
 .detta { text-align: center; }

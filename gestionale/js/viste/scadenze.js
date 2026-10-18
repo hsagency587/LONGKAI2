@@ -54,7 +54,7 @@ function foglioScadenza(s, nome, imp, lettura, ridisegna) {
       segna.disabled = true;
       try { await rinnovaScadenza(s.allievo_id, s.tipo, data.value || oggi); chiudi(); toast('Rinnovata.'); ridisegna(); } catch (e) { avvisa(e.message); } finally { segna.disabled = false; }
     } });
-    figli.push(el('div', { class: 'blocco' }, [el('p', { class: 'piccolo attenuato', testo: 'Se hai il documento nuovo, caricalo dalla scheda: la scadenza si rinnova da sola. Qui la segni a mano.' }), campo('Nuova scadenza', data), segna]));
+    figli.push(el('div', { class: 'blocco' }, [campo('Nuova scadenza', data), segna]));
     // il promemoria all'allievo: un tocco, si apre WhatsApp con il testo già scritto, lo manda il Sifu
     const testi = { ...TESTI_PREDEFINITI, ...(imp.promemoria?.testi || {}) };
     const messaggio = messaggioPromemoria(testi[s.tipo], { nome: s.allievi?.nome || '', tipo: (ETICHETTE[s.tipo] || s.tipo).toLowerCase(), data: s.data });

@@ -153,7 +153,6 @@ async function gruppoScadenze(main, lettura, ridisegna) {
   if (lettura) blocco.querySelectorAll('input').forEach((x) => { x.disabled = true; });
   main.append(sezione('Scadenze', blocco));
   main.append(sezione('Notifiche su questo telefono', await bloccoNotifiche(ridisegna)));
-  main.append(el('p', { class: 'piccolo attenuato', testo: 'Al massimo due notifiche al giorno: al mattino solo se c\'è qualcosa di nuovo (un riassunto, mai una per cosa), la sera solo se la lezione di oggi è ancora da chiudere. Il giorno 1 del mese, il rapporto. Mai fra le 22 e le 7. Gli avvisi per intero stanno in Oggi.' }));
 }
 
 /** Lo stato delle notifiche di questo telefono, con Attiva / Spegni / Manda una prova. Vale per tutti e due i ruoli: a Simone arrivano le segnalazioni. */
@@ -183,7 +182,7 @@ async function gruppoPromemoria(main, lettura, ridisegna) {
   const ETICHETTE = { certificato: 'Certificato medico', tesseramento: 'Tesseramento', quota: 'Quota' };
   const ESEMPI = { certificato: { nome: 'Allievo Uno', tipo: 'certificato medico', data: '2026-11-30' }, tesseramento: { nome: 'Allievo Uno', tipo: 'tesseramento', data: '2026-11-30' }, quota: { nome: 'Allievo Uno', tipo: 'il mensile di novembre', data: '2026-11-05', importo: '70,00 €' } };
   const aree = {}; const anteprime = {};
-  const figli = [tastoCorreggi(), el('p', { class: 'piccolo attenuato', testo: 'Parole che si riempiono da sole: {nome} {tipo} {data} {importo}.' })];
+  const figli = [tastoCorreggi(), el('p', { class: 'piccolo attenuato', testo: 'Si riempiono da sole: {nome} {tipo} {data} {importo}.' })];
   for (const k of ['certificato', 'tesseramento', 'quota']) {
     aree[k] = el('textarea', { rows: '3', maxlength: '500' }); aree[k].value = testi[k]; aree[k].disabled = lettura;
     anteprime[k] = el('p', { class: 'piccolo attenuato', testo: 'Esempio: ' + messaggioPromemoria(testi[k], ESEMPI[k]) });
@@ -192,7 +191,6 @@ async function gruppoPromemoria(main, lettura, ridisegna) {
   }
   if (!lettura) figli.push(el('button', { class: 'tasto pieno', testo: 'Salva', onclick: async () => { try { const nuovi = {}; for (const k of Object.keys(aree)) nuovi[k] = aree[k].value.trim() || TESTI_PREDEFINITI[k]; await salvaImpostazione('promemoria', 'testi', nuovi); toast('Salvato.'); ridisegna(); } catch (e) { avvisa(e.message); } } }));
   main.append(sezione('I testi', el('div', { class: 'blocco' }, figli)));
-  main.append(el('p', { class: 'piccolo attenuato', testo: 'I promemoria non partono da soli. Da una scadenza (Altro → Scadenze) o da una quota aperta tocchi «Ricorda su WhatsApp»: si apre WhatsApp con il messaggio già scritto e lo mandi tu. Serve il cellulare nella scheda dell\'allievo.' }));
 }
 
 /* ---------- Segnalazioni: l'elenco con lo stato (le gestisce Simone) ---------- */
@@ -208,7 +206,6 @@ async function gruppoSegnalazioni(main, ridisegna) {
     elenco.append(riga({ principale: s.titolo || s.testo.slice(0, 80), secondaria: [formattaData(s.creato_il.slice(0, 10), 'numerico'), s.profili?.nome, s.schermata, s.versione_app ? 'v' + s.versione_app : null, nomeStato + (s.risolta_versione ? ' nella ' + s.risolta_versione : '')].filter(Boolean).join(' · '), pallino, onclick: () => foglioSegnalazione(s, Boolean(p), ridisegna) }));
   }
   main.append(sezione(`Segnalazioni · ${tutte.length}`, elenco));
-  main.append(el('p', { class: 'piccolo attenuato', testo: 'Ogni segnalazione arriva a Simone come notifica sul telefono. Qui si vede lo stato: nuova, vista, risolta (con la versione).' }));
 }
 
 function foglioSegnalazione(s, puoGestire, ridisegna) {
@@ -252,8 +249,7 @@ function gruppoDati(main) {
       toast('Copia pronta.');
     } catch (err) { avvisa(err.message); } finally { e.target.disabled = false; }
   } });
-  main.append(sezione('Copia dei dati', el('div', { class: 'blocco' }, [el('p', { testo: 'Tutto quello che c\'è nell\'app, in un file. Una copia cifrata si fa da sola ogni settimana; questa la tieni tu dove vuoi.' }), scarica])));
-  main.append(el('p', { class: 'piccolo attenuato', testo: 'I documenti caricati (certificati, PDF) non sono nel file: stanno al sicuro sul server.' }));
+  main.append(sezione('Copia dei dati', el('div', { class: 'blocco' }, [scarica])));
 }
 
 /* ---------- Voce ---------- */
@@ -272,7 +268,7 @@ async function gruppoVoce(main, lettura, ridisegna) {
     interr('“Ricorda come lo dico” acceso', 'ricorda_pronunce', imp.ricorda_pronunce !== false),
     interr('Aiuto sotto Detta per le prime tre dettature', 'aiuto_prime_dettature', imp.aiuto_prime_dettature !== false),
     el('p', { class: 'piccolo attenuato', style: null, testo: `Dettature fatte: ${imp.dettature_fatte || 0}. Microfono: ${puoRegistrare() ? 'disponibile (' + (formatoSupportato() || 'formato di sistema') + ')' : 'non disponibile su questo browser'}.` }),
-  ])), el('p', { class: 'piccolo attenuato', testo: 'Le pronunce si vedono e si correggono in Forme e tecniche. La calibrazione della voce arriva più avanti.' }));
+  ])));
 }
 
 /* ---------- Intelligenza artificiale ---------- */
@@ -289,7 +285,6 @@ async function gruppoIa(main, lettura, ridisegna) {
   if (!consumi.length) elenco.append(statoVuoto('Nessun consumo questo mese.'));
   main.append(sezione('Questo mese', el('div', { class: 'blocco' }, [el('div', { class: 'principale', testo: `Speso: ${euro(speso)} su ${euro(imp.tetto_mensile_cent ?? 500)}` }), el('div', { class: 'copertura', style: null }, [(() => { const s = el('span'); s.style.width = `${Math.min(100, Math.round((speso / Math.max(1, imp.tetto_mensile_cent ?? 500)) * 100))}%`; return s; })()])])), sezione('Consumi', elenco));
   main.append(sezione('Regole', el('div', { class: 'blocco' }, [el('label', { class: 'interruttore' }, [el('span', { testo: 'Intelligenza artificiale accesa' }), accesa]), campo('Tetto mensile di spesa (€)', tetto, 'Raggiunto il tetto, la dettatura si ferma e “A mano” continua a funzionare.'), lettura ? null : salva])));
-  main.append(el('p', { class: 'piccolo attenuato', testo: 'I costi sono stime prudenti (Groq per la voce, Claude per il riordino). Le chiavi stanno sul server, mai nell\'app.' }));
 }
 
 /* ---------- Rapporti: i capitoli e cosa includere ---------- */
@@ -332,7 +327,6 @@ async function gruppoRapporti(main, lettura, ridisegna) {
   main.append(sezione('I capitoli del rapporto mensile', [tastoCorreggi('impostazioni'), elenco]));
   main.append(sezione('Cosa includere', el('div', { class: 'blocco' }, [interr('Le osservazioni sugli allievi', 'includi_osservazioni', imp.includi_osservazioni !== false), interr('Gli importi (incassi, da incassare)', 'includi_importi', imp.includi_importi !== false), interr('Chi non si \u00e8 mai visto nel mese', 'includi_assenti', imp.includi_assenti === true), interr('Il riassunto scritto da Claude', 'riassunto_ia', imp.riassunto_ia !== false)])));
   main.append(sezione('Generazione', el('div', { class: 'blocco' }, [el('div', { class: 'griglia-campi' }, [campo('Giorno del mese in cui esce', giorno, 'il rapporto del mese prima'), campo('Firma in fondo', firma)]), lettura ? null : salva])));
-  main.append(el('p', { class: 'piccolo attenuato', testo: 'Il modello grafico (carta, carattere, colori) \u00e8 il brand e resta fisso. Il rapportino della giornata esce su richiesta da Oggi o dalla sessione.' }));
 }
 
 /* ---------- Associazione ---------- */

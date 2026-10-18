@@ -29,7 +29,7 @@ export async function disegnaCorsi(box, ridisegna) {
     elenco.append(riga({ principale: `${c.nome} · ${c.citta}`, secondaria: [orari || 'nessun orario', formattaMinuti(c.durata_minuti), stato].filter(Boolean).join(' · '), pallino: !c.attivo ? 'neutro' : c.sospeso_dal ? 'attenzione' : 'ok', onclick: lettura ? null : () => foglioCorso(c, ridisegna) }));
   }
   if (!corsi.length) elenco.append(statoVuoto('Nessun corso: tocca «+ Corso» e metti nome, città, giorni e ore.'));
-  box.append(elenco, el('p', { class: 'piccolo attenuato', style: null, testo: 'Le lezioni dei prossimi 14 giorni si creano da sole dagli orari. Se cambi un orario, quelle future vuote si rifanno.' }));
+  box.append(elenco);
 }
 
 function foglioCorso(c, ridisegna) {

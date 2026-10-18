@@ -1,36 +1,31 @@
-/* Longkai — viste/quote.js: Da incassare · Pagamenti · Tariffe. */
+/* Longkai — viste/quote.js: Da incassare (chi deve pagare, quanto, entro quando) · Pagamenti (mese per mese).
+   La quota di ogni allievo si imposta nella sua scheda: quanto paga, ogni quanto, quando ha pagato l'ultima volta. */
 import { el, euro, icona } from '../base.js';
-import { daIncassare, pagamentiPeriodo, incassiMesi, tariffeTutte, salvaTariffa, soloLettura, statoAvvio } from '../dati.js';
-import { testata, statoVuoto, riga, sezione, scheletri, toast, apriFoglio, azioneFissa } from '../ui.js';
-import { oggiRoma, formattaMese, primoDelMese, aggiungiMesi, aggiungiGiorni } from '../../comune/date.js';
+import { daIncassare, pagamentiPeriodo, incassiMesi, elencoAllieviCompleto, soloLettura } from '../dati.js';
+import { testata, statoVuoto, riga, sezione, scheletri, azioneFissa } from '../ui.js';
+import { oggiRoma, formattaMese, formattaData, primoDelMese, aggiungiMesi, aggiungiGiorni } from '../../comune/date.js';
 import { gruppoScadenza, GRUPPI_SCADENZA, totali, METODI } from '../../comune/quote.js';
+import { giorniMancanti } from '../../comune/scadenze.js';
 import { normalizza } from '../../comune/fonetica.js';
-import { foglioRegistraPagamento, foglioAddebito, foglioAddebitoAzioni, foglioPagamentoAzioni, rigaAddebito, rigaPagamento } from './quote-fogli.js';
-import { campo } from './allievo-modulo.js';
-
-const TIPI = [['mensile', 'Mensile'], ['trimestrale', 'Trimestrale'], ['annuale', 'Annuale'], ['pacchetto', 'Pacchetto di N lezioni'], ['lezione', 'A lezione'], ['ora_privata', 'A ora di privata'], ['tessera', 'Tessera / iscrizione'], ['altro', 'Altro']];
-const NOME_TIPO = Object.fromEntries(TIPI);
+import { foglioRegistraPagamento, foglioAddebitoAzioni, foglioPagamentoAzioni, rigaPagamento } from './quote-fogli.js';
 
 export async function vistaQuote(main, parametri) {
-  const scheda = ['incassare', 'pagamenti', 'tariffe'].includes(parametri[0]) ? parametri[0] : 'incassare';
+  const scheda = parametri[0] === 'pagamenti' ? 'pagamenti' : 'incassare';
   const lettura = soloLettura();
   const ridisegna = () => { main.replaceChildren(); vistaQuote(main, parametri); };
-  const azione = lettura || scheda !== 'incassare' ? null : el('button', { class: 'tasto azione', 'data-scrittura': '', testo: 'Addebito a mano', onclick: () => foglioAddebito({ dopo: ridisegna }) });
-  testata('Quote', { azione });
-  // la bolla in basso: la cosa che si fa più spesso in questa scheda
-  azioneFissa(scheda === 'tariffe' ? { testo: 'Tariffa', onclick: () => foglioTariffa(null, ridisegna) } : { testo: 'Pagamento', onclick: () => foglioRegistraPagamento({ dopo: ridisegna }) });
+  testata('Quote');
+  azioneFissa({ testo: 'Pagamento', onclick: () => foglioRegistraPagamento({ dopo: ridisegna }) });
   const chips = el('div', { class: 'chips scorrevole' });
-  for (const [k, nome] of [['incassare', 'Da incassare'], ['pagamenti', 'Pagamenti'], ['tariffe', 'Listino']]) chips.append(el('a', { class: 'chip' + (k === scheda ? ' scelto' : ''), href: '#/quote/' + k, testo: nome }));
+  for (const [k, nome] of [['incassare', 'Da incassare'], ['pagamenti', 'Pagamenti']]) chips.append(el('a', { class: 'chip' + (k === scheda ? ' scelto' : ''), href: '#/quote/' + k, testo: nome }));
   main.append(chips, el('div', { class: 'spazio' }));
-  if (scheda === 'tariffe') { await disegnaTariffe(main, lettura, ridisegna); return; }
   if (scheda === 'pagamenti') { await disegnaPagamenti(main, parametri.slice(1), lettura, ridisegna); return; }
   await disegnaDaIncassare(main, lettura, ridisegna);
 }
 
-/* ---------- DA INCASSARE ---------- */
+/* ---------- DA INCASSARE: per allievo, quanto e entro quando; poi chi è in regola e chi è senza quota ---------- */
 async function disegnaDaIncassare(main, lettura, ridisegna) {
   main.append(scheletri(3));
-  const righe = await daIncassare();
+  const [righe, allievi] = await Promise.all([daIncassare(), elencoAllieviCompleto()]);
   main.querySelectorAll('.scheletro').forEach((x) => x.remove());
   const oggi = oggiRoma();
   const cerca = el('input', { type: 'search', placeholder: 'Cerca un allievo', autocomplete: 'off' });
@@ -38,27 +33,37 @@ async function disegnaDaIncassare(main, lettura, ridisegna) {
   const mostra = () => {
     corpo.replaceChildren();
     const q = normalizza(cerca.value);
-    const vis = righe.filter((d) => !q || normalizza(`${d.nome} ${d.cognome}`).includes(q) || normalizza(`${d.cognome} ${d.nome}`).includes(q));
-    const scaduto = vis.filter((d) => gruppoScadenza(d.scadenza, oggi) === 'scaduto').reduce((t, d) => t + d.residuo_cent, 0);
+    const nomeOk = (nome, cognome) => !q || normalizza(`${nome} ${cognome}`).includes(q) || normalizza(`${cognome} ${nome}`).includes(q);
+    const vis = righe.filter((d) => nomeOk(d.nome, d.cognome));
     const totale = vis.reduce((t, d) => t + d.residuo_cent, 0);
-    corpo.append(el('div', { class: 'blocco' }, [el('div', { class: 'principale', testo: `Da incassare: ${euro(totale)}` }), el('div', { class: 'secondaria attenuato', testo: scaduto ? `di cui scaduti: ${euro(scaduto)}` : 'niente di scaduto' })]));
-    if (!vis.length) {
-      if (righe.length) { corpo.append(statoVuoto('Nessuno con questo nome.')); return; }
-      // niente da incassare: si spiega da dove nascono le quote, se manca qualcosa
-      const vuoto = statoVuoto('Niente da incassare. Bene.');
-      corpo.append(vuoto);
-      if (!lettura) statoAvvio().then((st) => {
-        if (!st.tariffe) vuoto.replaceChildren(el('p', { testo: 'Niente da incassare, perché manca il listino: le quote nascono dagli abbonamenti, e gli abbonamenti dal listino.' }), el('a', { class: 'tasto pieno', href: '#/quote/tariffe', testo: 'Scrivi il listino' }));
-        else if (!st.abbonamenti) vuoto.replaceChildren(el('p', { testo: 'Niente da incassare: nessun allievo ha ancora un abbonamento. Si sceglie nella scheda dell\'allievo, in Quote → + Abbonamento.' }), el('a', { class: 'tasto pieno', href: '#/allievi', testo: 'Vai agli allievi' }));
-      }).catch(() => { /* resta il testo semplice */ });
-      return;
-    }
+    const scaduto = vis.filter((d) => gruppoScadenza(d.scadenza, oggi) === 'scaduto').reduce((t, d) => t + d.residuo_cent, 0);
+    corpo.append(el('div', { class: 'blocco' }, [el('div', { class: 'principale', testo: `Da incassare: ${euro(totale)}` }), scaduto ? el('div', { class: 'secondaria attenuato', testo: `di cui scaduti: ${euro(scaduto)}` }) : null]));
     for (const [k, titolo] of GRUPPI_SCADENZA) {
       const del = vis.filter((d) => gruppoScadenza(d.scadenza, oggi) === k);
       if (!del.length) continue;
       const elenco = el('div', { class: 'elenco' });
-      for (const d of del) elenco.append(riga({ principale: `${d.nome} ${d.cognome}`.trim(), secondaria: [d.descrizione || d.motivo, d.scadenza ? 'scade il ' + d.scadenza.split('-').reverse().join('/') : null, d.pagato_cent ? `pagato ${euro(d.pagato_cent)}` : null, d.stato_allievo !== 'attivo' ? d.stato_allievo : null].filter(Boolean).join(' · '), destra: euro(d.residuo_cent), pallino: k === 'scaduto' ? 'errore' : k === 'questo_mese' ? 'attenzione' : 'info', onclick: lettura ? () => location.assign(`#/allievi/${d.allievo_id}/quote`) : () => foglioAddebitoAzioni(d, ridisegna) }));
+      for (const d of del) {
+        const g = d.scadenza ? giorniMancanti(d.scadenza, oggi) : null;
+        const quando = g === null ? '' : g < 0 ? `scaduto da ${-g} giorni` : g === 0 ? 'entro oggi' : `entro il ${formattaData(d.scadenza, 'numerico')}`;
+        elenco.append(riga({ principale: `${d.nome} ${d.cognome}`.trim(), secondaria: [quando, d.pagato_cent ? `pagato ${euro(d.pagato_cent)}` : null, d.stato_allievo !== 'attivo' ? d.stato_allievo : null].filter(Boolean).join(' · '), destra: euro(d.residuo_cent), pallino: k === 'scaduto' ? 'errore' : k === 'questo_mese' ? 'attenzione' : 'info', onclick: lettura ? () => location.assign(`#/allievi/${d.allievo_id}/quote`) : () => foglioAddebitoAzioni(d, ridisegna) }));
+      }
       corpo.append(sezione(`${titolo} · ${del.length} · ${euro(del.reduce((t, d) => t + d.residuo_cent, 0))}`, elenco));
+    }
+    if (!vis.length) corpo.append(statoVuoto(righe.length ? 'Nessuno con questo nome.' : 'Niente da incassare.'));
+    // gli altri: in regola (con la data) e senza quota
+    const conDebito = new Set(righe.map((d) => d.allievo_id));
+    const attivi = allievi.filter((a) => a.stato === 'attivo' && !conDebito.has(a.id) && nomeOk(a.nome, a.cognome));
+    const inRegola = attivi.filter((a) => a.coperto_fino_al);
+    const senza = attivi.filter((a) => !a.coperto_fino_al && !a.protetto);
+    if (inRegola.length) {
+      const e = el('div', { class: 'elenco' });
+      for (const a of inRegola) e.append(riga({ principale: `${a.nome} ${a.cognome}`.trim(), secondaria: `prossima entro il ${formattaData(aggiungiGiorni(a.coperto_fino_al, 1), 'numerico')}`, pallino: 'ok', href: `#/allievi/${a.id}/quote` }));
+      corpo.append(sezione(`In regola · ${inRegola.length}`, e));
+    }
+    if (senza.length) {
+      const e = el('div', { class: 'elenco' });
+      for (const a of senza) e.append(riga({ principale: `${a.nome} ${a.cognome}`.trim(), secondaria: 'quota da impostare', pallino: 'neutro', href: `#/allievi/${a.id}/quote` }));
+      corpo.append(sezione(`Senza quota · ${senza.length}`, e));
     }
   };
   cerca.addEventListener('input', mostra);
@@ -103,81 +108,3 @@ async function disegnaPagamenti(main, parametri, lettura, ridisegna) {
   for (const [m, c] of [...perMese.entries()].slice(0, 12)) storico.append(riga({ principale: formattaMese(m), destra: euro(c), href: `#/quote/pagamenti/${m.slice(0, 7)}` }));
   if (perMese.size) main.append(sezione('Mesi', storico));
 }
-
-/* ---------- TARIFFE ---------- */
-async function disegnaTariffe(main, lettura, ridisegna) {
-  main.append(scheletri(3));
-  const tariffe = await tariffeTutte();
-  main.querySelectorAll('.scheletro').forEach((x) => x.remove());
-  const elenco = el('div', { class: 'elenco' });
-  for (const t of tariffe) {
-    const dettagli = [NOME_TIPO[t.tipo] || t.tipo, t.tipo === 'pacchetto' && t.n_lezioni ? `${t.n_lezioni} lezioni` : null, t.comprende_private ? 'comprende le private' : null, t.comprende_extra ? 'comprende le lezioni in più' : null, t.attiva ? null : 'non in uso'].filter(Boolean).join(' · ');
-    elenco.append(riga({ principale: t.nome, secondaria: dettagli, destra: euro(t.importo_cent), pallino: t.attiva ? 'ok' : 'neutro', onclick: lettura ? null : () => foglioTariffa(t, ridisegna) }));
-  }
-  if (tariffe.length) main.append(elenco);
-  else main.append(el('div', { class: 'blocco guida' }, [
-    el('p', { class: 'principale', testo: 'Il listino è vuoto.' }),
-    el('p', { class: 'attenuato', testo: 'Qui ci vanno le tue tariffe: mensile, trimestrale, tessera, lezione singola, ora di privata. Puoi partire da quelle proposte e mettere solo i prezzi, oppure scriverle una per una con «+ Tariffa».' }),
-    lettura ? null : el('button', { class: 'tasto pieno', 'data-scrittura': '', testo: 'Parti dal listino proposto', onclick: () => foglioListinoPartenza(ridisegna) }),
-  ]));
-  main.append(el('p', { class: 'piccolo attenuato', style: null, testo: 'Come funziona: il listino è l\'elenco dei prezzi. Nella scheda di ogni allievo, in Quote, scegli la sua tariffa (l\'abbonamento): da lì ogni mese nasce la quota da incassare. La tariffa “a lezione” serve per chi viene senza abbonamento, quella “a ora di privata” per le private.' }));
-}
-
-/** Il listino proposto: cinque tariffe tipiche, il Sifu mette solo i prezzi e toglie quelle che non usa. */
-function foglioListinoPartenza(ridisegna) {
-  const PROPOSTE = [['Mensile', 'mensile'], ['Trimestrale', 'trimestrale'], ['Tessera annuale', 'tessera'], ['Lezione singola', 'lezione'], ['Ora di privata', 'ora_privata']];
-  const righe = PROPOSTE.map(([nome, tipo]) => {
-    const spunta = el('input', { type: 'checkbox' }); spunta.checked = true;
-    const importo = el('input', { type: 'number', step: '0.01', min: '0', inputmode: 'decimal', placeholder: '€' });
-    return { nome, tipo, spunta, importo, riga: el('div', { class: 'riga-orario' }, [el('label', { class: 'interruttore' }, [el('span', { testo: nome }), spunta]), importo]) };
-  });
-  const errore = el('p', { class: 'errore-campo', role: 'alert' });
-  const salva = el('button', { class: 'tasto pieno grande', testo: 'Crea il listino', onclick: async () => {
-    errore.textContent = '';
-    const scelte = righe.filter((r) => r.spunta.checked);
-    const senzaPrezzo = scelte.filter((r) => !(Math.round(parseFloat(String(r.importo.value).replace(',', '.')) * 100) >= 0) || r.importo.value === '');
-    if (!scelte.length) { errore.textContent = 'Lascia almeno una tariffa.'; return; }
-    if (senzaPrezzo.length) { errore.textContent = 'Manca il prezzo di: ' + senzaPrezzo.map((r) => r.nome).join(', ') + '.'; return; }
-    salva.disabled = true;
-    try {
-      let ordine = 1;
-      for (const r of scelte) await salvaTariffa(null, { nome: r.nome, importo_cent: Math.round(parseFloat(String(r.importo.value).replace(',', '.')) * 100), tipo: r.tipo, n_lezioni: null, comprende_private: false, comprende_extra: false, attiva: true, ordine: ordine++ });
-      chiudi(); toast('Listino creato. Si cambia tutto da qui.'); ridisegna();
-    } catch (e) { errore.textContent = e.message || 'Non sono riuscito a salvare.'; salva.disabled = false; }
-  } });
-  const chiudi = apriFoglio('Il listino di partenza', el('div', {}, [el('p', { class: 'attenuato', testo: 'Metti i prezzi. Quello che non usi lo togli con la spunta. Dopo si cambia tutto, una tariffa alla volta.' }), el('div', { class: 'blocco' }, righe.map((r) => r.riga)), errore, salva]));
-}
-
-function foglioTariffa(t, ridisegna) {
-  const nome = el('input', { type: 'text', value: t?.nome || '', placeholder: 'es. Mensile adulti' });
-  const importo = el('input', { type: 'number', step: '0.01', min: '0', inputmode: 'decimal', value: t ? (t.importo_cent / 100).toFixed(2) : '' });
-  const tipo = el('select', {}, TIPI.map(([v, n]) => el('option', { value: v, testo: n })));
-  tipo.value = t?.tipo || 'mensile';
-  const nLezioni = el('input', { type: 'number', min: '1', step: '1', inputmode: 'numeric', value: t?.n_lezioni || '' });
-  const campoN = campo('Quante lezioni', nLezioni);
-  campoN.classList.toggle('nascosto', tipo.value !== 'pacchetto');
-  tipo.addEventListener('change', () => campoN.classList.toggle('nascosto', tipo.value !== 'pacchetto'));
-  const private_ = el('input', { type: 'checkbox' }); private_.checked = Boolean(t?.comprende_private);
-  const extra = el('input', { type: 'checkbox' }); extra.checked = Boolean(t?.comprende_extra);
-  const attiva = el('input', { type: 'checkbox' }); attiva.checked = t ? t.attiva : true;
-  const errore = el('p', { class: 'errore-campo', role: 'alert' });
-  const salva = el('button', { class: 'tasto pieno grande', testo: 'Salva', onclick: async () => {
-    errore.textContent = '';
-    const cent = Math.round(parseFloat(String(importo.value).replace(',', '.')) * 100);
-    if (!nome.value.trim()) { errore.textContent = 'Serve il nome.'; return; }
-    if (!(cent >= 0)) { errore.textContent = 'Serve l\'importo.'; return; }
-    salva.disabled = true;
-    try {
-      await salvaTariffa(t?.id || null, { nome: nome.value.trim(), importo_cent: cent, tipo: tipo.value, n_lezioni: tipo.value === 'pacchetto' ? (Number(nLezioni.value) || null) : null, comprende_private: private_.checked, comprende_extra: extra.checked, attiva: attiva.checked, ordine: t?.ordine ?? 9 });
-      chiudi(); toast('Tariffa salvata.'); ridisegna();
-    } catch (e) { errore.textContent = e.message || 'Non sono riuscito a salvare.'; } finally { salva.disabled = false; }
-  } });
-  const chiudi = apriFoglio(t ? t.nome : 'Nuova tariffa', el('div', {}, [
-    campo('Nome', nome), el('div', { class: 'griglia-campi' }, [campo('Importo (€)', importo), campo('Tipo', tipo)]), campoN,
-    el('label', { class: 'interruttore' }, [el('span', { testo: 'Comprende le lezioni private' }), private_]),
-    el('label', { class: 'interruttore' }, [el('span', { testo: 'Comprende le lezioni in più' }), extra]),
-    el('label', { class: 'interruttore' }, [el('span', { testo: 'In uso' }), attiva]),
-    errore, salva,
-  ]));
-}
-export { rigaAddebito };
