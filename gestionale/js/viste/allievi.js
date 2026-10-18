@@ -2,7 +2,7 @@
    Il modulo dei dati, l'abbonamento e il caricamento dei documenti stanno in allievo-modulo.js. */
 import { el, icona, euro } from '../base.js';
 import { elencoAllieviCompleto, allievoCompleto, cambiaStatoAllievo, mettiFuori, esportaAllievo, unisciAllievi, eliminaAllievo, contaPagamenti, apriDocumento, rinnovaScadenza, annullaScadenza, salvaAllievo, soloLettura, impostazioni } from '../dati.js';
-import { testata, riga, sezione, scheletri, statoVuoto, toast, avvisa, apriFoglio, chiedi, vai } from '../ui.js';
+import { testata, riga, sezione, scheletri, statoVuoto, toast, avvisa, apriFoglio, chiedi, vai, azioneFissa } from '../ui.js';
 import { normalizza } from '../../comune/fonetica.js';
 import { FILTRI, nomeCompleto, filtraAllievi, secondaRiga, pallinoAllievo, eta, eMinorenne, scadenzaProposta } from '../../comune/allievi.js';
 import { oggiRoma, formattaData, relativa } from '../../comune/date.js';
@@ -22,6 +22,7 @@ export async function vistaAllievi(main, parametri) {
   const scheda = parametri[1] || 'panoramica';
   if (!id) {
     testata('Allievi', { azione: el('a', { class: 'tasto azione', 'data-scrittura': '', href: '#/allievi/nuovo', testo: '+ Allievo' }) });
+    azioneFissa({ testo: 'Allievo', href: '#/allievi/nuovo' });
     await disegnaElenco(main, null);
     return;
   }
@@ -51,6 +52,12 @@ async function disegnaElenco(box, selezionato, compatto = false) {
   const chips = el('div', { class: 'chips scorrevole', role: 'tablist' });
   const elenco = el('div', { class: 'elenco' });
   const conto = el('p', { class: 'piccolo attenuato' });
+  // finché ci sono solo le schede protette, si spiega da dove si parte
+  const guida = el('div', { class: 'blocco guida nascosto' }, [
+    el('p', { class: 'principale', testo: 'I tuoi allievi non ci sono ancora.' }),
+    el('p', { class: 'attenuato', testo: 'Tocca «+ Allievo» qui in basso e metti nome, cognome, data di nascita, cellulare e corso. Oppure importali tutti insieme da un foglio.' }),
+    el('a', { class: 'tasto bordo', href: '#/impostazioni/allievi', testo: 'Importa da un foglio (CSV)' }),
+  ]);
   function disegnaChips() {
     chips.replaceChildren();
     for (const [k, nome] of FILTRI) {
@@ -63,6 +70,7 @@ async function disegnaElenco(box, selezionato, compatto = false) {
     const righe = filtraAllievi(tutti, filtro, normalizza, cerca.value);
     elenco.replaceChildren();
     conto.textContent = righe.length === 1 ? '1 allievo' : `${righe.length} allievi`;
+    guida.classList.toggle('nascosto', compatto || soloLettura() || Boolean(cerca.value) || tutti.some((a) => !a.protetto));
     if (!righe.length) {
       elenco.append(statoVuoto(tutti.length ? (cerca.value ? 'Nessun allievo con questo nome.' : 'Nessuno in questo gruppo.') : 'Nessun allievo ancora: aggiungi il primo con “+ Allievo”.'));
       return;
@@ -74,7 +82,7 @@ async function disegnaElenco(box, selezionato, compatto = false) {
     }
   }
   cerca.addEventListener('input', mostra);
-  box.append(el('div', { class: 'campo' }, [cerca]), chips, conto, elenco);
+  box.append(el('div', { class: 'campo' }, [cerca]), chips, guida, conto, elenco);
   disegnaChips();
   mostra();
   if (!compatto) setTimeout(() => { if (!matchMedia('(pointer: coarse)').matches) cerca.focus(); }, 50);
@@ -113,19 +121,20 @@ function disegnaPanoramica(box, { id, d, a, lettura, ridisegna, oggi }) {
   const corsiAttivi = d.iscrizioni.filter((i) => !i.al || i.al >= oggi);
   const testa = el('div', { class: 'blocco' }, [
     el('div', { class: 'riga-stato' }, [chipStato(a), anni !== null ? el('span', { class: 'attenuato', testo: `${anni} anni` }) : null, eMinorenne(a.nascita, oggi) ? el('span', { class: 'chip extra', testo: 'MINORENNE' }) : null]),
-    el('div', { class: 'secondaria attenuato', testo: corsiAttivi.length ? 'Corsi: ' + corsiAttivi.map((i) => `${i.corsi?.nome || ''} (${i.corsi?.citta || ''})`).join(', ') : 'Nessun corso: si iscrive da Dati.' }),
+    corsiAttivi.length ? el('div', { class: 'secondaria attenuato', testo: 'Corsi: ' + corsiAttivi.map((i) => `${i.corsi?.nome || ''} (${i.corsi?.citta || ''})`).join(', ') }) : el('a', { class: 'avviso-riga', href: `#/allievi/${id}/dati` }, [icona('avviso'), lettura ? 'Nessun corso.' : 'Nessun corso: tocca per iscriverlo.']),
   ]);
   if (a.da_completare) testa.append(el('a', { class: 'avviso-riga', href: `#/allievi/${id}/dati` }, [icona('avviso'), 'Scheda da completare: mancano dei dati.']));
   box.append(sezione('Chi è', testa));
 
   // quote
   const s = d.saldo || {};
+  const abbAttivo = d.abbonamenti.find((x) => !x.al || x.al >= oggi);
   const righeQuote = [];
   if (s.da_pagare_cent > 0) righeQuote.push(riga({ principale: 'Da pagare', destra: euro(s.da_pagare_cent), pallino: 'errore', href: `#/allievi/${id}/quote` }));
   else if (s.coperto_fino_al) righeQuote.push(riga({ principale: 'In regola fino al ' + formattaData(s.coperto_fino_al, 'numerico'), pallino: 'ok', href: `#/allievi/${id}/quote` }));
+  else if (!abbAttivo) righeQuote.push(riga({ principale: lettura ? 'Nessun abbonamento' : 'Nessun abbonamento: scegline uno', secondaria: 'dal listino; da lì nascono le quote', pallino: 'attenzione', href: `#/allievi/${id}/quote` }));
   else righeQuote.push(riga({ principale: 'Nessuna quota aperta', pallino: 'neutro', href: `#/allievi/${id}/quote` }));
   if (s.in_arrivo_cent > 0) righeQuote.push(riga({ principale: 'In arrivo', destra: euro(s.in_arrivo_cent), pallino: 'info', secondaria: s.prima_scadenza ? 'scade ' + relativa(s.prima_scadenza, oggi) : null }));
-  const abbAttivo = d.abbonamenti.find((x) => !x.al || x.al >= oggi);
   if (abbAttivo) righeQuote.push(riga({ principale: abbAttivo.tariffe?.nome || 'Abbonamento', secondaria: `dal ${formattaData(abbAttivo.dal, 'numerico')}` + (abbAttivo.importo_personalizzato_cent != null ? ' · importo personalizzato' : ''), destra: euro(abbAttivo.importo_personalizzato_cent ?? abbAttivo.tariffe?.importo_cent), href: `#/allievi/${id}/quote` }));
   box.append(sezione('Quote', el('div', { class: 'elenco' }, righeQuote)));
 
@@ -224,7 +233,7 @@ async function disegnaQuote(box, { id, d, a, lettura, ridisegna, oggi }) {
   const passati = d.abbonamenti.filter((x) => x.al && x.al < oggi);
   const elenco = el('div', { class: 'elenco' });
   for (const ab of attivi) elenco.append(riga({ principale: ab.tariffe?.nome || 'Abbonamento', secondaria: `dal ${formattaData(ab.dal, 'numerico')}` + (ab.al ? ` al ${formattaData(ab.al, 'numerico')}` : '') + (ab.rinnovo_automatico ? ' · si rinnova' : ' · non si rinnova') + (ab.nota ? ' · ' + ab.nota : ''), destra: euro(ab.importo_personalizzato_cent ?? ab.tariffe?.importo_cent), onclick: lettura ? null : () => foglioAbbonamento(id, ab, ridisegna) }));
-  if (!attivi.length) elenco.append(statoVuoto('Nessun abbonamento attivo.'));
+  if (!attivi.length) elenco.append(statoVuoto('Nessun abbonamento: scegli una tariffa dal listino. Da lì nascono le quote, periodo dopo periodo.', lettura ? null : el('button', { class: 'tasto pieno', 'data-scrittura': '', testo: '+ Abbonamento', onclick: () => foglioAbbonamento(id, null, ridisegna) })));
   box.append(sezione('Abbonamento', elenco, lettura ? null : el('button', { class: 'tasto azione', 'data-scrittura': '', testo: attivi.length ? 'Cambia' : '+ Abbonamento', onclick: () => foglioAbbonamento(id, attivi[0] || null, ridisegna) })));
   if (passati.length) {
     const vecchi = el('div', { class: 'elenco' });

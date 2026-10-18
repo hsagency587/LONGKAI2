@@ -1,7 +1,7 @@
 /* Longkai — viste/quote.js: Da incassare · Pagamenti · Tariffe. */
 import { el, euro, icona } from '../base.js';
-import { daIncassare, pagamentiPeriodo, incassiMesi, tariffeTutte, salvaTariffa, soloLettura } from '../dati.js';
-import { testata, statoVuoto, riga, sezione, scheletri, toast, apriFoglio } from '../ui.js';
+import { daIncassare, pagamentiPeriodo, incassiMesi, tariffeTutte, salvaTariffa, soloLettura, statoAvvio } from '../dati.js';
+import { testata, statoVuoto, riga, sezione, scheletri, toast, apriFoglio, azioneFissa } from '../ui.js';
 import { oggiRoma, formattaMese, primoDelMese, aggiungiMesi, aggiungiGiorni } from '../../comune/date.js';
 import { gruppoScadenza, GRUPPI_SCADENZA, totali, METODI } from '../../comune/quote.js';
 import { normalizza } from '../../comune/fonetica.js';
@@ -15,12 +15,12 @@ export async function vistaQuote(main, parametri) {
   const scheda = ['incassare', 'pagamenti', 'tariffe'].includes(parametri[0]) ? parametri[0] : 'incassare';
   const lettura = soloLettura();
   const ridisegna = () => { main.replaceChildren(); vistaQuote(main, parametri); };
-  const azione = lettura ? null : scheda === 'tariffe' ? el('button', { class: 'tasto azione', 'data-scrittura': '', testo: '+ Tariffa', onclick: () => foglioTariffa(null, ridisegna) })
-    : scheda === 'pagamenti' ? el('button', { class: 'tasto azione', 'data-scrittura': '', testo: '+ Pagamento', onclick: () => foglioRegistraPagamento({ dopo: ridisegna }) })
-    : el('button', { class: 'tasto azione', 'data-scrittura': '', testo: '+ Addebito', onclick: () => foglioAddebito({ dopo: ridisegna }) });
+  const azione = lettura || scheda !== 'incassare' ? null : el('button', { class: 'tasto azione', 'data-scrittura': '', testo: 'Addebito a mano', onclick: () => foglioAddebito({ dopo: ridisegna }) });
   testata('Quote', { azione });
+  // la bolla in basso: la cosa che si fa più spesso in questa scheda
+  azioneFissa(scheda === 'tariffe' ? { testo: 'Tariffa', onclick: () => foglioTariffa(null, ridisegna) } : { testo: 'Pagamento', onclick: () => foglioRegistraPagamento({ dopo: ridisegna }) });
   const chips = el('div', { class: 'chips scorrevole' });
-  for (const [k, nome] of [['incassare', 'Da incassare'], ['pagamenti', 'Pagamenti'], ['tariffe', 'Tariffe']]) chips.append(el('a', { class: 'chip' + (k === scheda ? ' scelto' : ''), href: '#/quote/' + k, testo: nome }));
+  for (const [k, nome] of [['incassare', 'Da incassare'], ['pagamenti', 'Pagamenti'], ['tariffe', 'Listino']]) chips.append(el('a', { class: 'chip' + (k === scheda ? ' scelto' : ''), href: '#/quote/' + k, testo: nome }));
   main.append(chips, el('div', { class: 'spazio' }));
   if (scheda === 'tariffe') { await disegnaTariffe(main, lettura, ridisegna); return; }
   if (scheda === 'pagamenti') { await disegnaPagamenti(main, parametri.slice(1), lettura, ridisegna); return; }
@@ -42,7 +42,17 @@ async function disegnaDaIncassare(main, lettura, ridisegna) {
     const scaduto = vis.filter((d) => gruppoScadenza(d.scadenza, oggi) === 'scaduto').reduce((t, d) => t + d.residuo_cent, 0);
     const totale = vis.reduce((t, d) => t + d.residuo_cent, 0);
     corpo.append(el('div', { class: 'blocco' }, [el('div', { class: 'principale', testo: `Da incassare: ${euro(totale)}` }), el('div', { class: 'secondaria attenuato', testo: scaduto ? `di cui scaduti: ${euro(scaduto)}` : 'niente di scaduto' })]));
-    if (!vis.length) { corpo.append(statoVuoto(righe.length ? 'Nessuno con questo nome.' : 'Niente da incassare. Bene.')); return; }
+    if (!vis.length) {
+      if (righe.length) { corpo.append(statoVuoto('Nessuno con questo nome.')); return; }
+      // niente da incassare: si spiega da dove nascono le quote, se manca qualcosa
+      const vuoto = statoVuoto('Niente da incassare. Bene.');
+      corpo.append(vuoto);
+      if (!lettura) statoAvvio().then((st) => {
+        if (!st.tariffe) vuoto.replaceChildren(el('p', { testo: 'Niente da incassare, perché manca il listino: le quote nascono dagli abbonamenti, e gli abbonamenti dal listino.' }), el('a', { class: 'tasto pieno', href: '#/quote/tariffe', testo: 'Scrivi il listino' }));
+        else if (!st.abbonamenti) vuoto.replaceChildren(el('p', { testo: 'Niente da incassare: nessun allievo ha ancora un abbonamento. Si sceglie nella scheda dell\'allievo, in Quote → + Abbonamento.' }), el('a', { class: 'tasto pieno', href: '#/allievi', testo: 'Vai agli allievi' }));
+      }).catch(() => { /* resta il testo semplice */ });
+      return;
+    }
     for (const [k, titolo] of GRUPPI_SCADENZA) {
       const del = vis.filter((d) => gruppoScadenza(d.scadenza, oggi) === k);
       if (!del.length) continue;
@@ -104,8 +114,38 @@ async function disegnaTariffe(main, lettura, ridisegna) {
     const dettagli = [NOME_TIPO[t.tipo] || t.tipo, t.tipo === 'pacchetto' && t.n_lezioni ? `${t.n_lezioni} lezioni` : null, t.comprende_private ? 'comprende le private' : null, t.comprende_extra ? 'comprende le lezioni in più' : null, t.attiva ? null : 'non in uso'].filter(Boolean).join(' · ');
     elenco.append(riga({ principale: t.nome, secondaria: dettagli, destra: euro(t.importo_cent), pallino: t.attiva ? 'ok' : 'neutro', onclick: lettura ? null : () => foglioTariffa(t, ridisegna) }));
   }
-  main.append(tariffe.length ? elenco : statoVuoto('Nessuna tariffa: scrivi le tue con “+ Tariffa”.'));
-  main.append(el('p', { class: 'piccolo attenuato', style: null, testo: 'Le tariffe sono il listino. L\'abbonamento di ogni allievo si sceglie dalla sua scheda, in Quote. La tariffa “a lezione” si usa per le lezioni in più, quella “a ora di privata” per le private.' }));
+  if (tariffe.length) main.append(elenco);
+  else main.append(el('div', { class: 'blocco guida' }, [
+    el('p', { class: 'principale', testo: 'Il listino è vuoto.' }),
+    el('p', { class: 'attenuato', testo: 'Qui ci vanno le tue tariffe: mensile, trimestrale, tessera, lezione singola, ora di privata. Puoi partire da quelle proposte e mettere solo i prezzi, oppure scriverle una per una con «+ Tariffa».' }),
+    lettura ? null : el('button', { class: 'tasto pieno', 'data-scrittura': '', testo: 'Parti dal listino proposto', onclick: () => foglioListinoPartenza(ridisegna) }),
+  ]));
+  main.append(el('p', { class: 'piccolo attenuato', style: null, testo: 'Come funziona: il listino è l\'elenco dei prezzi. Nella scheda di ogni allievo, in Quote, scegli la sua tariffa (l\'abbonamento): da lì ogni mese nasce la quota da incassare. La tariffa “a lezione” serve per chi viene senza abbonamento, quella “a ora di privata” per le private.' }));
+}
+
+/** Il listino proposto: cinque tariffe tipiche, il Sifu mette solo i prezzi e toglie quelle che non usa. */
+function foglioListinoPartenza(ridisegna) {
+  const PROPOSTE = [['Mensile', 'mensile'], ['Trimestrale', 'trimestrale'], ['Tessera annuale', 'tessera'], ['Lezione singola', 'lezione'], ['Ora di privata', 'ora_privata']];
+  const righe = PROPOSTE.map(([nome, tipo]) => {
+    const spunta = el('input', { type: 'checkbox' }); spunta.checked = true;
+    const importo = el('input', { type: 'number', step: '0.01', min: '0', inputmode: 'decimal', placeholder: '€' });
+    return { nome, tipo, spunta, importo, riga: el('div', { class: 'riga-orario' }, [el('label', { class: 'interruttore' }, [el('span', { testo: nome }), spunta]), importo]) };
+  });
+  const errore = el('p', { class: 'errore-campo', role: 'alert' });
+  const salva = el('button', { class: 'tasto pieno grande', testo: 'Crea il listino', onclick: async () => {
+    errore.textContent = '';
+    const scelte = righe.filter((r) => r.spunta.checked);
+    const senzaPrezzo = scelte.filter((r) => !(Math.round(parseFloat(String(r.importo.value).replace(',', '.')) * 100) >= 0) || r.importo.value === '');
+    if (!scelte.length) { errore.textContent = 'Lascia almeno una tariffa.'; return; }
+    if (senzaPrezzo.length) { errore.textContent = 'Manca il prezzo di: ' + senzaPrezzo.map((r) => r.nome).join(', ') + '.'; return; }
+    salva.disabled = true;
+    try {
+      let ordine = 1;
+      for (const r of scelte) await salvaTariffa(null, { nome: r.nome, importo_cent: Math.round(parseFloat(String(r.importo.value).replace(',', '.')) * 100), tipo: r.tipo, n_lezioni: null, comprende_private: false, comprende_extra: false, attiva: true, ordine: ordine++ });
+      chiudi(); toast('Listino creato. Si cambia tutto da qui.'); ridisegna();
+    } catch (e) { errore.textContent = e.message || 'Non sono riuscito a salvare.'; salva.disabled = false; }
+  } });
+  const chiudi = apriFoglio('Il listino di partenza', el('div', {}, [el('p', { class: 'attenuato', testo: 'Metti i prezzi. Quello che non usi lo togli con la spunta. Dopo si cambia tutto, una tariffa alla volta.' }), el('div', { class: 'blocco' }, righe.map((r) => r.riga)), errore, salva]));
 }
 
 function foglioTariffa(t, ridisegna) {

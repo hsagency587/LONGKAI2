@@ -1,9 +1,9 @@
 /* Longkai — viste/impostazioni.js: aspetto, allievi (gestione, CSV, regole), corsi, forme e tecniche, scadenze e avvisi (con le notifiche di questo telefono), promemoria agli allievi, segnalazioni, associazione, voce, IA, rapporti. */
 import { el, VERSIONE_APP } from '../base.js';
-import { leggiLocale, impostazioni, salvaImpostazione, elencoAllieviCompleto, importaAllievi, corsiCompleti, soloLettura, consumiMese, segnalazioniTutte, aggiornaSegnalazione, provaPush, profilo } from '../dati.js';
+import { leggiLocale, impostazioni, salvaImpostazione, elencoAllieviCompleto, importaAllievi, corsiCompleti, soloLettura, consumiMese, segnalazioniTutte, aggiornaSegnalazione, provaPush, profilo, scaricaCopia } from '../dati.js';
 import { statoPush, attivaPush, disattivaPush, iphoneNonInstallata } from '../push.js';
 import { TESTI_PREDEFINITI, messaggioPromemoria } from '../../comune/promemoria.js';
-import { formattaData } from '../../comune/date.js';
+import { formattaData, oggiRoma } from '../../comune/date.js';
 import { euro } from '../base.js';
 import { puoRegistrare, formatoSupportato } from '../voce.js';
 import { testata, sezione, riga, applicaAspetto, toast, avvisa, apriFoglio, statoVuoto } from '../ui.js';
@@ -13,25 +13,36 @@ import { disegnaCorsi } from './corsi.js';
 import { disegnaArgomenti } from './argomenti.js';
 import { campo } from './allievo-modulo.js';
 
-const GRUPPI = [['Associazione', 'associazione'], ['Accesso e sicurezza', 'sicurezza'], ['Voce', 'voce'], ['Corsi', 'corsi'], ['Allievi', 'allievi'], ['Forme e tecniche', 'forme'], ['Private', 'private'], ['Presenze e ore', 'presenze'], ['Programma', 'programma'], ['Quote', 'quote'], ['Scadenze e avvisi', 'scadenze'], ['Promemoria agli allievi', 'promemoria'], ['Rapporti', 'rapporti'], ['Intelligenza artificiale', 'ia'], ['Dati', 'dati'], ['Segnalazioni', 'segnalazioni']];
+const GRUPPI = [
+  ['Allievi', 'allievi', 'elenco, nuovo allievo, importa da un foglio, regole'],
+  ['Corsi e private', 'corsi', 'giorni e ore dei corsi, durata delle private'],
+  ['Forme e tecniche', 'forme', 'il vocabolario: forme con le sezioni, tecniche, pronunce'],
+  ['Scadenze e avvisi', 'scadenze', 'soglie, ora degli avvisi, notifiche su questo telefono'],
+  ['Promemoria agli allievi', 'promemoria', 'i testi dei messaggi WhatsApp'],
+  ['Rapporti', 'rapporti', 'capitoli del PDF mensile, cosa includere, firma'],
+  ['Voce e intelligenza artificiale', 'voce', 'modo di dettatura, tetto di spesa, consumi del mese'],
+  ['Associazione', 'associazione', 'nome e sedi'],
+  ['Segnalazioni', 'segnalazioni', 'i problemi segnalati e il loro stato'],
+  ['Dati', 'dati', 'scarica una copia di tutto'],
+];
 
 export async function vistaImpostazioni(main, parametri) {
   const gruppo = parametri[0];
   const lettura = soloLettura();
   const ridisegna = () => { main.replaceChildren(); vistaImpostazioni(main, parametri); };
   if (gruppo === 'allievi') { testata('Allievi', { indietro: 'impostazioni' }); await gruppoAllievi(main, lettura, ridisegna); return; }
-  if (gruppo === 'corsi') { testata('Corsi', { indietro: 'impostazioni' }); await disegnaCorsi(main, ridisegna); return; }
+  if (gruppo === 'corsi') { testata('Corsi e private', { indietro: 'impostazioni' }); await disegnaCorsi(main, ridisegna); main.append(await bloccoPrivate(lettura, ridisegna)); return; }
   if (gruppo === 'forme') { testata('Forme e tecniche', { indietro: 'impostazioni' }); await disegnaArgomenti(main, ridisegna); return; }
   if (gruppo === 'scadenze') { testata('Scadenze e avvisi', { indietro: 'impostazioni' }); await gruppoScadenze(main, lettura, ridisegna); return; }
   if (gruppo === 'associazione') { testata('Associazione', { indietro: 'impostazioni' }); await gruppoAssociazione(main, lettura, ridisegna); return; }
-  if (gruppo === 'voce') { testata('Voce', { indietro: 'impostazioni' }); await gruppoVoce(main, lettura, ridisegna); return; }
-  if (gruppo === 'ia') { testata('Intelligenza artificiale', { indietro: 'impostazioni' }); await gruppoIa(main, lettura, ridisegna); return; }
+  if (gruppo === 'voce' || gruppo === 'ia') { testata('Voce e intelligenza artificiale', { indietro: 'impostazioni' }); await gruppoVoce(main, lettura, ridisegna); await gruppoIa(main, lettura, ridisegna); return; }
+  if (gruppo === 'dati') { testata('Dati', { indietro: 'impostazioni' }); gruppoDati(main); return; }
   if (gruppo === 'rapporti') { testata('Rapporti', { indietro: 'impostazioni' }); await gruppoRapporti(main, lettura, ridisegna); return; }
   if (gruppo === 'promemoria') { testata('Promemoria agli allievi', { indietro: 'impostazioni' }); await gruppoPromemoria(main, lettura, ridisegna); return; }
   if (gruppo === 'segnalazioni') { testata('Segnalazioni', { indietro: 'impostazioni' }); await gruppoSegnalazioni(main, ridisegna); return; }
   if (gruppo && gruppo !== 'aspetto') {
-    testata(GRUPPI.find(([, k]) => k === gruppo)?.[0] || 'Impostazioni', { indietro: 'impostazioni' });
-    main.append(statoVuoto('Questo gruppo arriva in una fase successiva.'));
+    testata('Impostazioni', { indietro: 'impostazioni' });
+    main.append(statoVuoto('Questo gruppo non esiste.'));
     return;
   }
   testata('Impostazioni', { indietro: 'altro' });
@@ -46,7 +57,7 @@ export async function vistaImpostazioni(main, parametri) {
   }
   main.append(sezione('Aspetto', [el('div', { class: 'blocco' }, [el('p', { class: 'piccolo attenuato', testo: 'Tema' }), chipsTema, el('p', { class: 'piccolo attenuato', style: null, testo: 'Dimensione del testo' }), chipsTesto])]));
   const altri = el('div', { class: 'elenco' });
-  for (const [nome, k] of GRUPPI) altri.append(riga({ principale: nome, href: '#/impostazioni/' + k }));
+  for (const [nome, k, cosa] of GRUPPI) altri.append(riga({ principale: nome, secondaria: cosa, href: '#/impostazioni/' + k }));
   main.append(sezione('Tutto il resto', altri));
 }
 
@@ -214,6 +225,35 @@ function foglioSegnalazione(s, puoGestire, ridisegna) {
     else figli.push(el('button', { class: 'tasto', testo: 'Riapri', onclick: () => aggiorna({ stato: 'vista', risolta_versione: null }, 'Riaperta.') }));
   }
   const chiudi = apriFoglio(s.titolo || 'Segnalazione', el('div', { class: 'tasti-colonna' }, figli.filter(Boolean)));
+}
+
+/* ---------- Private: la durata e la ripetizione di partenza (si usano in Oggi → + Privata) ---------- */
+async function bloccoPrivate(lettura, ridisegna) {
+  const imp = (await impostazioni().catch(() => ({}))).private || {};
+  const durata = el('input', { type: 'number', min: '30', max: '240', step: '30', value: imp.durata_minuti || 60, inputmode: 'numeric' });
+  const ripeti = el('input', { type: 'checkbox' }); ripeti.checked = Boolean(imp.ripeti_settimanale);
+  const settimane = el('input', { type: 'number', min: '2', max: '52', value: imp.settimane_avanti || 8, inputmode: 'numeric' });
+  const salva = el('button', { class: 'tasto pieno', testo: 'Salva', onclick: async () => {
+    try { await salvaImpostazione('private', 'durata_minuti', Number(durata.value) || 60); await salvaImpostazione('private', 'ripeti_settimanale', ripeti.checked); await salvaImpostazione('private', 'settimane_avanti', Number(settimane.value) || 8); toast('Salvato.'); ridisegna(); } catch (e) { avvisa(e.message); }
+  } });
+  const b = el('div', { class: 'blocco' }, [el('div', { class: 'griglia-campi' }, [campo('Durata di una privata (minuti)', durata), campo('Settimane in avanti, se si ripete', settimane)]), el('label', { class: 'interruttore' }, [el('span', { testo: 'Una privata nuova si ripete ogni settimana' }), ripeti]), lettura ? null : salva]);
+  if (lettura) b.querySelectorAll('input').forEach((x) => { x.disabled = true; });
+  return sezione('Private', b);
+}
+
+/* ---------- Dati: la copia ---------- */
+function gruppoDati(main) {
+  const scarica = el('button', { class: 'tasto pieno', testo: 'Scarica una copia (JSON)', onclick: async (e) => {
+    e.target.disabled = true;
+    try {
+      const dati = await scaricaCopia();
+      const blob = new Blob([JSON.stringify(dati)], { type: 'application/json' });
+      const a = el('a', { href: URL.createObjectURL(blob), download: `longkai-copia-${oggiRoma()}.json` }); document.body.append(a); a.click(); a.remove();
+      toast('Copia pronta.');
+    } catch (err) { avvisa(err.message); } finally { e.target.disabled = false; }
+  } });
+  main.append(sezione('Copia dei dati', el('div', { class: 'blocco' }, [el('p', { testo: 'Tutto quello che c\'è nell\'app, in un file. Una copia cifrata si fa da sola ogni settimana; questa la tieni tu dove vuoi.' }), scarica])));
+  main.append(el('p', { class: 'piccolo attenuato', testo: 'I documenti caricati (certificati, PDF) non sono nel file: stanno al sicuro sul server.' }));
 }
 
 /* ---------- Voce ---------- */

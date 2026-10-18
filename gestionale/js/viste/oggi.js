@@ -1,6 +1,6 @@
 /* Longkai — viste/oggi.js: la prima schermata. Il corso di oggi con il previsto, le private, Da fare, Scadenze, la giornata. */
 import { el, icona, euro } from '../base.js';
-import { sessioniDelGiorno, contiDaFare, contiScadenze, profilo, corsiCompleti, programmiMesi, argomentiAttivi, allieviAttivi, creaStraordinaria, creaPrivate, saltaSessione, riapriSessione, apriGiornata, chiudiGiornata, giornata, sessioniAperteIeri, pianiAttivi, impostazioni, leggiLocale, salvaLocale, obiettiviAperti, avvisiAperti, segnaAvvisiLetti } from '../dati.js';
+import { sessioniDelGiorno, contiDaFare, contiScadenze, profilo, corsiCompleti, programmiMesi, argomentiAttivi, allieviAttivi, creaStraordinaria, creaPrivate, saltaSessione, riapriSessione, apriGiornata, chiudiGiornata, giornata, sessioniAperteIeri, pianiAttivi, impostazioni, leggiLocale, salvaLocale, obiettiviAperti, avvisiAperti, segnaAvvisiLetti, statoAvvio } from '../dati.js';
 import { pushSupportato, iphoneNonInstallata, attivaPush, aggiornaBadge } from '../push.js';
 import { testata, sezione, riga, scheletri, statoVuoto, statoErrore, toast, avvisa, apriFoglio, striscia, togliStriscia, vai } from '../ui.js';
 import { oggiRoma, formattaData, formattaOra, primoDelMese, aggiungiGiorni } from '../../comune/date.js';
@@ -36,6 +36,22 @@ export async function vistaOggi(main) {
   const vecchie = ieri.filter((s) => s.tipo !== 'privata');
   if (sifu && vecchie.length) striscia('ieri', `${vecchie.length === 1 ? 'Una lezione' : vecchie.length + ' lezioni'} da chiudere: ${formattaData(vecchie[0].data, 'breve')} ${vecchie[0].corso_nome || ''}`, { tipo: 'gialla', tasto: el('button', { class: 'tasto', testo: 'Apri', onclick: () => vai(`sessione/${vecchie[0].id}`) }) });
   else togliStriscia('ieri');
+
+  // PER INIZIARE: i primi passi, finché mancano listino, allievi o abbonamenti (si può nascondere)
+  if (sifu && !leggiLocale().guidaNascosta) {
+    const st = await statoAvvio().catch(() => null);
+    if (st && (!st.tariffe || !st.allievi || !st.abbonamenti)) {
+      const passi = [
+        [st.tariffe > 0, 'Scrivi il listino', 'le tariffe: mensile, trimestrale, tessera…', '#/quote/tariffe'],
+        [st.allievi > 0, 'Aggiungi gli allievi', 'uno alla volta con + Allievo, o tutti insieme da un foglio', '#/allievi'],
+        [st.abbonamenti > 0, 'Dai a ognuno il suo abbonamento', 'nella scheda → Quote → + Abbonamento; e il certificato in Documenti', '#/allievi'],
+      ];
+      main.append(sezione('Per iniziare', el('div', { class: 'blocco guida' }, [
+        ...passi.map(([fatto, titolo, sotto, href], i) => el('a', { class: 'passo' + (fatto ? ' fatto' : ''), href }, [el('span', { class: 'numero', testo: fatto ? '✓' : String(i + 1) }), el('div', {}, [el('div', { class: 'principale', testo: titolo }), el('div', { class: 'secondaria attenuato', testo: sotto })])])),
+        el('button', { class: 'tasto', testo: 'Non mostrare più', onclick: () => { const l = leggiLocale(); l.guidaNascosta = true; salvaLocale(l); ridisegna(); } }),
+      ])));
+    }
+  }
 
   // CORSO DI OGGI
   const corso = sessioni.find((s) => s.tipo === 'corso' || s.tipo === 'straordinaria');

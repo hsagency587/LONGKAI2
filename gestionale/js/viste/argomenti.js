@@ -2,7 +2,7 @@
    Si legge per area e si corregge a mano; la correzione a voce arriva in fase 4. */
 import { el } from '../base.js';
 import { argomentiTutti, salvaArgomento, soloLettura } from '../dati.js';
-import { testata, riga, sezione, scheletri, statoVuoto, toast, apriFoglio, chiedi } from '../ui.js';
+import { testata, riga, sezione, scheletri, statoVuoto, toast, apriFoglio, chiedi, azioneFissa } from '../ui.js';
 import { normalizza } from '../../comune/fonetica.js';
 import { campo } from './allievo-modulo.js';
 
@@ -12,6 +12,7 @@ export async function vistaArgomenti(main, parametri, { indietro = 'impostazioni
   const lettura = soloLettura();
   const ridisegna = () => { main.replaceChildren(); vistaArgomenti(main, parametri, { indietro, titolo }); };
   testata(titolo, { indietro, azione: lettura ? null : el('button', { class: 'tasto azione', 'data-scrittura': '', testo: '+ Argomento', onclick: () => foglioArgomento(null, [], ridisegna) }) });
+  azioneFissa({ testo: 'Argomento', onclick: () => foglioArgomento(null, [], ridisegna) });
   await disegnaArgomenti(main, ridisegna);
 }
 

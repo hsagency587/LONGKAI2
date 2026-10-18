@@ -1,8 +1,8 @@
 /* Longkai — service worker
    Tiene i file dell'app per aprirla senza rete. Il numero di versione lo scrive l'azione di rilascio
-   al posto di 2026-10-18-9649109; in locale resta così e la cache si chiama "locale".
+   al posto di 2026-10-18-ff43746; in locale resta così e la cache si chiama "locale".
    Niente di Supabase va in cache: una risposta vecchia sarebbe un errore silenzioso. */
-const VERSIONE = '2026-10-18-9649109';
+const VERSIONE = '2026-10-18-ff43746';
 const LOCALE = VERSIONE.startsWith('__');
 const CACHE = 'longkai|' + (LOCALE ? 'locale' : VERSIONE) + '|' + self.registration.scope;
 
@@ -15,7 +15,7 @@ const FILE_BASE = [
   './js/viste/accesso.js', './js/viste/oggi.js', './js/viste/allievi.js', './js/viste/allenamenti.js', './js/viste/quote.js',
   './js/viste/altro.js', './js/viste/diagnostica.js', './js/viste/segnala.js', './js/viste/impostazioni.js', './js/viste/nuova-password.js',
   './js/viste/allievo-modulo.js', './js/viste/scadenze.js', './js/viste/cassetta.js', './js/viste/corsi.js', './js/viste/argomenti.js',
-  './js/viste/sessione.js', './js/viste/scegli-argomenti.js', './js/viste/progressi.js', './js/viste/diario.js', './js/viste/programma.js', './js/viste/quote-fogli.js', './js/viste/detta.js', './js/viste/correggi.js', './js/viste/rapporti.js',
+  './js/viste/sessione.js', './js/viste/scegli-argomenti.js', './js/viste/progressi.js', './js/viste/diario.js', './js/viste/programma.js', './js/viste/quote-fogli.js', './js/viste/detta.js', './js/viste/correggi.js', './js/viste/rapporti.js', './js/viste/aiuto.js',
   './comune/fonetica.js', './comune/ore.js', './comune/date.js', './comune/scadenze.js', './comune/schema-sessione.js', './comune/allievi.js', './comune/csv.js', './comune/sessione.js', './comune/quote.js', './comune/avvisi.js', './comune/promemoria.js',
   './password.html', './js/password.js',
 ];

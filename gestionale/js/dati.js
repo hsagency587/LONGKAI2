@@ -636,6 +636,31 @@ export async function aggiungiPronuncia(argomentoId, sentito) {
   cacheArgomenti = { quando: 0, dati: [] };
 }
 
+/* ---------- la guida di partenza e il quadro degli allievi ---------- */
+/** Quante cose ci sono: per la guida «Per iniziare» in Oggi e per gli stati vuoti che spiegano. */
+export async function statoAvvio() {
+  const conta = async (q) => { const r = await q; controlla(r); return r.count || 0; };
+  const [tariffe, allievi, abbonamenti, corsi] = await Promise.all([
+    conta(sb().from('tariffe').select('id', { count: 'exact', head: true }).eq('attiva', true)),
+    conta(sb().from('allievi').select('id', { count: 'exact', head: true }).eq('protetto', false).neq('stato', 'uscito')),
+    conta(sb().from('abbonamenti').select('id', { count: 'exact', head: true }).or(`al.is.null,al.gte.${oggi()}`)),
+    conta(sb().from('corsi').select('id', { count: 'exact', head: true }).eq('attivo', true)),
+  ]);
+  return { tariffe, allievi, abbonamenti, corsi };
+}
+/** Per ogni allievo attivo: le forme in corso e le ultime cose fatte (per «A che punto sono» nel Programma). */
+export async function aChePunto() {
+  const [forme, resto, allievi] = await Promise.all([
+    sb().from('forme_allievo').select('allievo_id, forma_id, stato, sezione, argomenti(nome, sezioni)').neq('stato', 'non_iniziata'),
+    sb().from('v_progressi_resto').select('allievo_id, nome, ultima_volta').order('ultima_volta', { ascending: false }).limit(600),
+    sb().from('allievi').select('id, nome, cognome').eq('stato', 'attivo').order('cognome').order('nome'),
+  ]);
+  controlla(forme, resto, allievi);
+  return { forme: forme.data || [], resto: resto.data || [], allievi: allievi.data || [] };
+}
+/** Tutti i dati in un JSON (la funzione `copia`): per «Scarica una copia». */
+export const scaricaCopia = () => chiamaFunzione('copia', {});
+
 /* ---------- avvisi e notifiche (fase 7) ---------- */
 export async function avvisiAperti() {
   const s = await sessione();

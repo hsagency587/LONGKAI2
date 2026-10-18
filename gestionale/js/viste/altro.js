@@ -2,10 +2,12 @@
 import { el, icona } from '../base.js';
 import { esci, profilo, leggiLocale } from '../dati.js';
 import { testata, riga, chiedi, toast, vai } from '../ui.js';
+import { vistaAiuto } from './aiuto.js';
 
 export async function vistaAltro(main, parametri) {
   const sotto = parametri[0];
-  if (sotto) { testata(sotto[0].toUpperCase() + sotto.slice(1), { indietro: 'altro' }); main.append(el('div', { class: 'vuoto' }, [el('p', { testo: 'Questa parte arriva in una fase successiva.' })])); return; }
+  if (sotto === 'aiuto') { vistaAiuto(main); return; }
+  if (sotto) { testata(sotto[0].toUpperCase() + sotto.slice(1), { indietro: 'altro' }); main.append(el('div', { class: 'vuoto' }, [el('p', { testo: 'Questa parte non esiste.' })])); return; }
   testata('Altro');
   const p = await profilo().catch(() => null);
   const voci = [

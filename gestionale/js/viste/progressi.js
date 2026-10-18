@@ -83,7 +83,7 @@ export async function disegnaProgressi(box, { id, lettura, ridisegna, oggi = ogg
       lettura ? null : el('div', { class: 'tasti' }, [el('button', { class: 'tasto bordo', testo: 'Modifica', onclick: () => foglioPiano(id, piano, ridisegna) }), el('button', { class: 'tasto', testo: 'Chiudi il piano', onclick: async () => { const ok = await chiedi('Chiudere il piano?', 'Resta nella cronologia. Se ne può aprire un altro quando vuoi.', [{ testo: 'Chiudi', valore: true, classe: 'pieno' }, { testo: 'Lascia', valore: false }]); if (!ok) return; try { await chiudiPiano(piano.id); toast('Piano chiuso.'); ridisegna(); } catch (e) { avvisa(e.message); } } })]),
     );
   } else {
-    pianoBox.append(el('p', { class: 'attenuato', testo: 'Nessun piano personale: è una possibilità, non un obbligo.' }), lettura ? null : el('button', { class: 'tasto bordo', 'data-scrittura': '', testo: '+ Piano personale', onclick: () => foglioPiano(id, null, ridisegna) }));
+    pianoBox.append(el('p', { class: 'attenuato', testo: 'Nessun piano personale. Serve per chi segue un percorso suo: cosa sta facendo, il prossimo passo, dove vuole arrivare. Non è obbligatorio.' }), lettura ? null : el('button', { class: 'tasto pieno', 'data-scrittura': '', testo: '+ Piano personale', onclick: () => foglioPiano(id, null, ridisegna) }));
   }
   box.append(sezione('Piano personale', pianoBox));
 }
@@ -100,7 +100,7 @@ function foglioForma(allievoId, f, ridisegna) {
   const chiudi = apriFoglio(f.nome, el('div', {}, [campo('Stato', stato), n ? campo('Fino a', sez) : null, campo('Nota', nota), movimenti, salva]));
 }
 
-function foglioObiettivo(allievoId, o, ridisegna) {
+export function foglioObiettivo(allievoId, o, ridisegna) {
   const nota = el('textarea', { rows: '2', placeholder: 'es. pulire il Lap Sao con il passo' }); nota.value = o?.nota || '';
   let argomenti = (o?.obiettivi_argomenti || []).map((x) => x.argomento_id);
   const chipsBox = el('div');
@@ -113,7 +113,7 @@ function foglioObiettivo(allievoId, o, ridisegna) {
   const chiudi = apriFoglio(o ? 'Obiettivo' : 'Nuovo obiettivo', el('div', {}, figli));
 }
 
-function foglioPiano(allievoId, piano, ridisegna) {
+export function foglioPiano(allievoId, piano, ridisegna) {
   let sta = piano?.sta_lavorando_su || [];
   let prossimo = piano?.prossimo_passo_argomenti || [];
   const nota = el('input', { type: 'text', value: piano?.prossimo_passo_nota || '', placeholder: 'es. il Bong Sao con il passo' });
@@ -122,9 +122,10 @@ function foglioPiano(allievoId, piano, ridisegna) {
   const disegna = async () => { const tutti = await argomentiAttivi(); b1.replaceChildren(chipsArgomenti(sta, tutti, { vuoto: '—' })); b2.replaceChildren(chipsArgomenti(prossimo, tutti, { vuoto: '—' })); };
   disegna();
   const chiudi = apriFoglio(piano ? 'Piano personale' : 'Nuovo piano personale', el('div', {}, [
-    el('p', { class: 'piccolo attenuato', testo: 'Sta lavorando su' }), b1, el('button', { class: 'tasto bordo', testo: 'Scegli', onclick: async () => { const r = await scegliArgomenti({ scelti: sta, titolo: 'Sta lavorando su' }); if (r) { sta = r; disegna(); } } }),
+    el('p', { class: 'attenuato', testo: 'Tre cose, tutte facoltative: su cosa sta lavorando, qual è il prossimo passo (le sue private lo ereditano come previsto), dove vuole arrivare.' }),
+    el('p', { class: 'piccolo attenuato' , testo: 'Sta lavorando su' }), b1, el('button', { class: 'tasto bordo', testo: 'Scegli', onclick: async () => { const r = await scegliArgomenti({ scelti: sta, titolo: 'Sta lavorando su' }); if (r) { sta = r; disegna(); } } }),
     el('p', { class: 'piccolo attenuato', style: null, testo: 'Prossimo passo' }), b2, el('button', { class: 'tasto bordo', testo: 'Scegli', onclick: async () => { const r = await scegliArgomenti({ scelti: prossimo, titolo: 'Prossimo passo' }); if (r) { prossimo = r; disegna(); } } }),
-    campo('Nota sul prossimo passo', nota), campo('Obiettivo', obiettivo),
+    campo('Prossimo passo, a parole', nota, 'es. il Bong Sao con il passo'), campo('Dove vuole arrivare', obiettivo, 'es. finire il Chum Kiu entro primavera'),
     el('button', { class: 'tasto pieno grande', testo: 'Salva', onclick: async () => { try { await salvaPiano(allievoId, { sta_lavorando_su: sta, prossimo_passo_argomenti: prossimo, prossimo_passo_nota: nota.value.trim() || null, obiettivo: obiettivo.value.trim() || null }); chiudi(); toast('Piano salvato.'); ridisegna(); } catch (e) { avvisa(e.message); } } }),
   ]));
 }

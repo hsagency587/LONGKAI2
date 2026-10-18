@@ -36,6 +36,7 @@ export async function disegna() {
   const box = el('div', { class: 'vista' });
   main.replaceChildren(box);
   document.getElementById('fogli').replaceChildren(); // un foglio aperto non sopravvive al cambio di schermata
+  azioneFissa(null); // la bolla dell'azione è della schermata: la rimette chi la vuole
   disegnaNav(base);
   try {
     await vista(box, parametri);
@@ -77,6 +78,15 @@ function disegnaNav(attiva) {
 }
 export function mostraNav(si) { document.getElementById('nav').classList.toggle('nascosto', !si); document.getElementById('app').classList.toggle('senza-nav', !si); }
 
+/* ---------- la bolla dell'azione principale della schermata (+ Allievo, + Pagamento…), sopra il microfono ---------- */
+export function azioneFissa(opzioni) {
+  document.getElementById('bolla-azione')?.remove();
+  if (!opzioni || soloLettura()) return;
+  const { testo, href = null, onclick = null } = opzioni;
+  const b = el(href ? 'a' : 'button', { id: 'bolla-azione', class: 'bolla-azione', href, onclick, type: href ? null : 'button', 'data-scrittura': '' }, [icona('piu'), el('span', { testo })]);
+  document.body.append(b);
+}
+
 /* ---------- la bolla per dettare (solo il Sifu) ---------- */
 export function mostraBolla(si, azione) {
   let b = document.getElementById('bolla');
@@ -106,6 +116,7 @@ export function toast(testo, { tipo = '', annulla = null, durata = 5000 } = {}) 
   t.setAttribute('role', tipo === 'errore' ? 'alert' : 'status');
   t.setAttribute('aria-live', tipo === 'errore' ? 'assertive' : 'polite');
   t.replaceChildren(el('span', { testo }));
+  t.classList.toggle('passivo', !annulla); // senza tasto non deve coprire quello che c'è sotto (i tasti di un foglio)
   if (annulla) t.append(el('button', { class: 'tasto', testo: 'Annulla', onclick: () => { annulla(); nascondiToast(); } }));
   requestAnimationFrame(() => t.classList.add('visibile'));
   clearTimeout(toastTimer);

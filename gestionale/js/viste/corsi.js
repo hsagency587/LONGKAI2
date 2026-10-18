@@ -1,7 +1,7 @@
 /* Longkai — viste/corsi.js: i corsi di Longkai (giorni, ore, durata, sospensioni). Un corso attivo per giorno. */
 import { el } from '../base.js';
 import { corsiCompleti, salvaCorso, soloLettura } from '../dati.js';
-import { testata, riga, scheletri, statoVuoto, toast, apriFoglio } from '../ui.js';
+import { testata, riga, scheletri, statoVuoto, toast, apriFoglio, azioneFissa } from '../ui.js';
 import { formattaMinuti } from '../../comune/ore.js';
 import { formattaData, formattaOra } from '../../comune/date.js';
 import { campo } from './allievo-modulo.js';
@@ -11,8 +11,10 @@ const GIORNI_BREVI = ['', 'lun', 'mar', 'mer', 'gio', 'ven', 'sab', 'dom'];
 
 export async function vistaCorsi(main, parametri, { indietro = 'altro' } = {}) {
   const lettura = soloLettura();
-  testata('Corsi', { indietro, azione: lettura ? null : el('button', { class: 'tasto azione', 'data-scrittura': '', testo: '+ Corso', onclick: () => foglioCorso(null, () => { main.replaceChildren(); vistaCorsi(main, parametri, { indietro }); }) }) });
-  await disegnaCorsi(main, () => { main.replaceChildren(); vistaCorsi(main, parametri, { indietro }); });
+  const ridisegna = () => { main.replaceChildren(); vistaCorsi(main, parametri, { indietro }); };
+  testata('Corsi', { indietro, azione: lettura ? null : el('button', { class: 'tasto azione', 'data-scrittura': '', testo: '+ Corso', onclick: () => foglioCorso(null, ridisegna) }) });
+  azioneFissa({ testo: 'Corso', onclick: () => foglioCorso(null, ridisegna) });
+  await disegnaCorsi(main, ridisegna);
 }
 
 export async function disegnaCorsi(box, ridisegna) {
@@ -26,7 +28,7 @@ export async function disegnaCorsi(box, ridisegna) {
     const stato = !c.attivo ? 'spento' : c.sospeso_dal ? `sospeso dal ${formattaData(c.sospeso_dal, 'numerico')}` + (c.sospeso_al ? ` al ${formattaData(c.sospeso_al, 'numerico')}` : '') : null;
     elenco.append(riga({ principale: `${c.nome} · ${c.citta}`, secondaria: [orari || 'nessun orario', formattaMinuti(c.durata_minuti), stato].filter(Boolean).join(' · '), pallino: !c.attivo ? 'neutro' : c.sospeso_dal ? 'attenzione' : 'ok', onclick: lettura ? null : () => foglioCorso(c, ridisegna) }));
   }
-  if (!corsi.length) elenco.append(statoVuoto('Nessun corso: aggiungi il primo.'));
+  if (!corsi.length) elenco.append(statoVuoto('Nessun corso: tocca «+ Corso» e metti nome, città, giorni e ore.'));
   box.append(elenco, el('p', { class: 'piccolo attenuato', style: null, testo: 'Le lezioni dei prossimi 14 giorni si creano da sole dagli orari. Se cambi un orario, quelle future vuote si rifanno.' }));
 }
 
