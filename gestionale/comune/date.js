@@ -62,21 +62,21 @@ export function primoDelMese(data) {
   return String(data).slice(0, 7) + '-01';
 }
 
-/** "Sabato 18 ottobre" / "sab 18 ott" / "18/10/2026". */
-export function formattaData(data, stile = 'esteso') {
+/** "Sabato 18 ottobre" / "sab 18 ott" / "18/10" (l'anno solo se non è quello in corso: "18/10/2027"). */
+export function formattaData(data, stile = 'esteso', oggi = oggiRoma()) {
   const [a, m, g] = String(data).split('-').map(Number);
   const gs = giornoSettimana(data);
   if (stile === 'breve') return `${GIORNI_BREVI[gs % 7]} ${g} ${MESI[m - 1].slice(0, 3)}`;
-  if (stile === 'numerico') return `${String(g).padStart(2, '0')}/${String(m).padStart(2, '0')}/${a}`;
+  if (stile === 'numerico') return `${String(g).padStart(2, '0')}/${String(m).padStart(2, '0')}` + (String(a) === String(oggi).slice(0, 4) ? '' : `/${a}`);
   const nome = GIORNI[gs % 7];
   return `${nome[0].toUpperCase()}${nome.slice(1)} ${g} ${MESI[m - 1]}`;
 }
 
-/** "Ottobre 2026". */
-export function formattaMese(data) {
+/** "Ottobre" (con l'anno solo se non è quello in corso: "Ottobre 2027"). */
+export function formattaMese(data, oggi = oggiRoma()) {
   const [a, m] = String(data).split('-').map(Number);
   const n = MESI[m - 1];
-  return `${n[0].toUpperCase()}${n.slice(1)} ${a}`;
+  return `${n[0].toUpperCase()}${n.slice(1)}` + (String(a) === String(oggi).slice(0, 4) ? '' : ` ${a}`);
 }
 
 /** "fra 6 giorni", "oggi", "ieri", "3 giorni fa". */

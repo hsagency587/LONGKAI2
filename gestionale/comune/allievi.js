@@ -2,7 +2,7 @@
    Logica pura sugli allievi: nome, minorenni, validazione della scheda, filtri dell'elenco, scadenza proposta.
    Provata in test/allievi_test.js. */
 
-import { giorniFra, aggiungiMesi } from './date.js';
+import { giorniFra, aggiungiMesi, formattaData } from './date.js';
 
 export const FILTRI = [
   ['tutti', 'Tutti'], ['mortara', 'Mortara'], ['vigevano', 'Vigevano'], ['in_regola', 'In regola'], ['in_scadenza', 'In scadenza'],
@@ -88,7 +88,7 @@ export function secondaRiga(a) {
   if (a.corsi) pezzi.push(a.corsi);
   else if (a.citta) pezzi.push(a.citta);
   if (a.stato === 'sospeso') pezzi.push('sospeso');
-  if (a.stato === 'uscito') pezzi.push('uscito' + (a.uscito_il ? ' il ' + String(a.uscito_il).split('-').reverse().join('/') : ''));
+  if (a.stato === 'uscito') pezzi.push('uscito' + (a.uscito_il ? ' il ' + formattaData(a.uscito_il, 'numerico') : ''));
   if (a.da_completare) pezzi.push('scheda da completare');
   if (a.da_pagare_cent > 0) pezzi.push('da pagare');
   if (a.stato_scadenze === 'scaduta') pezzi.push('scaduto');

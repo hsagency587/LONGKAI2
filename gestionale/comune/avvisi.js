@@ -7,7 +7,7 @@ import { sogliaDaMandare, chiaveDedup } from './scadenze.js';
 export const TIPI = { certificato: 'certificato medico', tesseramento: 'tesseramento', quota: 'quota', da_richiamare: 'da richiamare', cassetta: 'cassetta', pacchetto: 'pacchetto', serale: 'serale', rapporto: 'rapporto' };
 
 function nome(a) { return `${a?.nome || ''} ${a?.cognome || ''}`.trim() || 'un allievo'; }
-function dataIt(d) { return String(d || '').split('-').reverse().join('/'); }
+function dataIt(d, oggi) { const [a, m, g] = String(d || '').split('-'); return `${g}/${m}` + (a === String(oggi || '').slice(0, 4) ? '' : `/${a}`); }
 function euro(cent) { return `${((Number(cent) || 0) / 100).toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} €`; }
 
 /**
@@ -26,14 +26,14 @@ export function avvisiDaCreare({ oggi, soglie = [30, 15, 7], scadenze = [], quot
   for (const s of scadenze) {
     const soglia = sogliaDaMandare(s.data, oggi, soglie, s.avvisi_mandati || {});
     if (soglia === null) continue;
-    const quando = soglia === 'scaduto' ? `è scaduto il ${dataIt(s.data)}` : soglia === 0 ? 'scade oggi' : `scade fra ${soglia} giorni (${dataIt(s.data)})`;
+    const quando = soglia === 'scaduto' ? `è scaduto il ${dataIt(s.data, oggi)}` : soglia === 0 ? 'scade oggi' : `scade fra ${soglia} giorni (${dataIt(s.data, oggi)})`;
     aggiungi({ chiave: chiaveDedup(s.id, soglia, 'app', destinatario), tipo: s.tipo, soglia: String(soglia), testo: `Il ${TIPI[s.tipo] || s.tipo} di ${nome(s.allievo)} ${quando}.`, allievo_id: s.allievo_id || s.allievo?.id || null, scadenza_id: s.id, addebito_id: null });
     segnaScadenze.push({ id: s.id, soglia: String(soglia) });
   }
   for (const q of quote) {
     const soglia = sogliaDaMandare(q.scadenza, oggi, soglie, q.avvisi_mandati || {});
     if (soglia === null) continue;
-    const quando = soglia === 'scaduto' ? `scaduta il ${dataIt(q.scadenza)}` : soglia === 0 ? 'in scadenza oggi' : `in scadenza fra ${soglia} giorni`;
+    const quando = soglia === 'scaduto' ? `scaduta il ${dataIt(q.scadenza, oggi)}` : soglia === 0 ? 'in scadenza oggi' : `in scadenza fra ${soglia} giorni`;
     aggiungi({ chiave: chiaveDedup('addebito:' + q.id, soglia, 'app', destinatario), tipo: 'quota', soglia: String(soglia), testo: `${nome(q.allievo)}: quota di ${euro(q.residuo_cent)} ${quando}.`, allievo_id: q.allievo_id || q.allievo?.id || null, scadenza_id: null, addebito_id: q.id });
   }
   for (const r of daRichiamare) {
