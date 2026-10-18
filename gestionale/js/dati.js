@@ -37,7 +37,18 @@ export function svuotaLocale() {
 export async function sessione() {
   if (!configurato()) return null;
   const { data } = await sb().auth.getSession();
-  return data.session || null;
+  if (data.session) return data.session;
+  // Senza rete il gettone scaduto non si può rinnovare: si resta dentro con la sessione salvata sul telefono
+  // (la password non si chiede a ogni apertura) e si rinnova da soli appena la rete torna.
+  if (!navigator.onLine) return sessioneSalvata();
+  return null;
+}
+function sessioneSalvata() {
+  try {
+    const ref = new URL(globalThis.CONFIG.supabaseUrl).hostname.split('.')[0];
+    const s = JSON.parse(localStorage.getItem(`sb-${ref}-auth-token`) || 'null');
+    return s?.user && s?.refresh_token ? s : null;
+  } catch { return null; }
 }
 export async function accedi(email, password) {
   const { data, error } = await sb().auth.signInWithPassword({ email, password });
@@ -52,6 +63,13 @@ export async function passwordDimenticata(email) {
 export async function aggiornaPassword(password) {
   const { error } = await sb().auth.updateUser({ password });
   if (error) throw error;
+}
+/** Il codice del link "scegli la password" (mandato a mano, es. su WhatsApp) apre la sessione: solo quando lo si usa, mai in anteprima. */
+export async function entraConCodice(codice) {
+  const { data, error } = await sb().auth.verifyOtp({ token_hash: codice, type: 'recovery' });
+  if (error) throw error;
+  profiloCorrente = null;
+  return data.session;
 }
 export async function esci() {
   // 'local' chiude la sessione su questo dispositivo anche senza rete. La libreria toglie la sessione locale

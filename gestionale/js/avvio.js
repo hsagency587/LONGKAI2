@@ -35,7 +35,7 @@ const rimanda = (hash) => location.replace(hash);
 async function instrada() {
   // Un link di recupero scaduto arriva come #error=...: lo si dice e si torna all'accesso.
   if (/^#error=/.test(location.hash)) {
-    avvisa('Il link non è più valido: chiedi di nuovo "Password dimenticata".');
+    avvisa('Questo link è scaduto o già usato: serve un link nuovo.');
     rimanda('#/accesso');
     return;
   }
@@ -52,7 +52,10 @@ async function instrada() {
     if (!document.getElementById('contenuto').childElementCount) { history.replaceState(null, '', '#/oggi'); }
     else { document.getElementById(location.hash.slice(1))?.focus({ preventScroll: false }); return; }
   }
-  const rotta = location.hash.replace(/^#\/?/, '').split('/')[0] || 'oggi';
+  const pezzi = location.hash.replace(/^#\/?/, '').split('/');
+  const rotta = pezzi[0] || 'oggi';
+  // #/nuova-password/<codice>: il link "scegli la password" mandato a mano; si entra senza sessione, il codice la crea
+  const conLink = rotta === 'nuova-password' && Boolean(pezzi[1]);
   if (!configurato()) {
     // senza progetto configurato si può vedere solo l'accesso e la diagnostica
     mostraNav(false);
@@ -62,7 +65,7 @@ async function instrada() {
   }
   const s = await sessione();
   if (!s) mostraNav(false);
-  if (!s && !PUBBLICHE.has(rotta)) { rimanda('#/accesso'); return; }
+  if (!s && !PUBBLICHE.has(rotta) && !conLink) { rimanda('#/accesso'); return; }
   if (s && PUBBLICHE.has(rotta)) { rimanda('#/oggi'); return; }
   if (s) {
     let p = null; let lettura_fallita = false;
