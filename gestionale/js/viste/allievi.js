@@ -9,6 +9,9 @@ import { oggiRoma, formattaData, relativa } from '../../comune/date.js';
 import { giorniMancanti } from '../../comune/scadenze.js';
 import { moduloAllievo, foglioAbbonamento, foglioCaricaDocumento, campo } from './allievo-modulo.js';
 import { disegnaProgressi, disegnaPresenze } from './progressi.js';
+import { foglioRegistraPagamento, foglioRimborso, foglioAddebito, foglioAddebitoAzioni, foglioPagamentoAzioni, rigaAddebito, rigaPagamento } from './quote-fogli.js';
+import { movimentiAllievo } from '../dati.js';
+import { fraseSaldo } from '../../comune/quote.js';
 import { foglioNuovaPrivata } from './oggi.js';
 
 const ETICHETTE_TIPO = { certificato: 'Certificato medico', tesseramento: 'Tesseramento', quota: 'Quota', altro: 'Altro' };
@@ -93,7 +96,7 @@ async function disegnaScheda(box, id, scheda) {
   const ridisegna = () => { box.replaceChildren(); disegnaScheda(box, id, scheda); };
   const contesto = { id, d, a, lettura, ridisegna, oggi: oggiRoma() };
   if (scheda === 'dati') { await moduloAllievo(box, contesto); return; }
-  if (scheda === 'quote') { disegnaQuote(box, contesto); return; }
+  if (scheda === 'quote') { await disegnaQuote(box, contesto); return; }
   if (scheda === 'documenti') { await disegnaDocumenti(box, contesto); return; }
   if (scheda === 'progressi') { await disegnaProgressi(box, contesto); return; }
   if (scheda === 'presenze') { await disegnaPresenze(box, contesto); return; }
@@ -199,9 +202,11 @@ function foglioUnisci(id, a, ridisegna) {
 }
 
 /* ---------- quote ---------- */
-function disegnaQuote(box, { id, d, lettura, ridisegna, oggi }) {
+async function disegnaQuote(box, { id, d, a, lettura, ridisegna, oggi }) {
   const s = d.saldo || {};
+  const frase = fraseSaldo(s, euro, (x) => formattaData(x, 'numerico'));
   const righe = [
+    riga({ principale: frase.testo, pallino: frase.tono }),
     riga({ principale: 'Da pagare', destra: euro(s.da_pagare_cent || 0), pallino: s.da_pagare_cent > 0 ? 'errore' : 'ok' }),
     riga({ principale: 'In arrivo', destra: euro(s.in_arrivo_cent || 0), pallino: 'info', secondaria: s.prima_scadenza ? 'prossima scadenza ' + formattaData(s.prima_scadenza, 'numerico') : null }),
   ];
@@ -219,7 +224,28 @@ function disegnaQuote(box, { id, d, lettura, ridisegna, oggi }) {
     for (const ab of passati) vecchi.append(riga({ principale: ab.tariffe?.nome || 'Abbonamento', secondaria: `dal ${formattaData(ab.dal, 'numerico')} al ${formattaData(ab.al, 'numerico')}`, destra: euro(ab.importo_personalizzato_cent ?? ab.tariffe?.importo_cent) }));
     box.append(sezione('Abbonamenti passati', vecchi));
   }
-  box.append(sezione('Movimenti', statoVuoto('Addebiti e pagamenti, con “Registra un pagamento”, arrivano in fase 3.')));
+  // movimenti: addebiti e pagamenti, con le azioni
+  const mov = await movimentiAllievo(id);
+  const tasti = lettura ? null : el('div', { class: 'tasti', 'data-scrittura': '' }, [
+    el('button', { class: 'tasto pieno', testo: '+ Pagamento', onclick: () => foglioRegistraPagamento({ allievo: a, dopo: ridisegna }) }),
+    el('button', { class: 'tasto bordo', testo: '+ Addebito', onclick: () => foglioAddebito({ allievo: a, dopo: ridisegna }) }),
+    s.credito_cent > 0 ? el('button', { class: 'tasto bordo', testo: 'Rimborso', onclick: () => foglioRimborso({ allievo: a, creditoCent: s.credito_cent, dopo: ridisegna }) }) : null,
+  ]);
+  const aperti = mov.addebiti.filter((x) => x.stato === 'da_pagare');
+  const chiusi = mov.addebiti.filter((x) => x.stato !== 'da_pagare');
+  const e1 = el('div', { class: 'elenco' });
+  for (const x of aperti) e1.append(rigaAddebito(x, lettura ? null : () => foglioAddebitoAzioni({ ...x, allievo_id: id, nome: a.nome, cognome: a.cognome, telefono: a.telefono }, ridisegna)));
+  if (!aperti.length) e1.append(statoVuoto('Niente da pagare.'));
+  box.append(sezione('Da pagare', [tasti, e1].filter(Boolean)));
+  const e2 = el('div', { class: 'elenco' });
+  for (const p of mov.pagamenti) e2.append(rigaPagamento(p, lettura ? null : () => foglioPagamentoAzioni({ ...p, allievo_id: id }, ridisegna)));
+  if (!mov.pagamenti.length) e2.append(statoVuoto('Nessun pagamento ancora.'));
+  box.append(sezione('Pagamenti', e2));
+  if (chiusi.length) {
+    const e3 = el('div', { class: 'elenco' });
+    for (const x of chiusi.slice(0, 30)) e3.append(rigaAddebito(x, null));
+    box.append(sezione('Addebiti chiusi', e3));
+  }
 }
 
 /* ---------- documenti ---------- */

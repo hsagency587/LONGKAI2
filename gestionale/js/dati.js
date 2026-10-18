@@ -229,6 +229,8 @@ export async function salvaAbbonamento(allievoId, dati, idEsistente = null) {
   const corpo = { allievo_id: allievoId, tariffa_id: dati.tariffa_id, dal: dati.dal, al: dati.al || null, rinnovo_automatico: dati.rinnovo_automatico !== false, importo_personalizzato_cent: dati.importo_personalizzato_cent ?? null, nota: dati.nota || null };
   const r = idEsistente ? await sb().from('abbonamenti').update(corpo).eq('id', idEsistente).select('id').single() : await sb().from('abbonamenti').insert(corpo).select('id').single();
   controlla(r);
+  // il primo periodo nasce subito, così il saldo si vede senza aspettare l'orologio
+  try { await sb().rpc('genera_addebiti_in_arrivo', { p_giorni: 7 }); } catch { /* l'orologio ci pensa domattina */ }
   return r.data.id;
 }
 export async function chiudiAbbonamento(id, al = oggi()) {
@@ -541,6 +543,44 @@ export async function salvaProgramma({ corsoId = null, mese = null, sessioneId =
 export async function nonToccati() { const r = await sb().from('v_non_toccati').select('*'); controlla(r); return r.data || []; }
 export async function pianiAttivi() { const r = await sb().from('piani_personali').select('*, allievi(nome, cognome)').eq('stato', 'attivo'); controlla(r); return r.data || []; }
 export async function obiettiviAperti() { const r = await sb().from('obiettivi').select('id, nota, aperto_il, allievo_id, allievi(nome, cognome), obiettivi_argomenti(argomento_id)').eq('stato', 'aperto').order('aperto_il'); controlla(r); return r.data || []; }
+
+/* ============================================================
+   FASE 3 — quote: addebiti, pagamenti, rimborsi, annullamenti
+   ============================================================ */
+export async function daIncassare() { const r = await sb().from('v_da_incassare').select('*').order('scadenza', { ascending: true, nullsFirst: false }); controlla(r); return r.data || []; }
+export async function registraPagamento({ allievoId, importoCent, data = oggi(), metodo = 'contanti', nota = null, addebitoId = null, lavoroId = null }) {
+  const r = await sb().rpc('registra_pagamento', { p_allievo: allievoId, p_importo_cent: importoCent, p_data: data, p_metodo: metodo, p_nota: nota, p_sessione: null, p_lavoro_id: lavoroId || idNuovo(), p_addebito: addebitoId });
+  controlla(r);
+  return r.data;
+}
+export async function annullaPagamento(id, perche = null) { const r = await sb().rpc('annulla_pagamento', { p_pagamento: id, p_perche: perche }); controlla(r); }
+export async function registraRimborso({ allievoId, importoCent, data = oggi(), metodo = 'contanti', nota = null }) {
+  const r = await sb().rpc('registra_rimborso', { p_allievo: allievoId, p_importo_cent: importoCent, p_data: data, p_metodo: metodo, p_nota: nota, p_lavoro_id: idNuovo() });
+  controlla(r);
+  return r.data;
+}
+export async function nuovoAddebito({ allievoId, importoCent, motivo = 'altro', descrizione = null, scadenza = null, data = oggi() }) {
+  const r = await sb().from('addebiti').insert({ allievo_id: allievoId, importo_cent: importoCent, motivo, descrizione, scadenza, data }).select('id').single();
+  controlla(r);
+  return r.data.id;
+}
+export async function annullaAddebito(id, perche = null) { const r = await sb().rpc('annulla_addebito', { p_addebito: id, p_perche: perche }); controlla(r); }
+export async function scontaAddebito(id, scontoCent) { const r = await sb().from('addebiti').update({ sconto_cent: scontoCent }).eq('id', id).select('id'); controlla(r); }
+export async function pagamentiPeriodo(dal, al) {
+  const r = await sb().from('pagamenti').select('id, allievo_id, data, importo_cent, tipo, metodo, nota, credito_residuo_cent, sessione_id, annullato_il, annullato_perche, creato_il, allievi(nome, cognome)').gte('data', dal).lte('data', al).order('data', { ascending: false }).order('creato_il', { ascending: false });
+  controlla(r);
+  return r.data || [];
+}
+export async function incassiMesi() { const r = await sb().from('v_incassi_mese').select('*').order('mese', { ascending: false }); controlla(r); return r.data || []; }
+export async function movimentiAllievo(id) {
+  const [ad, pg] = await Promise.all([
+    sb().from('addebiti').select('id, data, scadenza, importo_cent, sconto_cent, pagato_cent, motivo, descrizione, periodo_dal, periodo_al, stato, annullato_perche, sessione_id').eq('allievo_id', id).order('data', { ascending: false }),
+    sb().from('pagamenti').select('id, data, importo_cent, tipo, metodo, nota, credito_residuo_cent, annullato_il, annullato_perche, creato_il').eq('allievo_id', id).order('data', { ascending: false }).order('creato_il', { ascending: false }),
+  ]);
+  controlla(ad, pg);
+  return { addebiti: ad.data || [], pagamenti: pg.data || [] };
+}
+export async function generaAddebitiInArrivo(giorni = 7) { const r = await sb().rpc('genera_addebiti_in_arrivo', { p_giorni: giorni }); controlla(r); return r.data; }
 
 /* ---------- impostazioni: un campo alla volta, con la cronologia ---------- */
 export async function salvaImpostazione(gruppo, campo, valore, testoDetto = null) {

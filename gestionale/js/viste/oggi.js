@@ -8,6 +8,7 @@ import { previstoDalMese, statoGiornata } from '../../comune/sessione.js';
 import { normalizza } from '../../comune/fonetica.js';
 import { campo } from './allievo-modulo.js';
 import { foglioAnnulla } from './sessione.js';
+import { foglioRegistraPagamento } from './quote-fogli.js';
 
 const nomeDi = (a) => `${a?.nome || ''} ${a?.cognome || ''}`.trim();
 
@@ -96,7 +97,8 @@ export async function vistaOggi(main) {
   const chiusa = g?.stato === 'chiusa';
   const tastoGiornata = sifu && sessioni.length ? el('button', { class: 'tasto azione', 'data-scrittura': '', testo: chiusa ? 'Giornata chiusa ✓' : 'Chiudi giornata', disabled: chiusa || !sg.chiudibile, onclick: async () => { try { await chiudiGiornata(oggi); toast('Giornata chiusa. Buona serata.'); ridisegna(); } catch (e) { avvisa(e.message); } } }) : null;
   if (sifu && !sg.chiudibile && sg.daFare) righe.push(riga({ principale: `${sg.daFare === 1 ? 'Una sessione' : sg.daFare + ' sessioni'} ancora da confermare`, pallino: 'attenzione' }));
-  main.append(sezione('Da fare', righe.length ? el('div', { class: 'elenco' }, righe) : statoVuoto(chiusa ? 'Tutto chiuso. Bene.' : 'Niente da fare. Bene.'), tastoGiornata));
+  const azioniDaFare = sifu ? el('div', { class: 'tasti', 'data-scrittura': '' }, [el('button', { class: 'tasto azione', testo: '+ Pagamento', onclick: () => foglioRegistraPagamento({ dopo: ridisegna }) }), tastoGiornata].filter(Boolean)) : null;
+  main.append(sezione('Da fare', righe.length ? el('div', { class: 'elenco' }, righe) : statoVuoto(chiusa ? 'Tutto chiuso. Bene.' : 'Niente da fare. Bene.'), azioniDaFare));
 
   // SCADENZE
   if (scad) {
