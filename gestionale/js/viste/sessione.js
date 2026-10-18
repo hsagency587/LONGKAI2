@@ -1,7 +1,7 @@
 /* Longkai — viste/sessione.js: una sessione (corso, straordinaria o privata) fatta a mano: presenti, gruppo, singoli, forme,
    pagamenti, prossima volta. È la stessa revisione della dettatura (fase 4), senza il vocale. Una sessione fatta si riapre e si corregge. */
 import { el, euro, nuovoId } from '../base.js';
-import { sessioneCompleta, attesiSessione, allieviAttivi, argomentiAttivi, confermaSessione, saltaSessione, riapriSessione, annullaSessione, spostaSessione, nuovoAllievoVeloce, ultimoContenutoCorso, soloLettura, impostazioni, aggiungiSoprannome, aggiungiPronuncia, creaPrivate } from '../dati.js';
+import { sessioneCompleta, attesiSessione, allieviAttivi, argomentiAttivi, confermaSessione, saltaSessione, riapriSessione, annullaSessione, spostaSessione, nuovoAllievoVeloce, ultimoContenutoCorso, soloLettura, impostazioni, aggiungiSoprannome, aggiungiPronuncia, creaPrivate, generaRapportino } from '../dati.js';
 import { testata, riga, sezione, scheletri, statoVuoto, toast, avvisa, apriFoglio, chiedi, vai } from '../ui.js';
 import { normalizza } from '../../comune/fonetica.js';
 import { formattaData, formattaOra, oggiRoma } from '../../comune/date.js';
@@ -250,6 +250,7 @@ export async function vistaSessione(main, parametri) {
   const secondari = el('div', { class: 'tasti' });
   if (s.stato === 'prevista') secondari.append(el('button', { class: 'tasto', testo: 'Salta', onclick: () => foglioSalta(id, ridisegna) }));
   if (s.tipo === 'privata' && s.stato === 'prevista') secondari.append(el('button', { class: 'tasto', testo: 'Sposta', onclick: () => foglioSposta(s, ridisegna) }));
+  if (s.stato === 'fatta') secondari.append(el('button', { class: 'tasto bordo', testo: 'Rapportino PDF', onclick: async (e) => { e.target.disabled = true; const w = globalThis.open('', '_blank'); try { const r = await generaRapportino(id); if (w) w.location.replace(r.url); else location.assign(r.url); } catch (err) { if (w) w.close(); avvisa(err.message || 'Non sono riuscito a fare il PDF.'); } finally { e.target.disabled = false; } } }));
   if (s.stato !== 'fatta') secondari.append(el('button', { class: 'tasto pericolo', testo: 'Annulla la sessione', onclick: () => foglioAnnulla(s, ridisegna) }));
   main.append(sezione('Nota', el('div', { class: 'blocco' }, [campo('Nota', nota)])));
   if (st.testo_grezzo) main.append(el('details', { class: 'area-dettagli' }, [el('summary', { testo: 'Il testo dettato' }), el('p', { class: 'piccolo attenuato', style: null, testo: st.testo_grezzo })]));

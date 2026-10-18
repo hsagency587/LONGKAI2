@@ -9,6 +9,7 @@ import { normalizza } from '../../comune/fonetica.js';
 import { campo } from './allievo-modulo.js';
 import { foglioAnnulla } from './sessione.js';
 import { foglioRegistraPagamento } from './quote-fogli.js';
+import { generaRapportino } from '../dati.js';
 
 const nomeDi = (a) => `${a?.nome || ''} ${a?.cognome || ''}`.trim();
 
@@ -76,7 +77,7 @@ export async function vistaOggi(main) {
         if (fallita) blocco.append(el('a', { class: 'tasto', href: '#/diagnostica', testo: 'Vedi perché la dettatura si è fermata' }));
       }
     } else if (sifu && corso.stato === 'fatta') {
-      blocco.append(el('div', { class: 'tasti riga-sotto', 'data-scrittura': '' }, [el('a', { class: 'tasto bordo', href: `#/sessione/${corso.id}`, testo: 'Modifica' }), el('button', { class: 'tasto', testo: 'PDF', onclick: () => toast('Il rapportino PDF arriva in fase 6.') })]));
+      blocco.append(el('div', { class: 'tasti riga-sotto', 'data-scrittura': '' }, [el('a', { class: 'tasto bordo', href: `#/sessione/${corso.id}`, testo: 'Modifica' }), el('button', { class: 'tasto', testo: 'PDF', onclick: async (e) => { e.target.disabled = true; const w = globalThis.open('', '_blank'); try { const r = await generaRapportino(corso.id); if (w) w.location.replace(r.url); else location.assign(r.url); } catch (err) { if (w) w.close(); avvisa(err.message || 'Non sono riuscito a fare il PDF.'); } finally { e.target.disabled = false; } } })]));
     } else if (sifu && corso.stato === 'saltata') {
       blocco.append(el('div', { class: 'tasti riga-sotto', 'data-scrittura': '' }, [el('button', { class: 'tasto bordo', testo: 'Riapri', onclick: async () => { try { await riapriSessione(corso.id); ridisegna(); } catch (e) { avvisa(e.message); } } })]));
     } else if (!sifu) {

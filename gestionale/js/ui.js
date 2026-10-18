@@ -35,6 +35,7 @@ export async function disegna() {
   const main = document.getElementById('contenuto');
   const box = el('div', { class: 'vista' });
   main.replaceChildren(box);
+  document.getElementById('fogli').replaceChildren(); // un foglio aperto non sopravvive al cambio di schermata
   disegnaNav(base);
   try {
     await vista(box, parametri);

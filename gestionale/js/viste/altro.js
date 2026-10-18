@@ -9,7 +9,7 @@ export async function vistaAltro(main, parametri) {
   testata('Altro');
   const p = await profilo().catch(() => null);
   const voci = [
-    ['Rapporti', 'rapporto', '#/altro/rapporti'],
+    ['Rapporti', 'rapporto', '#/rapporti'],
     ['Scadenze', 'avviso', '#/scadenze'],
     ['Corsi', 'calendario', '#/corsi'],
     ['Cassetta', 'documento', '#/cassetta'],

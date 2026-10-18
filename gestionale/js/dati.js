@@ -631,6 +631,20 @@ export async function aggiungiPronuncia(argomentoId, sentito) {
   cacheArgomenti = { quando: 0, dati: [] };
 }
 
+/* ---------- rapporti (fase 6) ---------- */
+export async function rapportiMensili() {
+  const r = await sb().from('rapporti_mensili').select('id, mese, pdf_percorso, generato_il, totali, riassunto, riassunto_corretto_il').order('mese', { ascending: false });
+  controlla(r);
+  return r.data || [];
+}
+export const generaRapporto = (mese, rigeneraRiassunto = false) => chiamaFunzione('pdf', { tipo: 'mensile', mese, rigenera_riassunto: rigeneraRiassunto });
+export const generaRapportino = (sessioneId) => chiamaFunzione('pdf', { tipo: 'rapportino', sessione_id: sessioneId });
+export async function apriRapporto(percorso) { const r = await chiamaFunzione('pdf', { tipo: 'apri', percorso }); return r.url; }
+export async function salvaRiassunto(mese, testo) {
+  const r = await sb().from('rapporti_mensili').upsert({ mese, riassunto: testo, riassunto_corretto_il: new Date().toISOString() }, { onConflict: 'mese' }).select('id');
+  controlla(r);
+}
+
 /* ---------- Correggi parlando: applica le operazioni spuntate ---------- */
 function daSiNo(v) { const t = String(v ?? '').trim().toLowerCase(); return ['si', 'sì', 'true', 'acceso', 'on', '1'].includes(t); }
 function numeri(v) { return String(v ?? '').split(/[,\s]+/).map((x) => Number(x)).filter((x) => Number.isFinite(x) && x > 0); }

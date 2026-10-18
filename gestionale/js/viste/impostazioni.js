@@ -23,6 +23,7 @@ export async function vistaImpostazioni(main, parametri) {
   if (gruppo === 'associazione') { testata('Associazione', { indietro: 'impostazioni' }); await gruppoAssociazione(main, lettura, ridisegna); return; }
   if (gruppo === 'voce') { testata('Voce', { indietro: 'impostazioni' }); await gruppoVoce(main, lettura, ridisegna); return; }
   if (gruppo === 'ia') { testata('Intelligenza artificiale', { indietro: 'impostazioni' }); await gruppoIa(main, lettura, ridisegna); return; }
+  if (gruppo === 'rapporti') { testata('Rapporti', { indietro: 'impostazioni' }); await gruppoRapporti(main, lettura, ridisegna); return; }
   if (gruppo && gruppo !== 'aspetto') {
     testata(GRUPPI.find(([, k]) => k === gruppo)?.[0] || 'Impostazioni', { indietro: 'impostazioni' });
     main.append(statoVuoto('Questo gruppo arriva in una fase successiva.'));
@@ -162,6 +163,49 @@ async function gruppoIa(main, lettura, ridisegna) {
   main.append(sezione('Questo mese', el('div', { class: 'blocco' }, [el('div', { class: 'principale', testo: `Speso: ${euro(speso)} su ${euro(imp.tetto_mensile_cent ?? 500)}` }), el('div', { class: 'copertura', style: null }, [(() => { const s = el('span'); s.style.width = `${Math.min(100, Math.round((speso / Math.max(1, imp.tetto_mensile_cent ?? 500)) * 100))}%`; return s; })()])])), sezione('Consumi', elenco));
   main.append(sezione('Regole', el('div', { class: 'blocco' }, [el('label', { class: 'interruttore' }, [el('span', { testo: 'Intelligenza artificiale accesa' }), accesa]), campo('Tetto mensile di spesa (€)', tetto, 'Raggiunto il tetto, la dettatura si ferma e “A mano” continua a funzionare.'), lettura ? null : salva])));
   main.append(el('p', { class: 'piccolo attenuato', testo: 'I costi sono stime prudenti (Groq per la voce, Claude per il riordino). Le chiavi stanno sul server, mai nell\'app.' }));
+}
+
+/* ---------- Rapporti: i capitoli e cosa includere ---------- */
+async function gruppoRapporti(main, lettura, ridisegna) {
+  const imp = (await impostazioni().catch(() => ({}))).rapporti || {};
+  const TUTTI = [['in_breve', 'Il mese in breve'], ['corsi', 'I corsi, lezione per lezione'], ['private', 'Le private'], ['allievi', 'Gli allievi'], ['quote', 'Le quote'], ['scadenze', 'Le scadenze in arrivo'], ['mese_prossimo', 'Il mese prossimo']];
+  let attivi = Array.isArray(imp.capitoli) && imp.capitoli.length ? [...imp.capitoli] : TUTTI.map(([k]) => k);
+  const nomi = { ...(imp.nomi_capitoli || {}) };
+  const elenco = el('div', { class: 'elenco' });
+  const disegna = () => {
+    elenco.replaceChildren();
+    const ordinati = [...attivi.map((k) => TUTTI.find(([x]) => x === k)).filter(Boolean), ...TUTTI.filter(([k]) => !attivi.includes(k))];
+    ordinati.forEach(([k, nomeStd]) => {
+      const acceso = attivi.includes(k);
+      const r = el('div', { class: 'riga statica' }, [
+        el('span', { class: 'pallino ' + (acceso ? 'ok' : 'neutro') }),
+        el('div', {}, [el('div', { class: 'principale', testo: nomi[k] || nomeStd }), el('div', { class: 'secondaria', testo: nomi[k] ? 'nome standard: ' + nomeStd : (acceso ? 'nel rapporto' : 'escluso') })]),
+        lettura ? el('div') : el('div', { class: 'destra' }, [
+          acceso ? el('button', { class: 'tasto stepper-tasto', 'aria-label': 'Su', testo: '\u2191', onclick: () => { const i = attivi.indexOf(k); if (i > 0) { attivi.splice(i, 1); attivi.splice(i - 1, 0, k); disegna(); } } }) : null,
+          el('button', { class: 'tasto', testo: acceso ? 'Escludi' : 'Includi', onclick: () => { attivi = acceso ? attivi.filter((x) => x !== k) : [...attivi, k]; disegna(); } }),
+          el('button', { class: 'tasto', testo: 'Nome', onclick: () => { const n = el('input', { type: 'text', value: nomi[k] || nomeStd }); const ok = el('button', { class: 'tasto pieno grande', testo: 'Salva', onclick: () => { if (n.value.trim() && n.value.trim() !== nomeStd) nomi[k] = n.value.trim(); else delete nomi[k]; chiudi(); disegna(); } }); const chiudi = apriFoglio('Nome del capitolo', el('div', {}, [campo('Nome', n), ok])); } }),
+        ]),
+      ]);
+      elenco.append(r);
+    });
+  };
+  disegna();
+  const interr = (etichetta, campoK, valore) => { const i = el('input', { type: 'checkbox' }); i.checked = valore; i.disabled = lettura; i.addEventListener('change', async () => { try { await salvaImpostazione('rapporti', campoK, i.checked); toast('Salvato.'); } catch (e) { avvisa(e.message); } }); return el('label', { class: 'interruttore' }, [el('span', { testo: etichetta }), i]); };
+  const giorno = el('input', { type: 'number', min: '1', max: '28', value: imp.giorno || 1, inputmode: 'numeric' });
+  const firma = el('input', { type: 'text', value: imp.firma || '', placeholder: 'es. Sifu Diego Ceriani' });
+  const salva = el('button', { class: 'tasto pieno', testo: 'Salva', onclick: async () => {
+    try {
+      await salvaImpostazione('rapporti', 'capitoli', attivi);
+      await salvaImpostazione('rapporti', 'nomi_capitoli', nomi);
+      await salvaImpostazione('rapporti', 'giorno', Math.min(28, Math.max(1, Number(giorno.value) || 1)));
+      await salvaImpostazione('rapporti', 'firma', firma.value.trim() || null);
+      toast('Salvato.'); ridisegna();
+    } catch (e) { avvisa(e.message); }
+  } });
+  main.append(sezione('I capitoli del rapporto mensile', [tastoCorreggi('impostazioni'), elenco]));
+  main.append(sezione('Cosa includere', el('div', { class: 'blocco' }, [interr('Le osservazioni sugli allievi', 'includi_osservazioni', imp.includi_osservazioni !== false), interr('Gli importi (incassi, da incassare)', 'includi_importi', imp.includi_importi !== false), interr('Chi non si \u00e8 mai visto nel mese', 'includi_assenti', imp.includi_assenti === true), interr('Il riassunto scritto da Claude', 'riassunto_ia', imp.riassunto_ia !== false)])));
+  main.append(sezione('Generazione', el('div', { class: 'blocco' }, [el('div', { class: 'griglia-campi' }, [campo('Giorno del mese in cui esce', giorno, 'il rapporto del mese prima'), campo('Firma in fondo', firma)]), lettura ? null : salva])));
+  main.append(el('p', { class: 'piccolo attenuato', testo: 'Il modello grafico (carta, carattere, colori) \u00e8 il brand e resta fisso. Il rapportino della giornata esce su richiesta da Oggi o dalla sessione.' }));
 }
 
 /* ---------- Associazione ---------- */
