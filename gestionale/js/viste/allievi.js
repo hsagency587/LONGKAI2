@@ -8,6 +8,8 @@ import { FILTRI, nomeCompleto, filtraAllievi, secondaRiga, pallinoAllievo, eta, 
 import { oggiRoma, formattaData, relativa } from '../../comune/date.js';
 import { giorniMancanti } from '../../comune/scadenze.js';
 import { moduloAllievo, foglioAbbonamento, foglioCaricaDocumento, campo } from './allievo-modulo.js';
+import { disegnaProgressi, disegnaPresenze } from './progressi.js';
+import { foglioNuovaPrivata } from './oggi.js';
 
 const ETICHETTE_TIPO = { certificato: 'Certificato medico', tesseramento: 'Tesseramento', quota: 'Quota', altro: 'Altro' };
 const SCHEDE = [['panoramica', 'Panoramica'], ['progressi', 'Progressi'], ['presenze', 'Presenze'], ['quote', 'Quote'], ['documenti', 'Documenti'], ['dati', 'Dati']];
@@ -93,8 +95,8 @@ async function disegnaScheda(box, id, scheda) {
   if (scheda === 'dati') { await moduloAllievo(box, contesto); return; }
   if (scheda === 'quote') { disegnaQuote(box, contesto); return; }
   if (scheda === 'documenti') { await disegnaDocumenti(box, contesto); return; }
-  if (scheda === 'progressi') { box.append(statoVuoto('I progressi (forme e tutto il resto) arrivano in fase 2.')); return; }
-  if (scheda === 'presenze') { box.append(statoVuoto('Le presenze arrivano in fase 2.')); return; }
+  if (scheda === 'progressi') { await disegnaProgressi(box, contesto); return; }
+  if (scheda === 'presenze') { await disegnaPresenze(box, contesto); return; }
   disegnaPanoramica(box, contesto);
 }
 
@@ -150,6 +152,7 @@ function disegnaPanoramica(box, { id, d, a, lettura, ridisegna, oggi }) {
   const tasti = el('div', { class: 'tasti', 'data-scrittura': '' });
   if (a.stato === 'attivo') tasti.append(el('button', { class: 'tasto bordo', testo: 'Sospendi', onclick: async () => { try { await cambiaStatoAllievo(id, 'sospeso'); toast('Sospeso.'); ridisegna(); } catch (e) { avvisa(e.message); } } }));
   if (a.stato === 'sospeso') tasti.append(el('button', { class: 'tasto bordo', testo: 'Riattiva', onclick: async () => { try { await cambiaStatoAllievo(id, 'attivo'); toast('Di nuovo attivo.'); ridisegna(); } catch (e) { avvisa(e.message); } } }));
+  if (a.stato !== 'uscito') tasti.append(el('button', { class: 'tasto bordo', testo: 'Segna una privata', onclick: async () => { const imp = await impostazioni().catch(() => ({})); foglioNuovaPrivata(oggi, imp.private || {}, ridisegna, id); } }));
   if (a.stato !== 'uscito') tasti.append(el('button', { class: 'tasto bordo', testo: 'Metti fuori', onclick: async () => {
     const ok = await chiedi('Metterlo fuori?', 'Esce dai corsi e dagli abbonamenti da oggi. Le sue private future si annullano. I periodi non ancora iniziati non si pagano. Resta tutto nello storico.', [{ testo: 'Metti fuori', valore: true, classe: 'terracotta' }, { testo: 'Resta', valore: false }]);
     if (!ok) return;

@@ -1,9 +1,15 @@
-/* Longkai — viste/oggi.js: la prima schermata. In fase 0 legge il corso del giorno, le private, i conti di Da fare e Scadenze. */
+/* Longkai — viste/oggi.js: la prima schermata. Il corso di oggi con il previsto, le private, Da fare, Scadenze, la giornata. */
 import { el, icona, euro } from '../base.js';
-import { corsoDelGiorno, privateDelGiorno, contiDaFare, contiScadenze, profilo } from '../dati.js';
-import { testata, sezione, riga, scheletri, statoVuoto, statoErrore, toast } from '../ui.js';
-import { oggiRoma, formattaData, formattaOra } from '../../comune/date.js';
+import { sessioniDelGiorno, contiDaFare, contiScadenze, profilo, corsiCompleti, programmiMesi, argomentiAttivi, allieviAttivi, creaStraordinaria, creaPrivate, saltaSessione, riapriSessione, apriGiornata, chiudiGiornata, giornata, sessioniAperteIeri, pianiAttivi, impostazioni, leggiLocale, salvaLocale, obiettiviAperti } from '../dati.js';
+import { testata, sezione, riga, scheletri, statoVuoto, statoErrore, toast, avvisa, apriFoglio, striscia, togliStriscia, vai } from '../ui.js';
+import { oggiRoma, formattaData, formattaOra, primoDelMese, aggiungiGiorni } from '../../comune/date.js';
 import { formattaMinuti } from '../../comune/ore.js';
+import { previstoDalMese, statoGiornata } from '../../comune/sessione.js';
+import { normalizza } from '../../comune/fonetica.js';
+import { campo } from './allievo-modulo.js';
+import { foglioAnnulla } from './sessione.js';
+
+const nomeDi = (a) => `${a?.nome || ''} ${a?.cognome || ''}`.trim();
 
 export async function vistaOggi(main) {
   const oggi = oggiRoma();
@@ -11,54 +17,164 @@ export async function vistaOggi(main) {
   document.getElementById('barra-alto').classList.remove('nascosto');
   main.replaceChildren(scheletri(4));
   const p = await profilo().catch(() => null);
-  let corso, priv, daFare, scad;
+  const sifu = p?.ruolo === 'sifu';
+  if (sifu) { try { await apriGiornata(oggi); } catch { /* l'orologio ci pensa alle 8 */ } }
+  let sessioni, daFare, scad, piani, ieri, g, imp, obiettivi;
   try {
-    [corso, priv, daFare, scad] = await Promise.all([corsoDelGiorno(oggi), privateDelGiorno(oggi), contiDaFare(), contiScadenze()]);
+    [sessioni, daFare, scad, piani, ieri, g, imp, obiettivi] = await Promise.all([sessioniDelGiorno(oggi), contiDaFare(), contiScadenze(), pianiAttivi().catch(() => []), sifu ? sessioniAperteIeri(oggi) : Promise.resolve([]), giornata(oggi).catch(() => null), impostazioni().catch(() => ({})), obiettiviAperti().catch(() => [])]);
   } catch (e) {
-    // un errore non è "niente da mostrare": si dice e si offre Riprova
     main.replaceChildren(statoErrore(navigator.onLine ? e : new Error('Sei senza rete.'), () => vistaOggi(main)));
     return;
   }
   main.replaceChildren();
+  const ridisegna = () => vistaOggi(main);
+
+  // ieri non chiuso
+  const vecchie = ieri.filter((s) => s.tipo !== 'privata');
+  if (sifu && vecchie.length) striscia('ieri', `${vecchie.length === 1 ? 'Una lezione' : vecchie.length + ' lezioni'} da chiudere: ${formattaData(vecchie[0].data, 'breve')} ${vecchie[0].corso_nome || ''}`, { tipo: 'gialla', tasto: el('button', { class: 'tasto', testo: 'Apri', onclick: () => vai(`sessione/${vecchie[0].id}`) }) });
+  else togliStriscia('ieri');
 
   // CORSO DI OGGI
+  const corso = sessioni.find((s) => s.tipo === 'corso' || s.tipo === 'straordinaria');
   const blocco = el('div', { class: 'blocco' });
   if (corso) {
+    let previsto = corso.previsto_argomenti;
+    if (!previsto && corso.corso_id) {
+      try {
+        const [mesi, arg] = await Promise.all([programmiMesi([primoDelMese(oggi)]), argomentiAttivi()]);
+        const m = mesi.find((x) => x.corso_id === corso.corso_id);
+        const ids = previstoDalMese({ argomenti: m?.programma_argomenti || [] });
+        if (ids.length) previsto = ids.map((id) => arg.find((a) => a.id === id)?.nome).filter(Boolean).join(', ') + ' (dal mese)';
+      } catch { /* niente */ }
+    }
+    const pianiDelCorso = piani.length ? `${piani.length} con piano personale` : null;
+    const obiettiviN = obiettivi.length ? `${obiettivi.length} obiettivi aperti` : null;
+    const statoRiga = corso.stato === 'fatta' ? 'fatta ✓' : corso.stato === 'saltata' ? 'saltata' + (corso.motivo ? ': ' + corso.motivo : '') : 'da fare';
     blocco.append(
-      el('div', { class: 'principale', testo: `${corso.nome} · ${corso.citta} · ${formattaOra(corso.ora)} · ${formattaMinuti(corso.durata_minuti)}` }),
-      el('div', { class: 'secondaria attenuato', testo: `${corso.attesi} attesi` + (corso.stato_sessione === 'fatta' ? ' · fatto' : '') }),
-      el('button', { class: 'tasto pieno grande', 'data-scrittura': '', style: null, onclick: () => toast('La dettatura arriva in fase 4.') }, [icona('microfono'), 'Detta il rapportino']),
-      el('div', { class: 'tasti riga-sotto', 'data-scrittura': '' }, [
-        el('button', { class: 'tasto bordo', testo: 'A mano', onclick: () => toast('Le presenze a mano arrivano in fase 2.') }),
-        el('button', { class: 'tasto bordo', testo: 'Salta', onclick: () => toast('In fase 2.') }),
-      ]),
+      el('div', { class: 'principale', testo: `${corso.corso_nome || 'Lezione'} · ${corso.citta || ''} · ${formattaOra(corso.ora)} · ${formattaMinuti(corso.durata_minuti)}` + (corso.tipo === 'straordinaria' ? ' · straordinaria' : '') }),
+      el('div', { class: 'secondaria attenuato', testo: [statoRiga, corso.presenti ? `${corso.presenti} presenti` : null, pianiDelCorso, obiettiviN].filter(Boolean).join(' · ') }),
+      previsto ? el('div', { class: 'secondaria', testo: 'Previsto: ' + previsto }) : el('div', { class: 'secondaria attenuato', testo: 'Niente di previsto: libero.' }),
     );
+    if (sifu && corso.stato === 'prevista') {
+      blocco.append(
+        el('button', { class: 'tasto pieno grande', 'data-scrittura': '', onclick: () => toast('La dettatura arriva in fase 4: intanto “A mano”.') }, [icona('microfono'), 'Detta il rapportino']),
+        el('div', { class: 'tasti riga-sotto', 'data-scrittura': '' }, [
+          el('a', { class: 'tasto bordo', href: `#/sessione/${corso.id}`, testo: 'A mano' }),
+          el('button', { class: 'tasto bordo', testo: 'Salta', onclick: () => foglioSalta(corso.id, ridisegna) }),
+        ]),
+      );
+    } else if (sifu && corso.stato === 'fatta') {
+      blocco.append(el('div', { class: 'tasti riga-sotto', 'data-scrittura': '' }, [el('a', { class: 'tasto bordo', href: `#/sessione/${corso.id}`, testo: 'Modifica' }), el('button', { class: 'tasto', testo: 'PDF', onclick: () => toast('Il rapportino PDF arriva in fase 6.') })]));
+    } else if (sifu && corso.stato === 'saltata') {
+      blocco.append(el('div', { class: 'tasti riga-sotto', 'data-scrittura': '' }, [el('button', { class: 'tasto bordo', testo: 'Riapri', onclick: async () => { try { await riapriSessione(corso.id); ridisegna(); } catch (e) { avvisa(e.message); } } })]));
+    } else if (!sifu) {
+      blocco.append(el('a', { class: 'tasto bordo', href: `#/sessione/${corso.id}`, testo: 'Vedi' }));
+    }
   } else {
-    blocco.append(el('div', { class: 'principale', testo: 'Oggi nessun corso' }), el('div', { class: 'tasti riga-sotto', 'data-scrittura': '' }, [el('button', { class: 'tasto bordo', testo: 'Straordinaria', onclick: () => toast('In fase 2.') })]));
+    blocco.append(el('div', { class: 'principale', testo: 'Oggi nessun corso' }));
+    if (sifu) blocco.append(el('div', { class: 'tasti riga-sotto', 'data-scrittura': '' }, [el('button', { class: 'tasto bordo', testo: 'Straordinaria', onclick: () => foglioStraordinaria(oggi, ridisegna) })]));
   }
   main.append(sezione('Corso di oggi', blocco));
 
   // PRIVATE
+  const priv = sessioni.filter((s) => s.tipo === 'privata');
   const elenco = el('div', { class: 'elenco' });
   if (!priv.length) elenco.append(statoVuoto('Nessuna privata oggi.'));
   for (const s of priv) {
-    const nome = s.allievi ? `${s.allievi.nome} ${s.allievi.cognome}`.trim() : 'da abbinare';
-    elenco.append(riga({ principale: `${formattaOra(s.ora)} · ${nome}`, secondaria: formattaMinuti(s.durata_minuti), destra: s.stato_revisione === 'confermata' ? 'fatto' : 'da fare', pallino: s.stato_revisione === 'confermata' ? 'ok' : 'neutro', onclick: () => toast('In fase 2.') }));
+    const piano = piani.find((x) => x.allievo_id === s.allievo_id);
+    const pianoTesto = piano?.prossimo_passo_nota ? ' · piano: ' + piano.prossimo_passo_nota : '';
+    elenco.append(riga({ principale: `${formattaOra(s.ora)} · ${nomeDi({ nome: s.allievo_nome, cognome: s.allievo_cognome })}`, secondaria: formattaMinuti(s.durata_minuti) + (s.stato === 'fatta' ? ' · fatta' : s.stato === 'saltata' ? ' · saltata' : '') + pianoTesto, pallino: s.stato === 'fatta' ? 'ok' : s.stato === 'saltata' ? 'neutro' : 'attenzione', onclick: () => (sifu ? foglioPrivata(s, ridisegna) : vai(`sessione/${s.id}`)) }));
   }
-  main.append(sezione('Private', elenco, el('button', { class: 'tasto azione', 'data-scrittura': '', testo: '+ Privata', onclick: () => toast('In fase 2.') })));
+  main.append(sezione('Private', elenco, sifu ? el('button', { class: 'tasto azione', 'data-scrittura': '', testo: '+ Privata', onclick: () => foglioNuovaPrivata(oggi, imp.private || {}, ridisegna) }) : null));
 
   // DA FARE
-  if (daFare) {
-    const righe = [];
-    if (daFare.quote) righe.push(riga({ principale: `${daFare.quote} quote da incassare`, destra: euro(daFare.quoteCent), pallino: 'attenzione', href: '#/allievi?f=da_pagare' }));
-    if (daFare.daRichiamare) righe.push(riga({ principale: `${daFare.daRichiamare} da richiamare`, secondaria: 'mancano da 3 lezioni', pallino: 'info', href: '#/allievi?f=da_richiamare' }));
-    if (daFare.daCompletare) righe.push(riga({ principale: `${daFare.daCompletare} schede da completare`, pallino: 'info', href: '#/allievi?f=da_completare' }));
-    main.append(sezione('Da fare', righe.length ? el('div', { class: 'elenco' }, righe) : statoVuoto('Niente da fare. Bene.'), p?.ruolo === 'sifu' ? el('button', { class: 'tasto azione', 'data-scrittura': '', testo: '+ Pagamento', onclick: () => toast('In fase 3.') }) : null));
-  }
+  const righe = [];
+  if (daFare.quote) righe.push(riga({ principale: `${daFare.quote} quote da incassare`, destra: euro(daFare.quoteCent), pallino: 'attenzione', href: '#/allievi?f=da_pagare' }));
+  if (daFare.daRichiamare) righe.push(riga({ principale: `${daFare.daRichiamare} da richiamare`, secondaria: `mancano da ${imp.scadenze?.da_richiamare_lezioni || 3} lezioni`, pallino: 'info', href: '#/allievi?f=da_richiamare' }));
+  if (daFare.daCompletare) righe.push(riga({ principale: `${daFare.daCompletare} schede da completare`, pallino: 'info', href: '#/allievi?f=da_completare' }));
+  const sg = statoGiornata(sessioni);
+  const chiusa = g?.stato === 'chiusa';
+  const tastoGiornata = sifu && sessioni.length ? el('button', { class: 'tasto azione', 'data-scrittura': '', testo: chiusa ? 'Giornata chiusa ✓' : 'Chiudi giornata', disabled: chiusa || !sg.chiudibile, onclick: async () => { try { await chiudiGiornata(oggi); toast('Giornata chiusa. Buona serata.'); ridisegna(); } catch (e) { avvisa(e.message); } } }) : null;
+  if (sifu && !sg.chiudibile && sg.daFare) righe.push(riga({ principale: `${sg.daFare === 1 ? 'Una sessione' : sg.daFare + ' sessioni'} ancora da confermare`, pallino: 'attenzione' }));
+  main.append(sezione('Da fare', righe.length ? el('div', { class: 'elenco' }, righe) : statoVuoto(chiusa ? 'Tutto chiuso. Bene.' : 'Niente da fare. Bene.'), tastoGiornata));
 
   // SCADENZE
   if (scad) {
     const testo = `${scad.scadute} scadute · ${scad.entro7} entro 7 giorni · ${scad.entro30} entro 30`;
     main.append(sezione('Scadenze', el('div', { class: 'elenco' }, riga({ principale: testo, pallino: scad.scadute ? 'errore' : scad.entro7 ? 'attenzione' : 'ok', href: '#/scadenze' }))));
   }
+}
+
+/* ---------- fogli ---------- */
+function foglioSalta(id, ridisegna) {
+  const motivo = el('input', { type: 'text', placeholder: 'es. festa, palestra chiusa' });
+  const ok = el('button', { class: 'tasto pieno grande', testo: 'Salta', onclick: async () => { try { await saltaSessione(id, motivo.value.trim() || null); chiudi(); toast('Saltata: non conta.'); ridisegna(); } catch (e) { avvisa(e.message); } } });
+  const chiudi = apriFoglio('Salta la lezione di oggi', el('div', {}, [el('p', { class: 'attenuato', testo: 'Non conta come fatta né come mancata. Si può riaprire.' }), campo('Motivo', motivo), ok]));
+}
+
+async function foglioStraordinaria(oggi, ridisegna) {
+  let corsi = [];
+  try { corsi = (await corsiCompleti()).filter((c) => c.attivo); } catch (e) { avvisa(e.message); return; }
+  if (!corsi.length) { avvisa('Nessun corso attivo.'); return; }
+  const sel = el('select', {}, corsi.map((c) => el('option', { value: c.id, testo: `${c.nome} · ${c.citta}` })));
+  const ora = el('input', { type: 'time', value: '19:00', step: '300' });
+  const durata = el('input', { type: 'number', min: '30', max: '240', step: '30', value: corsi[0].durata_minuti });
+  sel.addEventListener('change', () => { durata.value = corsi.find((c) => c.id === sel.value)?.durata_minuti || 60; });
+  const nota = el('input', { type: 'text', placeholder: 'es. recupero della festa' });
+  const ok = el('button', { class: 'tasto pieno grande', testo: 'Crea', onclick: async () => { try { const id = await creaStraordinaria(sel.value, oggi, ora.value || '19:00', Number(durata.value) || 60, nota.value.trim() || null); chiudi(); toast('Lezione straordinaria creata.'); vai(`sessione/${id}`); } catch (e) { avvisa(e.message); } } });
+  const chiudi = apriFoglio('Lezione straordinaria di oggi', el('div', {}, [campo('Corso', sel), el('div', { class: 'griglia-campi' }, [campo('Ora', ora), campo('Minuti', durata)]), campo('Nota', nota), ok]));
+  void ridisegna;
+}
+
+export async function foglioNuovaPrivata(dataIniziale, impPrivate, ridisegna, allievoFisso = null) {
+  let tutti = [];
+  try { tutti = await allieviAttivi(); } catch (e) { avvisa(e.message); return; }
+  const loc = leggiLocale();
+  const recenti = (loc.privateRecenti || []).map((id) => tutti.find((a) => a.id === id)).filter(Boolean);
+  let scelto = allievoFisso ? tutti.find((a) => a.id === allievoFisso) || null : null;
+  const cerca = el('input', { type: 'search', placeholder: 'Con chi?', autocomplete: 'off', value: scelto ? nomeDi(scelto) : '' });
+  const elenco = el('div', { class: 'elenco' });
+  const mostra = () => {
+    elenco.replaceChildren();
+    const q = normalizza(cerca.value);
+    const righe = (q ? tutti.filter((a) => normalizza(nomeDi(a)).includes(q) || normalizza(`${a.cognome} ${a.nome}`).includes(q) || (a.soprannomi || []).some((x) => normalizza(x).includes(q))) : recenti).slice(0, 6);
+    for (const a of righe) elenco.append(riga({ principale: nomeDi(a), secondaria: !q && recenti.includes(a) ? 'recente' : null, pallino: scelto?.id === a.id ? 'ok' : 'neutro', onclick: () => { scelto = a; cerca.value = nomeDi(a); elenco.replaceChildren(); } }));
+  };
+  cerca.addEventListener('input', () => { scelto = null; mostra(); });
+  const data = el('input', { type: 'date', value: dataIniziale });
+  const ora = el('input', { type: 'time', value: '17:00', step: '300' });
+  const durata = el('input', { type: 'number', min: '30', max: '360', step: '30', value: impPrivate.durata_minuti || 60 });
+  const ripeti = el('input', { type: 'checkbox' }); ripeti.checked = Boolean(impPrivate.ripeti_settimanale);
+  const settimane = el('input', { type: 'number', min: '2', max: '52', value: impPrivate.settimane_avanti || 8 });
+  const campoSett = campo('Per quante settimane', settimane); campoSett.classList.toggle('nascosto', !ripeti.checked);
+  ripeti.addEventListener('change', () => campoSett.classList.toggle('nascosto', !ripeti.checked));
+  const nota = el('input', { type: 'text', placeholder: 'es. lavoriamo sul Chum Kiu' });
+  const ok = el('button', { class: 'tasto pieno grande', testo: 'Segna', onclick: async () => {
+    if (!scelto) { avvisa('Scegli l\'allievo.'); return; }
+    ok.disabled = true;
+    try {
+      const n = ripeti.checked ? Math.max(2, Number(settimane.value) || 8) : 1;
+      await creaPrivate({ allievoId: scelto.id, data: data.value || dataIniziale, ora: ora.value || '17:00', minuti: Number(durata.value) || 60, settimane: n, nota: nota.value.trim() || null });
+      const l = leggiLocale(); l.privateRecenti = [scelto.id, ...(l.privateRecenti || []).filter((x) => x !== scelto.id)].slice(0, 5); salvaLocale(l);
+      chiudi(); toast(n > 1 ? `Segnate ${n} private, una a settimana.` : 'Privata segnata.'); ridisegna();
+    } catch (e) { avvisa(e.message); ok.disabled = false; }
+  } });
+  const chiudi = apriFoglio('Nuova privata', el('div', {}, [el('div', { class: 'campo' }, [cerca]), elenco, el('div', { class: 'griglia-campi' }, [campo('Giorno', data), campo('Ora', ora), campo('Minuti', durata)]), el('label', { class: 'interruttore' }, [el('span', { testo: 'Ripeti ogni settimana' }), ripeti]), campoSett, campo('Nota', nota), ok]));
+  mostra();
+}
+
+function foglioPrivata(s, ridisegna) {
+  const figli = [el('p', { class: 'attenuato', testo: `${formattaData(s.data)} · ${formattaOra(s.ora)} · ${formattaMinuti(s.durata_minuti)}` + (s.nota ? ' · ' + s.nota : '') })];
+  if (s.stato === 'prevista') {
+    figli.push(el('a', { class: 'tasto pieno', href: `#/sessione/${s.id}`, testo: 'A mano', onclick: () => chiudi() }));
+    figli.push(el('button', { class: 'tasto bordo', testo: 'Detta', onclick: () => toast('La dettatura arriva in fase 4.') }));
+    figli.push(el('button', { class: 'tasto bordo', testo: 'Salta', onclick: async () => { try { await saltaSessione(s.id, null); chiudi(); toast('Saltata.'); ridisegna(); } catch (e) { avvisa(e.message); } } }));
+    figli.push(el('button', { class: 'tasto bordo', testo: 'Sposta a domani', onclick: async () => { try { const { spostaSessione } = await import('../dati.js'); await spostaSessione(s.id, { data: aggiungiGiorni(s.data, 1), ora: s.ora, durata_minuti: s.durata_minuti }); chiudi(); toast('Spostata a domani.'); ridisegna(); } catch (e) { avvisa(e.message); } } }));
+    figli.push(el('button', { class: 'tasto pericolo', testo: 'Annulla', onclick: () => { chiudi(); foglioAnnulla(s, ridisegna); } }));
+  } else if (s.stato === 'fatta') {
+    figli.push(el('a', { class: 'tasto pieno', href: `#/sessione/${s.id}`, testo: 'Vedi o modifica', onclick: () => chiudi() }));
+  } else if (s.stato === 'saltata') {
+    figli.push(el('button', { class: 'tasto bordo', testo: 'Riapri', onclick: async () => { try { await riapriSessione(s.id); chiudi(); ridisegna(); } catch (e) { avvisa(e.message); } } }));
+  }
+  const chiudi = apriFoglio(nomeDi({ nome: s.allievo_nome, cognome: s.allievo_cognome }), el('div', { class: 'tasti-colonna' }, figli));
 }

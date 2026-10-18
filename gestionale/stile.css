@@ -238,6 +238,26 @@ img { max-width: 100%; display: block; }
 .riga-orario input[type="time"] { min-height: 40px; padding: 0 var(--s-2); border-radius: var(--raggio); border: 1px solid var(--c-bordo); background: var(--c-superficie); color: var(--c-testo); }
 .riga-orario input[type="time"]:disabled { opacity: 0.4; }
 
+/* ---------- sessione: presenze con spunta e minuti, mesi del programma ---------- */
+.riga.presenza { cursor: default; }
+.riga.presenza:hover { background: none; }
+.spunta-presenza { width: 40px; height: 40px; border-radius: 50%; border: 2px solid var(--c-bordo); background: none; color: var(--c-oro-testo); font-size: 20px; font-weight: 700; cursor: pointer; flex: none; }
+.spunta-presenza.si { background: var(--c-oro); border-color: var(--c-oro); }
+.riga.presenza:not(.c-e) .principale { color: var(--c-testo-3); }
+.riga.presenza .destra { flex-wrap: wrap; justify-content: flex-end; gap: var(--s-1); }
+.stepper-tasto { min-width: 36px; min-height: 36px; padding: 0; border: 1px solid var(--c-bordo); border-radius: 50%; color: var(--c-testo); font-size: 18px; }
+.mese-nav { display: flex; align-items: center; justify-content: space-between; gap: var(--s-2); margin-bottom: var(--s-3); }
+.mese-nav h2 { font-family: var(--f-titoli); font-size: var(--t-18); }
+.card-mese { background: var(--c-superficie); border: 1px solid var(--c-bordo); border-radius: var(--raggio); padding: var(--s-3) var(--s-4); margin-bottom: var(--s-2); }
+.card-mese .tasto { margin-top: var(--s-2); }
+.chip.fatto { border-color: var(--c-ok); color: var(--c-ok); }
+.area-dettagli { background: var(--c-superficie); border: 1px solid var(--c-bordo); border-radius: var(--raggio); margin-bottom: var(--s-2); padding: var(--s-2) var(--s-3); }
+.area-dettagli summary { cursor: pointer; list-style: none; }
+.area-dettagli summary::-webkit-details-marker { display: none; }
+.area-dettagli .area-testa { display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--s-1); }
+.area-dettagli .elenco { margin-top: var(--s-2); }
+details > summary { cursor: pointer; }
+
 /* ---------- tasti ---------- */
 .tasto {
   display: inline-flex; align-items: center; justify-content: center; gap: var(--s-2);

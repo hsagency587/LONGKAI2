@@ -18,6 +18,7 @@ import { vistaScadenze } from './viste/scadenze.js';
 import { vistaCassetta } from './viste/cassetta.js';
 import { vistaCorsi } from './viste/corsi.js';
 import { vistaArgomenti } from './viste/argomenti.js';
+import { vistaSessione } from './viste/sessione.js';
 
 registraVista('accesso', vistaAccesso);
 registraVista('oggi', vistaOggi);
@@ -30,6 +31,7 @@ registraVista('segnala', vistaSegnala);
 registraVista('impostazioni', vistaImpostazioni);
 registraVista('nuova-password', vistaNuovaPassword);
 registraVista('scadenze', vistaScadenze);
+registraVista('sessione', vistaSessione);
 registraVista('cassetta', vistaCassetta);
 registraVista('corsi', vistaCorsi);
 registraVista('argomenti', (main, p) => vistaArgomenti(main, p, { indietro: 'allenamenti/argomenti', titolo: 'Argomenti' }));

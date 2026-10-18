@@ -1,8 +1,10 @@
-/* Longkai — viste/allenamenti.js: Diario · Programma · Argomenti. Gli argomenti si leggono e si correggono; Diario e Programma arrivano nelle fasi 2 e 5. */
+/* Longkai — viste/allenamenti.js: Diario · Programma · Argomenti. */
 import { el } from '../base.js';
 import { soloLettura } from '../dati.js';
-import { testata, statoVuoto, toast } from '../ui.js';
+import { testata } from '../ui.js';
 import { disegnaArgomenti } from './argomenti.js';
+import { disegnaDiario } from './diario.js';
+import { disegnaProgramma } from './programma.js';
 
 export async function vistaAllenamenti(main, parametri) {
   const scheda = parametri[0] || 'diario';
@@ -15,5 +17,6 @@ export async function vistaAllenamenti(main, parametri) {
   }
   main.append(chips, el('div', { class: 'spazio' }));
   if (scheda === 'argomenti') { await disegnaArgomenti(main, ridisegna); return; }
-  main.append(statoVuoto(scheda === 'diario' ? 'Il diario delle sessioni arriva in fase 2.' : 'Il programma arriva in fase 2 (i chip) e in fase 4 (a voce).', el('button', { class: 'tasto bordo', testo: 'Come funzionerà', onclick: () => toast('Una frase a voce riempie il mese; ogni lezione eredita il previsto; la dettatura spunta il fatto.', { durata: 8000 }) })));
+  if (scheda === 'programma') { await disegnaProgramma(main, ridisegna); return; }
+  await disegnaDiario(main, parametri.slice(1));
 }
