@@ -44,7 +44,7 @@ export async function vistaImpostazioni(main, parametri) {
   main.append(sezione('Tutto il resto', altri));
 }
 
-function tastoCorreggi() { return el('button', { class: 'tasto bordo', 'data-scrittura': '', testo: 'Correggi parlando', onclick: () => toast('La correzione a voce arriva in fase 4.') }); }
+function tastoCorreggi(ambito = 'impostazioni') { return el('a', { class: 'tasto bordo', 'data-scrittura': '', href: '#/correggi/' + ambito, testo: 'Correggi parlando' }); }
 
 /* ---------- Allievi: gestione, importazione, regole ---------- */
 async function gruppoAllievi(main, lettura, ridisegna) {

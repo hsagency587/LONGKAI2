@@ -80,7 +80,7 @@ export async function vistaDetta(main, parametri) {
 }
 
 /** Il registratore: un microfono grande, il tempo, le tacchette, Pausa e Fine. */
-function registratore({ suFine }) {
+export function registratore({ suFine }) {
   const mic = el('button', { class: 'mic', 'aria-label': 'Registra' }, icona('microfono'));
   const tempo = el('div', { class: 'tempo', testo: '0:00' });
   const tacchette = el('div', { class: 'tacchette' }, Array.from({ length: 16 }, () => el('span')));

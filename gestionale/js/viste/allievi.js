@@ -162,6 +162,7 @@ function disegnaPanoramica(box, { id, d, a, lettura, ridisegna, oggi }) {
     try { const resto = await mettiFuori(id); toast(resto > 0 ? `Messo fuori. Deve ancora ${euro(resto)}.` : 'Messo fuori.'); ridisegna(); } catch (e) { avvisa(e.message); }
   } }));
   if (a.stato === 'uscito') tasti.append(el('button', { class: 'tasto bordo', testo: 'Riprendi', onclick: async () => { try { await cambiaStatoAllievo(id, 'attivo'); toast('Di nuovo dentro: controlla corsi e abbonamento.'); vai(`allievi/${id}/dati`); } catch (e) { avvisa(e.message); } } }));
+  tasti.append(el('a', { class: 'tasto bordo', href: `#/correggi/allievo/${id}`, testo: 'Correggi parlando' }));
   tasti.append(el('button', { class: 'tasto bordo', testo: 'Esporta i suoi dati', onclick: async () => {
     try {
       const dati = await esportaAllievo(id);

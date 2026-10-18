@@ -15,7 +15,7 @@ export async function vistaAltro(main, parametri) {
     ['Cassetta', 'documento', '#/cassetta'],
     ['Impostazioni', 'impostazioni', '#/impostazioni'],
     ['Cambia password', 'esci', '#/nuova-password'],
-    ['Correggi parlando', 'microfono', '#/altro/correggi'],
+    ['Correggi parlando', 'microfono', '#/correggi'],
     ['Segnala un problema', 'segnala', '#/segnala'],
     ['Aiuto', 'aiuto', '#/altro/aiuto'],
     ['Diagnostica', 'rete', '#/diagnostica'],

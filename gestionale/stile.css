@@ -282,6 +282,9 @@ body.senza-bolla .bolla, body.sola-lettura .bolla { display: none; }
 .passi span.fatto { background: var(--c-ok); }
 .passi span.corrente { background: var(--c-oro); }
 
+.riga.prima-dopo { cursor: pointer; }
+.riga.prima-dopo input[type="checkbox"] { width: 24px; height: 24px; accent-color: var(--c-oro); }
+
 /* ---------- tasti ---------- */
 .tasto {
   display: inline-flex; align-items: center; justify-content: center; gap: var(--s-2);

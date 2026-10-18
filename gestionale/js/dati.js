@@ -631,6 +631,104 @@ export async function aggiungiPronuncia(argomentoId, sentito) {
   cacheArgomenti = { quando: 0, dati: [] };
 }
 
+/* ---------- Correggi parlando: applica le operazioni spuntate ---------- */
+function daSiNo(v) { const t = String(v ?? '').trim().toLowerCase(); return ['si', 'sì', 'true', 'acceso', 'on', '1'].includes(t); }
+function numeri(v) { return String(v ?? '').split(/[,\s]+/).map((x) => Number(x)).filter((x) => Number.isFinite(x) && x > 0); }
+export async function applicaCorrezioni(operazioni, testoDetto = null) {
+  let fatte = 0;
+  for (const o of operazioni) {
+    if (o.ambito === 'argomento') {
+      if (o.tipo === 'nuovo_argomento') { await salvaArgomento(null, { nome: String(o.testo || o.valore || '').trim(), area: String(o.valore && o.testo ? o.valore : 'Tecniche di mano'), sinonimi: [], pronunce: [], attivo: true, sezioni: null }, null, testoDetto); fatte++; continue; }
+      const a = (await argomentiTutti()).find((x) => x.id === o.id) || (await sb().from('argomenti').select('*').eq('id', o.id).maybeSingle()).data;
+      if (!a) continue;
+      const prima = { nome: a.nome, area: a.area, sinonimi: a.sinonimi, pronunce: a.pronunce, attivo: a.attivo, sezioni: a.sezioni };
+      const d = { nome: a.nome, area: a.area, sinonimi: [...(a.sinonimi || [])], pronunce: [...(a.pronunce || [])], attivo: a.attivo, sezioni: Array.isArray(a.sezioni) ? a.sezioni.map((s) => ({ ...s, movimenti: [...(s.movimenti || [])] })) : a.sezioni };
+      const senza = (lista, t) => lista.filter((x) => x.toLowerCase() !== String(t).toLowerCase());
+      const n = Number(o.n) || 0;
+      switch (o.tipo) {
+        case 'rinomina': d.nome = String(o.testo || o.valore || d.nome).trim(); break;
+        case 'area': d.area = String(o.testo || o.valore || d.area).trim(); break;
+        case 'aggiungi_sinonimo': if (!d.sinonimi.some((x) => x.toLowerCase() === String(o.testo).toLowerCase())) d.sinonimi.push(String(o.testo)); break;
+        case 'togli_sinonimo': d.sinonimi = senza(d.sinonimi, o.testo); break;
+        case 'aggiungi_pronuncia': if (!d.pronunce.some((x) => x.toLowerCase() === String(o.testo).toLowerCase())) d.pronunce.push(String(o.testo)); break;
+        case 'togli_pronuncia': d.pronunce = senza(d.pronunce, o.testo); break;
+        case 'attiva': d.attivo = o.attivo !== false; break;
+        case 'rinomina_sezione': d.sezioni = d.sezioni || []; if (d.sezioni[n - 1]) d.sezioni[n - 1].nome = String(o.testo || o.valore || ''); break;
+        case 'aggiungi_sezione': d.sezioni = d.sezioni || []; d.sezioni.splice(n > 0 ? n : d.sezioni.length, 0, { nome: String(o.testo || o.valore || `Sezione ${d.sezioni.length + 1}`), movimenti: o.movimenti || [] }); break;
+        case 'togli_sezione': d.sezioni = (d.sezioni || []).filter((_, i) => i !== n - 1); break;
+        case 'movimenti_sezione': d.sezioni = d.sezioni || []; if (d.sezioni[n - 1]) d.sezioni[n - 1].movimenti = o.movimenti || []; break;
+        default: continue;
+      }
+      if (Array.isArray(d.sezioni)) d.sezioni = d.sezioni.map((s, i) => ({ n: i + 1, nome: s.nome || `Sezione ${i + 1}`, movimenti: s.movimenti || [] }));
+      await salvaArgomento(a.id, d, prima, testoDetto); fatte++;
+    } else if (o.ambito === 'allievo') {
+      const allievoId = o.allievo_id || o.contesto_id || null;
+      const cerca = async (id) => (await sb().from('allievi').select('id, aggiornato_il, soprannomi').eq('id', id).maybeSingle()).data;
+      if (o.tipo === 'campo') { const a = await cerca(o.id); if (!a) continue; const ammessi = ['nome', 'cognome', 'nascita', 'citta', 'telefono', 'email', 'famiglia', 'note', 'tutore_nome', 'tutore_telefono', 'tutore_email']; if (!ammessi.includes(o.campo)) continue; await salvaAllievo(a.id, { [o.campo]: String(o.valore ?? '').trim() || null }, a.aggiornato_il); fatte++; }
+      else if (o.tipo === 'aggiungi_soprannome') { await aggiungiSoprannome(o.id, o.testo); fatte++; }
+      else if (o.tipo === 'togli_soprannome') { const a = await cerca(o.id); if (!a) continue; await salvaAllievo(a.id, { soprannomi: (a.soprannomi || []).filter((x) => x.toLowerCase() !== String(o.testo).toLowerCase()) }, a.aggiornato_il); fatte++; }
+      else if (o.tipo === 'stato') { await cambiaStatoAllievo(o.id, o.valore === 'sospeso' ? 'sospeso' : 'attivo'); fatte++; }
+      else if (o.tipo === 'iscrivi' || o.tipo === 'togli_corso' || o.tipo === 'abbonamento') {
+        // qui o.id è il corso o la tariffa; l'allievo è quello della pagina
+        const chi = allievoId || o.allievo;
+        if (!chi) continue;
+        if (o.tipo === 'iscrivi') { await iscrivi(chi, o.id, o.dal || oggi()); fatte++; }
+        else if (o.tipo === 'togli_corso') { const i = await sb().from('iscrizioni').select('id').eq('allievo_id', chi).eq('corso_id', o.id).is('al', null); controlla(i); for (const x of i.data || []) await chiudiIscrizione(x.id, o.al || oggi()); fatte++; }
+        else { const ab = await sb().from('abbonamenti').select('id, dal, tariffa_id').eq('allievo_id', chi).is('al', null); controlla(ab); for (const x of ab.data || []) if (x.tariffa_id !== o.id) await chiudiAbbonamento(x.id, oggi()); if (!(ab.data || []).some((x) => x.tariffa_id === o.id)) await salvaAbbonamento(chi, { tariffa_id: o.id, dal: o.dal || oggi(), rinnovo_automatico: true }, null); fatte++; }
+      }
+    } else if (o.ambito === 'tariffe') {
+      if (o.tipo === 'nuova_tariffa') { await salvaTariffa(null, { nome: String(o.testo || 'Nuova tariffa'), importo_cent: Number(o.importo_cent) || 0, tipo: ['mensile', 'trimestrale', 'annuale', 'pacchetto', 'lezione', 'ora_privata', 'tessera', 'altro'].includes(o.valore) ? o.valore : 'altro', attiva: true, comprende_private: false, comprende_extra: false, ordine: 9 }); fatte++; }
+      else if (o.tipo === 'importo') { await salvaTariffa(o.id, { importo_cent: Number(o.importo_cent) || 0 }); fatte++; }
+      else if (o.tipo === 'rinomina_tariffa') { await salvaTariffa(o.id, { nome: String(o.testo || '') }); fatte++; }
+      else if (o.tipo === 'attiva_tariffa') { await salvaTariffa(o.id, { attiva: o.attivo !== false }); fatte++; }
+    } else if (o.ambito === 'corsi') {
+      const c = (await corsiCompleti()).find((x) => x.id === o.id);
+      if (!c) continue;
+      const dati = { nome: c.nome, citta: c.citta, durata_minuti: c.durata_minuti, attivo: c.attivo, sospeso_dal: c.sospeso_dal, sospeso_al: c.sospeso_al, ordine: c.ordine };
+      let orari = (c.corsi_orari || []).map((x) => ({ giorno: x.giorno, ora: String(x.ora).slice(0, 5) }));
+      if (o.tipo === 'orario') { orari = orari.filter((x) => x.giorno !== o.giorno); orari.push({ giorno: Number(o.giorno), ora: String(o.ora || '19:00').slice(0, 5) }); }
+      else if (o.tipo === 'togli_giorno') orari = orari.filter((x) => x.giorno !== Number(o.giorno));
+      else if (o.tipo === 'durata') dati.durata_minuti = Number(o.minuti) || dati.durata_minuti;
+      else if (o.tipo === 'sospendi') { dati.sospeso_dal = o.dal || oggi(); dati.sospeso_al = o.al || null; }
+      else if (o.tipo === 'riattiva') { dati.sospeso_dal = null; dati.sospeso_al = null; dati.attivo = true; }
+      else if (o.tipo === 'rinomina_corso') dati.nome = String(o.testo || dati.nome);
+      else continue;
+      await salvaCorso(c.id, dati, orari); fatte++;
+    } else if (o.ambito === 'impostazioni' && o.tipo === 'campo_impostazione') {
+      const pezzi = String(o.campo || '').split('.');
+      const v = o.valore;
+      if (pezzi[0] === 'promemoria_allievi' && pezzi[1] === 'testi' && pezzi[2]) { const imp = await impostazioni(); const testi = { ...(imp.promemoria_allievi?.testi || {}), [pezzi[2]]: String(v || '') }; await salvaImpostazione('promemoria_allievi', 'testi', testi, testoDetto); fatte++; continue; }
+      if (pezzi.length !== 2) continue;
+      const [gruppo, campo] = pezzi;
+      const liste = ['soglie', 'canali', 'sedi']; const booleani = ['tutore_sotto_18', 'accesa', 'ricorda_pronunce', 'riempi_previsto', 'promemoria_serale_acceso', 'ripeti_settimanale']; const interi = ['certificato_mesi', 'tesseramento_mesi', 'da_richiamare_lezioni', 'durata_minuti', 'settimane_avanti', 'non_toccati_giorni', 'orizzonte_giorni', 'tetto_mensile_cent', 'giorno', 'avviso_pacchetto_a', 'tolleranza_giorni', 'forma_attiva_giorni'];
+      const valore = liste.includes(campo) ? (campo === 'soglie' ? numeri(v).sort((a, b) => b - a) : String(v).split(',').map((x) => x.trim()).filter(Boolean)) : booleani.includes(campo) ? daSiNo(v) : interi.includes(campo) ? Math.round(Number(String(v).replace(',', '.'))) : String(v ?? '');
+      if (interi.includes(campo) && !Number.isFinite(valore)) continue;
+      await salvaImpostazione(gruppo, campo, valore, testoDetto); fatte++;
+    } else if (o.ambito === 'programma') {
+      if (o.tipo === 'mese') { await salvaProgramma({ corsoId: o.id, mese: o.mese || oggi().slice(0, 7) + '-01', nota: o.valore || null, argomenti: o.argomenti || [] }); fatte++; }
+      else if (o.tipo === 'sessione') { await salvaProgramma({ sessioneId: o.id, nota: o.valore || null, argomenti: o.argomenti || [] }); fatte++; }
+      else if (o.tipo === 'piano') { const e = await sb().from('piani_personali').select('sta_lavorando_su').eq('allievo_id', o.id).eq('stato', 'attivo').maybeSingle(); await salvaPiano(o.id, { sta_lavorando_su: e.data?.sta_lavorando_su || [], prossimo_passo_argomenti: o.argomenti || [], prossimo_passo_nota: o.valore || null }); fatte++; }
+    }
+  }
+  cacheArgomenti = { quando: 0, dati: [] };
+  return fatte;
+}
+/** La cronologia delle correzioni (argomenti e impostazioni), le ultime. */
+export async function versioniRecenti() {
+  const [a, i] = await Promise.all([
+    sb().from('argomenti_versioni').select('id, argomento_id, prima, dopo, testo_detto, creato_il, argomenti(nome)').order('creato_il', { ascending: false }).limit(20),
+    sb().from('impostazioni_versioni').select('id, campo, prima, dopo, testo_detto, creato_il').order('creato_il', { ascending: false }).limit(20),
+  ]);
+  controlla(a, i);
+  return [...(a.data || []).map((x) => ({ ...x, genere: 'argomento' })), ...(i.data || []).map((x) => ({ ...x, genere: 'impostazione' }))].sort((x, y) => String(y.creato_il).localeCompare(String(x.creato_il)));
+}
+export async function ripristinaArgomento(v) {
+  if (!v?.argomento_id || !v.prima) throw new Error('niente da ripristinare');
+  const attuale = (await sb().from('argomenti').select('nome, area, sinonimi, pronunce, attivo, sezioni').eq('id', v.argomento_id).maybeSingle()).data;
+  await salvaArgomento(v.argomento_id, { nome: v.prima.nome, area: v.prima.area, sinonimi: v.prima.sinonimi || [], pronunce: v.prima.pronunce || [], attivo: v.prima.attivo !== false, sezioni: v.prima.sezioni ?? null }, attuale, 'ripristino');
+  cacheArgomenti = { quando: 0, dati: [] };
+}
+
 /* ---------- impostazioni: un campo alla volta, con la cronologia ---------- */
 export async function salvaImpostazione(gruppo, campo, valore, testoDetto = null) {
   const r = await sb().from('impostazioni').select('valori').eq('id', 1).maybeSingle();

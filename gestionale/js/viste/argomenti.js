@@ -99,7 +99,7 @@ function foglioArgomento(a, aree, ridisegna, lettura = false) {
     } catch (e) { errore.textContent = /23505|duplicate/i.test(e.message || '') ? 'C\'è già un argomento con questo nome in quest\'area.' : (e.message || 'Non sono riuscito a salvare.'); } finally { salva.disabled = false; }
   } });
   const figli = [
-    lettura ? null : el('button', { class: 'tasto bordo', testo: 'Correggi parlando', onclick: () => toast('La correzione a voce arriva in fase 4.') }),
+    lettura || !a ? null : el('a', { class: 'tasto bordo', href: `#/correggi/argomento/${a.id}`, testo: 'Correggi parlando', onclick: () => chiudi() }),
     el('div', { class: 'griglia-campi' }, [campo('Nome', nome), campo('Area', areaSel)]), areaNuova,
     campo('Sinonimi', sinonimi), campo('Pronunce del Sifu', pronunce, 'Così la dettatura capisce: “bon sao” → Bong Sao.'),
     el('label', { class: 'interruttore' }, [el('span', { testo: 'In uso' }), attivo]),

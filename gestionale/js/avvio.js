@@ -21,6 +21,7 @@ import { vistaCorsi } from './viste/corsi.js';
 import { vistaArgomenti } from './viste/argomenti.js';
 import { vistaSessione } from './viste/sessione.js';
 import { vistaDetta } from './viste/detta.js';
+import { vistaCorreggi } from './viste/correggi.js';
 import './dettatura.js';
 import { sessioniDelGiorno } from './dati.js';
 import { oggiRoma, formattaOra } from '../comune/date.js';
@@ -38,6 +39,7 @@ registraVista('nuova-password', vistaNuovaPassword);
 registraVista('scadenze', vistaScadenze);
 registraVista('sessione', vistaSessione);
 registraVista('detta', vistaDetta);
+registraVista('correggi', vistaCorreggi);
 registraVista('cassetta', vistaCassetta);
 registraVista('corsi', vistaCorsi);
 registraVista('argomenti', (main, p) => vistaArgomenti(main, p, { indietro: 'allenamenti/argomenti', titolo: 'Argomenti' }));
@@ -96,7 +98,7 @@ async function instrada() {
     mostraNav(true);
     mostraBolla(p?.ruolo === 'sifu', bollaAzione);
   }
-  document.body.classList.toggle('senza-bolla', ['detta', 'accesso', 'nuova-password', 'sessione'].includes(rotta));
+  document.body.classList.toggle('senza-bolla', ['detta', 'accesso', 'nuova-password', 'sessione', 'correggi'].includes(rotta));
   await disegna();
 }
 
@@ -109,7 +111,7 @@ async function bollaAzione() {
   const elenco = el('div', { class: 'elenco' });
   for (const s of sessioni) elenco.append(riga({ principale: s.tipo === 'privata' ? `${formattaOra(s.ora)} · Privata · ${s.allievo_nome || ''} ${s.allievo_cognome || ''}`.trim() : `${formattaOra(s.ora)} · ${s.corso_nome || 'Corso'} · ${s.citta || ''}`, secondaria: s.in_revisione ? 'bozza pronta' : 'da fare', pallino: s.in_revisione ? 'ok' : 'attenzione', onclick: () => { chiudi(); vai(`detta/${s.id}`); } }));
   if (!sessioni.length) elenco.append(el('div', { class: 'vuoto' }, [el('p', { testo: 'Oggi non c\'è niente da dettare.' }), el('a', { class: 'tasto bordo', href: '#/oggi', onclick: () => chiudi(), testo: 'Vai a Oggi' })]));
-  const chiudi = apriFoglio('Cosa detti?', el('div', {}, [elenco, el('div', { class: 'spazio' }), el('a', { class: 'tasto', href: '#/segnala', onclick: () => chiudi(), testo: 'Segnala un problema' })]));
+  const chiudi = apriFoglio('Cosa detti?', el('div', {}, [elenco, el('div', { class: 'spazio' }), el('div', { class: 'tasti' }, [el('a', { class: 'tasto bordo', href: '#/correggi', onclick: () => chiudi(), testo: 'Correggi parlando' }), el('a', { class: 'tasto', href: '#/segnala', onclick: () => chiudi(), testo: 'Segnala un problema' })])]));
 }
 
 function avviaRete() {
