@@ -41,8 +41,8 @@ export async function disegnaProgramma(box, ridisegna) {
   const elenco = el('div', { class: 'elenco' });
   for (const s of sessioni.filter((x) => x.stato === 'prevista')) {
     const chi = s.tipo === 'privata' ? `Privata · ${s.allievo_nome || ''} ${s.allievo_cognome || ''}`.trim() : `${s.corso_nome || 'Corso'} · ${s.citta || ''}`;
-    const riassunto = riassuntoBlocchi(s.blocchi || [], { nomeArgomento: nomeArg, nomeAllievo: nomeAll });
-    elenco.append(riga({ principale: `${formattaData(s.data, 'breve')} ${formattaOra(s.ora)} · ${chi}`, secondaria: riassunto || s.previsto_nota || 'niente di programmato', pallino: riassunto ? 'ok' : 'neutro', onclick: lettura ? null : () => foglioLezione(s, { nota: s.previsto_nota, blocchi: s.blocchi }, ridisegna) }));
+    const riassunto = riassuntoBlocchi(s.blocchi || [], { nomeArgomento: nomeArg, nomeAllievo: nomeAll }) || (s.previsto_argomenti || []).map(nomeArg).join(', ');
+    elenco.append(riga({ principale: `${formattaData(s.data, 'breve')} ${formattaOra(s.ora)} · ${chi}`, secondaria: [riassunto, s.previsto_nota].filter(Boolean).join(' · ') || 'niente di programmato', pallino: riassunto ? 'ok' : 'neutro', onclick: lettura ? null : () => foglioLezione(s, { nota: s.previsto_nota, blocchi: s.blocchi }, ridisegna) }));
   }
   if (!elenco.childElementCount) elenco.append(statoVuoto('Nessuna lezione nei prossimi 14 giorni.'));
   box.append(sezione(`Prossime lezioni · ${imp.programma?.orizzonte_giorni || 14} giorni`, elenco));

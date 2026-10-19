@@ -67,6 +67,8 @@ export async function vistaOggi(main) {
       el('div', { class: 'principale', testo: `${corso.corso_nome || 'Lezione'} · ${corso.citta || ''} · ${formattaOra(corso.ora)} · ${formattaMinuti(corso.durata_minuti)}` + (corso.tipo === 'straordinaria' ? ' · straordinaria' : '') }),
       el('div', { class: 'secondaria attenuato', testo: [statoRiga, corso.presenti ? `${corso.presenti} presenti` : null].filter(Boolean).join(' · ') }),
     );
+    // il previsto dalla sesta domanda («la prossima volta») e la nota: come prima
+    if (corso.previsto_argomenti && !blocchi.length) blocco.append(el('div', { class: 'secondaria', testo: 'Previsto: ' + corso.previsto_argomenti }));
     if (corso.previsto_nota) blocco.append(el('div', { class: 'secondaria', testo: corso.previsto_nota }));
     // la lezione a blocchi: la linea del tempo; se non c'è, un tasto solo per programmarla
     const programmabile = sifu && corso.stato === 'prevista';
