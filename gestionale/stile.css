@@ -280,6 +280,15 @@ body.sola-lettura .bolla-azione { display: none; }
 .guida .numero { flex: none; width: 28px; height: 28px; border-radius: 50%; background: var(--c-oro); color: var(--c-oro-testo); display: flex; align-items: center; justify-content: center; font-weight: 700; }
 .guida .passo.fatto .numero { background: var(--c-ok); color: #fff; }
 .guida .passo.fatto .principale { text-decoration: line-through; opacity: 0.7; }
+.linea-tempo { margin-top: var(--s-3); }
+.corsia-riga { display: grid; grid-template-columns: 76px 1fr; align-items: center; gap: var(--s-2); margin-bottom: 6px; }
+.corsia-nome { font-size: var(--t-14); color: var(--c-testo-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.corsia { position: relative; height: 32px; background: var(--c-superficie-2); border-radius: 6px; }
+.barra { position: absolute; top: 2px; bottom: 2px; border-radius: 6px; background: var(--c-terracotta); color: #fff; font: inherit; font-size: var(--t-14); font-weight: 600; border: 0; padding: 0 6px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; text-align: left; cursor: default; display: flex; align-items: center; }
+.barra span { overflow: hidden; text-overflow: ellipsis; }
+button.barra { cursor: pointer; }
+.corsia.gruppo .barra { background: var(--c-oro); color: var(--c-oro-testo); }
+.scala { display: flex; justify-content: space-between; margin: 0 0 var(--s-2) 84px; font-size: 0.7rem; color: var(--c-testo-2); }
 .riga-quota { display: flex; align-items: center; gap: var(--s-2); flex-wrap: wrap; margin-bottom: var(--s-3); font-size: var(--t-18); }
 .riga-quota input { width: 96px; font-size: var(--t-18); font-weight: 700; text-align: right; }
 .riga-quota select { width: auto; }

@@ -1,6 +1,6 @@
 /* Longkai — viste/progressi.js: nella scheda dell'allievo, Progressi (forme a parte da tutto il resto, osservazioni, obiettivi, numeri, piano personale) e Presenze. */
 import { el } from '../base.js';
-import { progressiAllievo, argomentiAttivi, aggiornaForma, salvaObiettivo, chiudiObiettivo, salvaPiano, chiudiPiano, presenzeAllievo } from '../dati.js';
+import { progressiAllievo, argomentiAttivi, aggiornaForma, salvaPiano, chiudiPiano, presenzeAllievo } from '../dati.js';
 import { riga, sezione, scheletri, statoVuoto, toast, avvisa, apriFoglio, chiedi } from '../ui.js';
 import { formattaData, formattaMese, formattaOra, oggiRoma } from '../../comune/date.js';
 import { formattaMinuti } from '../../comune/ore.js';
@@ -60,32 +60,27 @@ export async function disegnaProgressi(box, { id, lettura, ridisegna, oggi = ogg
   if (!pr.osservazioni.length) oss.append(statoVuoto('Nessuna osservazione ancora.'));
   box.append(sezione('Osservazioni', oss));
 
-  /* ---------- OBIETTIVI ---------- */
-  const ob = el('div', { class: 'elenco' });
-  for (const o of pr.obiettivi) ob.append(riga({ principale: o.nota || '(senza testo)', secondaria: [(o.obiettivi_argomenti || []).map((x) => nomeArg(x.argomento_id)).join(', '), o.stato === 'raggiunto' ? 'raggiunto il ' + formattaData(o.raggiunto_il, 'numerico') : 'dal ' + formattaData(o.aperto_il, 'numerico')].filter(Boolean).join(' · '), pallino: o.stato === 'raggiunto' ? 'ok' : 'attenzione', onclick: lettura ? null : () => foglioObiettivo(id, o, ridisegna) }));
-  if (!pr.obiettivi.length) ob.append(statoVuoto('Nessun obiettivo.'));
-  box.append(sezione('Obiettivi', ob, lettura ? null : el('button', { class: 'tasto azione', 'data-scrittura': '', testo: '+ Obiettivo', onclick: () => foglioObiettivo(id, null, ridisegna) })));
-
   /* ---------- NUMERI ---------- */
   const num = el('div', { class: 'elenco' });
   for (const m of pr.ore.slice(0, 12)) num.append(riga({ principale: formattaMese(m.mese), secondaria: [`${m.lezioni || 0} lezioni`, m.private ? `${m.private} private` : null, m.extra ? `${m.extra} in più` : null, m.recuperi ? `${m.recuperi} recuperi` : null].filter(Boolean).join(' · '), destra: formattaMinuti((m.minuti_corsi || 0) + (m.minuti_private || 0)) }));
   if (!pr.ore.length) num.append(statoVuoto('Nessuna presenza ancora.'));
   box.append(sezione('Numeri', num));
 
-  /* ---------- PIANO PERSONALE ---------- */
+  /* ---------- PERCORSO: dove vuole arrivare, il prossimo passo, su cosa sta lavorando ---------- */
   const piano = pr.piano;
   const pianoBox = el('div', { class: 'blocco' });
   if (piano) {
     pianoBox.append(
-      el('p', { class: 'piccolo attenuato', testo: 'Sta lavorando su' }), chipsArgomenti(piano.sta_lavorando_su, argomenti, { vuoto: '—' }),
-      el('p', { class: 'piccolo attenuato', style: null, testo: 'Prossimo passo' }), chipsArgomenti(piano.prossimo_passo_argomenti, argomenti, { vuoto: piano.prossimo_passo_nota ? '' : '—' }), piano.prossimo_passo_nota ? el('p', { testo: piano.prossimo_passo_nota }) : null,
-      piano.obiettivo ? el('p', {}, [el('strong', { testo: 'Obiettivo: ' }), piano.obiettivo]) : null,
-      lettura ? null : el('div', { class: 'tasti' }, [el('button', { class: 'tasto bordo', testo: 'Modifica', onclick: () => foglioPiano(id, piano, ridisegna) }), el('button', { class: 'tasto', testo: 'Chiudi il piano', onclick: async () => { const ok = await chiedi('Chiudere il piano?', 'Resta nella cronologia. Se ne può aprire un altro quando vuoi.', [{ testo: 'Chiudi', valore: true, classe: 'pieno' }, { testo: 'Lascia', valore: false }]); if (!ok) return; try { await chiudiPiano(piano.id); toast('Piano chiuso.'); ridisegna(); } catch (e) { avvisa(e.message); } } })]),
+      piano.obiettivo ? el('div', { class: 'principale', testo: piano.obiettivo }) : null,
+      el('div', { class: 'riga-stato' }, [el('span', { class: 'attenuato', testo: 'Prossimo passo' }), el('strong', { testo: piano.prossimo_passo_nota || (piano.prossimo_passo_argomenti || []).map(nomeArg).join(', ') || '—' })]),
+      (piano.prossimo_passo_argomenti || []).length && piano.prossimo_passo_nota ? chipsArgomenti(piano.prossimo_passo_argomenti, argomenti) : null,
+      (piano.sta_lavorando_su || []).length ? el('div', { class: 'riga-stato' }, [el('span', { class: 'attenuato', testo: 'Sta lavorando su' }), chipsArgomenti(piano.sta_lavorando_su, argomenti)]) : null,
+      lettura ? null : el('div', { class: 'tasti' }, [el('button', { class: 'tasto bordo', testo: 'Cambia', onclick: () => foglioPiano(id, piano, ridisegna) }), el('button', { class: 'tasto', testo: 'Chiudi il percorso', onclick: async () => { const ok = await chiedi('Chiudere il percorso?', 'Resta nella cronologia. Se ne può aprire un altro quando vuoi.', [{ testo: 'Chiudi', valore: true, classe: 'pieno' }, { testo: 'Lascia', valore: false }]); if (!ok) return; try { await chiudiPiano(piano.id); toast('Chiuso.'); ridisegna(); } catch (e) { avvisa(e.message); } } })]),
     );
   } else {
-    pianoBox.append(el('p', { class: 'attenuato', testo: 'Nessun piano personale.' }), lettura ? null : el('button', { class: 'tasto pieno', 'data-scrittura': '', testo: '+ Piano personale', onclick: () => foglioPiano(id, null, ridisegna) }));
+    pianoBox.append(el('p', { class: 'attenuato', testo: 'Nessun percorso suo.' }), lettura ? null : el('button', { class: 'tasto pieno', 'data-scrittura': '', testo: '+ Percorso', onclick: () => foglioPiano(id, null, ridisegna) }));
   }
-  box.append(sezione('Piano personale', pianoBox));
+  box.append(sezione('Percorso', pianoBox));
 }
 
 function foglioForma(allievoId, f, ridisegna) {
@@ -121,13 +116,15 @@ export function foglioPiano(allievoId, piano, ridisegna) {
   const b1 = el('div'); const b2 = el('div');
   const disegna = async () => { const tutti = await argomentiAttivi(); b1.replaceChildren(chipsArgomenti(sta, tutti, { vuoto: '—' })); b2.replaceChildren(chipsArgomenti(prossimo, tutti, { vuoto: '—' })); };
   disegna();
-  const chiudi = apriFoglio(piano ? 'Piano personale' : 'Nuovo piano personale', el('div', {}, [
-    el('p', { class: 'piccolo attenuato' , testo: 'Sta lavorando su' }), b1, el('button', { class: 'tasto bordo', testo: 'Scegli', onclick: async () => { const r = await scegliArgomenti({ scelti: sta, titolo: 'Sta lavorando su' }); if (r) { sta = r; disegna(); } } }),
+  const chiudi = apriFoglio('Percorso', el('div', {}, [
+    campo('Dove vuole arrivare', obiettivo),
+    el('p', { class: 'piccolo attenuato', testo: 'Sta lavorando su' }), b1, el('button', { class: 'tasto bordo', testo: 'Scegli', onclick: async () => { const r = await scegliArgomenti({ scelti: sta, titolo: 'Sta lavorando su' }); if (r) { sta = r; disegna(); } } }),
     el('p', { class: 'piccolo attenuato', style: null, testo: 'Prossimo passo' }), b2, el('button', { class: 'tasto bordo', testo: 'Scegli', onclick: async () => { const r = await scegliArgomenti({ scelti: prossimo, titolo: 'Prossimo passo' }); if (r) { prossimo = r; disegna(); } } }),
-    campo('Prossimo passo, a parole', nota, 'es. il Bong Sao con il passo'), campo('Dove vuole arrivare', obiettivo, 'es. finire il Chum Kiu entro primavera'),
+    campo('Prossimo passo, a parole', nota),
     el('button', { class: 'tasto pieno grande', testo: 'Salva', onclick: async () => { try { await salvaPiano(allievoId, { sta_lavorando_su: sta, prossimo_passo_argomenti: prossimo, prossimo_passo_nota: nota.value.trim() || null, obiettivo: obiettivo.value.trim() || null }); chiudi(); toast('Piano salvato.'); ridisegna(); } catch (e) { avvisa(e.message); } } }),
   ]));
 }
+
 
 export async function disegnaPresenze(box, { id }) {
   box.append(scheletri(3));

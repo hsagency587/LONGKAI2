@@ -1,11 +1,13 @@
 /* Longkai — viste/oggi.js: la prima schermata. Il corso di oggi con il previsto, le private, Da fare, Scadenze, la giornata. */
 import { el, icona, euro } from '../base.js';
-import { sessioniDelGiorno, contiDaFare, contiScadenze, profilo, corsiCompleti, programmiMesi, argomentiAttivi, allieviAttivi, creaStraordinaria, creaPrivate, saltaSessione, riapriSessione, apriGiornata, chiudiGiornata, giornata, sessioniAperteIeri, pianiAttivi, impostazioni, leggiLocale, salvaLocale, obiettiviAperti, avvisiAperti, segnaAvvisiLetti, statoAvvio } from '../dati.js';
+import { sessioniDelGiorno, contiDaFare, contiScadenze, profilo, corsiCompleti, argomentiAttivi, allieviAttivi, creaStraordinaria, creaPrivate, saltaSessione, riapriSessione, apriGiornata, chiudiGiornata, giornata, sessioniAperteIeri, pianiAttivi, impostazioni, leggiLocale, salvaLocale, avvisiAperti, segnaAvvisiLetti, statoAvvio } from '../dati.js';
+import { lineaTempo, foglioLezione } from './blocchi.js';
+import { riassuntoBlocchi } from '../../comune/blocchi.js';
 import { pushSupportato, iphoneNonInstallata, attivaPush, aggiornaBadge } from '../push.js';
 import { testata, sezione, riga, scheletri, statoVuoto, statoErrore, toast, avvisa, apriFoglio, striscia, togliStriscia, vai } from '../ui.js';
-import { oggiRoma, formattaData, formattaOra, primoDelMese, aggiungiGiorni } from '../../comune/date.js';
+import { oggiRoma, formattaData, formattaOra, aggiungiGiorni } from '../../comune/date.js';
 import { formattaMinuti } from '../../comune/ore.js';
-import { previstoDalMese, statoGiornata } from '../../comune/sessione.js';
+import { statoGiornata } from '../../comune/sessione.js';
 import { normalizza } from '../../comune/fonetica.js';
 import { campo } from './allievo-modulo.js';
 import { foglioAnnulla } from './sessione.js';
@@ -22,9 +24,9 @@ export async function vistaOggi(main) {
   const p = await profilo().catch(() => null);
   const sifu = p?.ruolo === 'sifu';
   if (sifu) { try { await apriGiornata(oggi); } catch { /* l'orologio ci pensa alle 8 */ } }
-  let sessioni, daFare, scad, piani, ieri, g, imp, obiettivi, avvisi;
+  let sessioni, daFare, scad, piani, ieri, g, imp, avvisi, allievi, argomenti;
   try {
-    [sessioni, daFare, scad, piani, ieri, g, imp, obiettivi, avvisi] = await Promise.all([sessioniDelGiorno(oggi), contiDaFare(), contiScadenze(), pianiAttivi().catch(() => []), sifu ? sessioniAperteIeri(oggi) : Promise.resolve([]), giornata(oggi).catch(() => null), impostazioni().catch(() => ({})), obiettiviAperti().catch(() => []), avvisiAperti().catch(() => [])]);
+    [sessioni, daFare, scad, piani, ieri, g, imp, avvisi, allievi, argomenti] = await Promise.all([sessioniDelGiorno(oggi), contiDaFare(), contiScadenze(), pianiAttivi().catch(() => []), sifu ? sessioniAperteIeri(oggi) : Promise.resolve([]), giornata(oggi).catch(() => null), impostazioni().catch(() => ({})), avvisiAperti().catch(() => []), allieviAttivi().catch(() => []), argomentiAttivi().catch(() => [])]);
   } catch (e) {
     main.replaceChildren(statoErrore(navigator.onLine ? e : new Error('Sei senza rete.'), () => vistaOggi(main)));
     return;
@@ -57,25 +59,19 @@ export async function vistaOggi(main) {
   const corso = sessioni.find((s) => s.tipo === 'corso' || s.tipo === 'straordinaria');
   const blocco = el('div', { class: 'blocco' });
   if (corso) {
-    let previsto = corso.previsto_argomenti;
-    if (!previsto && corso.corso_id) {
-      try {
-        const [mesi, arg] = await Promise.all([programmiMesi([primoDelMese(oggi)]), argomentiAttivi()]);
-        const m = mesi.find((x) => x.corso_id === corso.corso_id);
-        const ids = previstoDalMese({ argomenti: m?.programma_argomenti || [] });
-        if (ids.length) previsto = ids.map((id) => arg.find((a) => a.id === id)?.nome).filter(Boolean).join(', ') + ' (dal mese)';
-      } catch { /* niente */ }
-    }
-    const pianiDelCorso = piani.length ? `${piani.length} con piano personale` : null;
-    const obiettiviN = obiettivi.length ? `${obiettivi.length} obiettivi aperti` : null;
+    const blocchi = corso.blocchi || [];
     const inCoda = leggiLocale().coda.some((l) => l.tipo === 'dettatura' && l.sessione_id === corso.id && l.stato !== 'fallito');
     const fallita = leggiLocale().coda.find((l) => l.tipo === 'dettatura' && l.sessione_id === corso.id && l.stato === 'fallito');
     const statoRiga = corso.stato === 'fatta' ? 'fatta ✓' : corso.stato === 'saltata' ? 'saltata' + (corso.motivo ? ': ' + corso.motivo : '') : corso.in_revisione ? 'in revisione: la bozza è pronta' : inCoda ? 'in coda: sto trascrivendo' : fallita ? 'dettatura ferma: ' + (fallita.errore || '') : 'da fare';
     blocco.append(
       el('div', { class: 'principale', testo: `${corso.corso_nome || 'Lezione'} · ${corso.citta || ''} · ${formattaOra(corso.ora)} · ${formattaMinuti(corso.durata_minuti)}` + (corso.tipo === 'straordinaria' ? ' · straordinaria' : '') }),
-      el('div', { class: 'secondaria attenuato', testo: [statoRiga, corso.presenti ? `${corso.presenti} presenti` : null, pianiDelCorso, obiettiviN].filter(Boolean).join(' · ') }),
-      previsto ? el('div', { class: 'secondaria', testo: 'Previsto: ' + previsto }) : el('div', { class: 'secondaria attenuato', testo: 'Niente di previsto: libero.' }),
+      el('div', { class: 'secondaria attenuato', testo: [statoRiga, corso.presenti ? `${corso.presenti} presenti` : null].filter(Boolean).join(' · ') }),
     );
+    if (corso.previsto_nota) blocco.append(el('div', { class: 'secondaria', testo: corso.previsto_nota }));
+    // la lezione a blocchi: la linea del tempo; se non c'è, un tasto solo per programmarla
+    const programmabile = sifu && corso.stato === 'prevista';
+    if (blocchi.length) blocco.append(lineaTempo(blocchi, { durata: corso.durata_minuti, allievi, argomenti, onTocca: programmabile ? () => foglioLezione(corso, { nota: corso.previsto_nota, blocchi }, ridisegna) : null }));
+    else if (programmabile) blocco.append(el('button', { class: 'tasto bordo', 'data-scrittura': '', testo: 'Programma la lezione', onclick: () => foglioLezione(corso, { nota: corso.previsto_nota, blocchi: [] }, ridisegna) }));
     if (sifu && corso.stato === 'prevista') {
       if (corso.in_revisione) {
         blocco.append(el('a', { class: 'tasto pieno grande', 'data-scrittura': '', href: `#/sessione/${corso.id}` }, [icona('spunta'), 'Rivedi e conferma']));
@@ -124,7 +120,8 @@ export async function vistaOggi(main) {
   for (const s of priv) {
     const piano = piani.find((x) => x.allievo_id === s.allievo_id);
     const pianoTesto = piano?.prossimo_passo_nota ? ' · piano: ' + piano.prossimo_passo_nota : '';
-    elenco.append(riga({ principale: `${formattaOra(s.ora)} · ${nomeDi({ nome: s.allievo_nome, cognome: s.allievo_cognome })}`, secondaria: formattaMinuti(s.durata_minuti) + (s.stato === 'fatta' ? ' · fatta' : s.stato === 'saltata' ? ' · saltata' : s.in_revisione ? ' · bozza pronta: rivedi' : '') + pianoTesto, pallino: s.stato === 'fatta' ? 'ok' : s.stato === 'saltata' ? 'neutro' : 'attenzione', onclick: () => (sifu ? foglioPrivata(s, ridisegna) : vai(`sessione/${s.id}`)) }));
+    const blocchiTesto = (s.blocchi || []).length ? ' · ' + riassuntoBlocchi(s.blocchi, { nomeArgomento: (id) => argomenti.find((a) => a.id === id)?.nome || '…', nomeAllievo: (id) => nomeDi(allievi.find((a) => a.id === id)), massimo: 3 }) : '';
+    elenco.append(riga({ principale: `${formattaOra(s.ora)} · ${nomeDi({ nome: s.allievo_nome, cognome: s.allievo_cognome })}`, secondaria: formattaMinuti(s.durata_minuti) + (s.stato === 'fatta' ? ' · fatta' : s.stato === 'saltata' ? ' · saltata' : s.in_revisione ? ' · bozza pronta: rivedi' : '') + blocchiTesto + pianoTesto, pallino: s.stato === 'fatta' ? 'ok' : s.stato === 'saltata' ? 'neutro' : 'attenzione', onclick: () => (sifu ? foglioPrivata(s, ridisegna) : vai(`sessione/${s.id}`)) }));
   }
   main.append(sezione('Private', elenco, sifu ? el('button', { class: 'tasto azione', 'data-scrittura': '', testo: '+ Privata', onclick: () => foglioNuovaPrivata(oggi, imp.private || {}, ridisegna) }) : null));
 
@@ -227,6 +224,7 @@ function foglioPrivata(s, ridisegna) {
   if (s.stato === 'prevista') {
     figli.push(el('a', { class: 'tasto pieno', href: `#/sessione/${s.id}`, testo: s.in_revisione ? 'Rivedi e conferma' : 'A mano', onclick: () => chiudi() }));
     figli.push(el('a', { class: 'tasto bordo', href: `#/detta/${s.id}`, testo: 'Detta', onclick: () => chiudi() }));
+    figli.push(el('button', { class: 'tasto bordo', testo: (s.blocchi || []).length ? 'Cambia il programma' : 'Programma la lezione', onclick: () => { chiudi(); foglioLezione(s, { nota: s.previsto_nota, blocchi: s.blocchi || [] }, ridisegna); } }));
     figli.push(el('button', { class: 'tasto bordo', testo: 'Salta', onclick: async () => { try { await saltaSessione(s.id, null); chiudi(); toast('Saltata.'); ridisegna(); } catch (e) { avvisa(e.message); } } }));
     figli.push(el('button', { class: 'tasto bordo', testo: 'Sposta a domani', onclick: async () => { try { const { spostaSessione } = await import('../dati.js'); await spostaSessione(s.id, { data: aggiungiGiorni(s.data, 1), ora: s.ora, durata_minuti: s.durata_minuti }); chiudi(); toast('Spostata a domani.'); ridisegna(); } catch (e) { avvisa(e.message); } } }));
     figli.push(el('button', { class: 'tasto pericolo', testo: 'Annulla', onclick: () => { chiudi(); foglioAnnulla(s, ridisegna); } }));

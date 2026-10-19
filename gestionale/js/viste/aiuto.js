@@ -18,10 +18,10 @@ const CAPITOLI = [
     'Oggi → + Privata: con chi, quando, quanto dura, se si ripete ogni settimana. Poi si detta o si fa a mano come una lezione.',
   ]],
   ['Programmare', [
-    'Allenamenti → Programma: tocca un mese per scrivere cosa vuoi fare e scegliere gli argomenti in ordine. Le lezioni li ereditano da sole.',
-    'Tocca una sessione nei prossimi giorni per scrivere cosa fare proprio quel giorno.',
+    'Il mese: in Allenamenti → Programma tocca un mese e scrivi l\'idea, a parole. Serve a te, non cambia niente da solo.',
+    'La lezione: in Oggi (o nel Programma) tocca «Programma la lezione» e metti i blocchi: chi (il gruppo o un allievo), cosa, dal minuto al minuto se vuoi, i passi. In Oggi la vedi come una linea del tempo: il gruppo in oro, i singoli sotto con il nome.',
     '«A che punto sono» mostra per ogni allievo le forme in corso e le ultime cose fatte.',
-    'Un piano personale è per chi segue un percorso suo (cosa sta facendo, il prossimo passo, dove vuole arrivare). Non è obbligatorio.',
+    'Nella scheda → Progressi, la card «Percorso»: dove vuole arrivare, il prossimo passo, su cosa sta lavorando.',
   ]],
   ['Le quote', [
     'Quote → Da incassare: chi deve pagare, quanto, entro quando. Un tocco e segni che ha pagato. Sotto, chi è in regola e fino a quando.',

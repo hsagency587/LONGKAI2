@@ -396,7 +396,16 @@ export async function salvaTariffa(id, dati) {
 export async function sessioniDelGiorno(data) {
   const r = await sb().from('v_sessioni_diario').select('*').eq('data', data).neq('stato', 'annullata').order('ora');
   controlla(r);
-  return r.data || [];
+  return conProgrammi(r.data || []);
+}
+/** Attacca a ogni sessione il suo programma: i blocchi e la nota. */
+async function conProgrammi(sessioni) {
+  const ids = sessioni.map((s) => s.id);
+  if (!ids.length) return sessioni;
+  const r = await sb().from('programma').select('sessione_id, nota, blocchi').in('sessione_id', ids);
+  controlla(r);
+  const per = new Map((r.data || []).map((p) => [p.sessione_id, p]));
+  return sessioni.map((s) => ({ ...s, blocchi: per.get(s.id)?.blocchi || [], previsto_nota: s.previsto_nota ?? per.get(s.id)?.nota ?? null }));
 }
 export async function sessioneCompleta(id) {
   const s = await sb().from('v_sessioni_diario').select('*').eq('id', id).maybeSingle();
@@ -408,7 +417,7 @@ export async function sessioneCompleta(id) {
     sb().from('osservazioni').select('allievo_id, testo').eq('sessione_id', id),
     sb().from('forme_storia').select('allievo_id, forma_id, a_stato, a_sezione').eq('sessione_id', id),
     sb().from('pagamenti').select('id, allievo_id, importo_cent, metodo, nota, creato_il').eq('sessione_id', id).is('annullato_il', null).order('creato_il'),
-    sb().from('programma').select('id, nota, programma_argomenti(argomento_id, ordine, fatto_il)').eq('sessione_id', id).maybeSingle(),
+    sb().from('programma').select('id, nota, blocchi, programma_argomenti(argomento_id, ordine, fatto_il)').eq('sessione_id', id).maybeSingle(),
     s.data.corso_id ? sb().from('sessioni').select('id, data, ora').eq('corso_id', s.data.corso_id).eq('tipo', 'corso').eq('stato', 'prevista').gt('data', s.data.data).order('data').limit(1) : Promise.resolve({ data: [] }),
     sb().from('sessioni').select('testo_grezzo, risposta_grezza, stato_revisione').eq('id', id).maybeSingle(),
   ]);
@@ -535,14 +544,14 @@ export async function diario(dal, al) {
   controlla(r);
   return r.data || [];
 }
-export async function prossimeSessioni() { const r = await sb().from('v_prossime_sessioni').select('*'); controlla(r); return r.data || []; }
+export async function prossimeSessioni() { const r = await sb().from('v_prossime_sessioni').select('*'); controlla(r); return conProgrammi(r.data || []); }
 export async function programmiMesi(mesi) {
   const r = await sb().from('programma').select('id, corso_id, mese, nota, programma_argomenti(argomento_id, ordine, fatto_il)').in('mese', mesi);
   controlla(r);
   return r.data || [];
 }
-export async function salvaProgramma({ corsoId = null, mese = null, sessioneId = null, nota = null, argomenti = [] }) {
-  const r = await sb().rpc('salva_programma', { p_corso: corsoId, p_mese: mese, p_sessione: sessioneId, p_nota: nota, p_argomenti: argomenti });
+export async function salvaProgramma({ corsoId = null, mese = null, sessioneId = null, nota = null, argomenti = [], blocchi = null }) {
+  const r = await sb().rpc('salva_programma', { p_corso: corsoId, p_mese: mese, p_sessione: sessioneId, p_nota: nota, p_argomenti: argomenti, p_blocchi: blocchi });
   controlla(r);
   return r.data;
 }
