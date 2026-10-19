@@ -1,40 +1,19 @@
-<!DOCTYPE html>
-<html lang="it" data-tema="scuro">
+<!doctype html>
+<html lang="it">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self' https://*.supabase.co wss://*.supabase.co; manifest-src 'self'; worker-src 'self'; base-uri 'self'; form-action 'self'; object-src 'none'">
-  <title>Longkai</title>
-  <meta name="description" content="Il gestionale del Sifu di Longkai.">
-  <meta name="theme-color" content="#1a1613">
-  <meta name="color-scheme" content="dark light">
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta name="apple-mobile-web-app-title" content="Longkai">
-  <link rel="manifest" href="manifest.webmanifest">
-  <link rel="icon" type="image/png" sizes="32x32" href="icone/favicon-32.png">
-  <link rel="apple-touch-icon" href="icone/apple-touch-icon.png">
-  <link rel="stylesheet" href="stile.css">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; base-uri 'self'; form-action 'self'; object-src 'none'">
+  <meta name="robots" content="noindex">
+  <title>Longkai · Gestionale</title>
+  <link rel="stylesheet" href="./stile.css">
 </head>
 <body>
-  <a class="salta" href="#contenuto">Vai al contenuto</a>
-
-  <div class="app" id="app">
-    <nav class="nav" id="nav" aria-label="Sezioni"></nav>
-    <div class="cima" id="cima">
-      <div id="strisce" class="strisce" aria-live="polite"></div>
-      <header class="barra-alto" id="barra-alto"></header>
-    </div>
-    <main class="contenuto" id="contenuto" tabindex="-1"></main>
-  </div>
-
-  <div id="fogli"></div>
-  <div id="toast" class="toast" role="status" aria-live="polite"></div>
-
-  <noscript><p class="noscript">Longkai ha bisogno di JavaScript per funzionare.</p></noscript>
-
-  <script src="vendor/supabase.js"></script>
-  <script src="config.js"></script>
-  <script type="module" src="js/avvio.js"></script>
+  <main>
+    <p class="marchio">Longkai</p>
+    <h1>Gestionale</h1>
+    <p class="stato">Lavori in corso</p>
+  </main>
+  <script src="./avvio.js"></script>
 </body>
 </html>
