@@ -51,10 +51,11 @@ const breve = l => l.tipo === 'corso' ? `Corso ${l.corso}` : `Priv. · ${l.allie
 const orario = l => l.tipo === 'corso' ? (l.orarioCorso || CORSI[l.corso].orario) : `${l.inizio}-${l.fine}`;
 const quando = l => l.giorno === OGGI ? 'oggi' : dataBreve(l.giorno);
 const mancano = assenti => `${assenti.length === 1 ? 'manca' : 'mancano'} ${assenti.join(', ')}`;
+const presenti = n => `${n} ${n === 1 ? 'presente' : 'presenti'}`;
 const testoAppello = l => l.appello.assenti.length
-  ? `${presentiDi(l).length} presenti · ${mancano(l.appello.assenti)}`
+  ? `${presenti(presentiDi(l).length)} · ${mancano(l.appello.assenti)}`
   : `tutti presenti (${presentiDi(l).length})`;
-const appelloBreve = l => l.appello.assenti.length > 1 ? `${presentiDi(l).length} presenti · mancano ${l.appello.assenti.length}` : testoAppello(l);
+const appelloBreve = l => l.appello.assenti.length > 1 ? `${presenti(presentiDi(l).length)} · mancano ${l.appello.assenti.length}` : testoAppello(l);
 const daRaccontare = () => stato.lezioni
   .filter(l => l.giorno >= PRIMO_GIORNO && l.giorno < OGGI && l.giorno >= sposta(OGGI, -14) && !l.fatto && !l.nonFatta)
   .sort((a, b) => b.giorno.localeCompare(a.giorno));
@@ -211,8 +212,8 @@ const AZIONI_VOCE = {
       righe.push(`privata: ${az.prezzo_privata} € a lezione`);
     }
     if (az.telefono) { a.cell = String(az.telefono).trim(); righe.push(`cellulare: ${a.cell}`); }
-    const c = CINTURE.find(([n]) => n === String(az.cintura || '').trim().toLowerCase());
-    if (c && c[0] !== a.cintura) { a.cintura = c[0]; righe.push(`cintura ${c[0]}`); }
+    const c = CINTURE.find(x => x.k === String(az.cintura || '').trim().toLowerCase());
+    if (c && c.k !== a.cintura) { a.cintura = c.k; righe.push(`cintura: ${nomeCintura(c)}`); }
     if (typeof az.uscito === 'boolean' && az.uscito !== a.uscito) { a.uscito = az.uscito; righe.push(a.uscito ? 'non viene più' : 'torna a venire'); }
     return righe.length ? [{ luogo: `Scheda · ${a.nome}`, righe }] : [];
   },
@@ -311,7 +312,7 @@ function statoOggi(l) {
 }
 
 function rigaLezione(l, statoHtml, colonna, conTasto) {
-  const tasto = conTasto && !l.fatto && !l.nonFatta ? tastoDetta(l.id) : FRECCIA;
+  const tasto = conTasto ? tastoDetta(l.id) : FRECCIA;   // sempre (Simone, 20/10): si racconta anche a pezzi, ogni dettatura si aggiunge
   return `
     <article class="lezione${l.nonFatta ? ' spenta' : ''}${colonna.data ? ' data-col' : ''}" id="lez-${esc(l.id)}">
       <button type="button" class="stendi" data-az="apri" data-id="${esc(l.id)}" aria-label="Apri ${esc(titolo(l))}"></button>
@@ -969,7 +970,7 @@ function dettaglioLezione(l) {
       </div>
       <div class="piede gutter">
         ${tastoDetta(l.id, 'grande')}
-        <p class="sotto">Anche per correggere: basta dirlo.</p>
+        <p class="sotto">Per aggiungere o correggere: basta dirlo.</p>
       </div>
     </div>`;
 }
@@ -1249,7 +1250,7 @@ const rigaImp = (az, dati, nome, valore) => `<button type="button" class="imp-ri
 const siNo = (k, acceso) => `<div class="scelte">${[['si', 'Sì'], ['no', 'No']].map(([v, n]) =>
   `<button type="button" class="scelta" data-az="imp-notifica" data-k="${k}" data-v="${v}" aria-pressed="${(v === 'si') === acceso}">${n}</button>`).join('')}</div>`;
 
-// Il calendario: lo legge la funzione `calendario` ogni 2 minuti e scrive com'è andata (lavori_fatti)
+// Il calendario: lo legge la funzione `calendario` ogni 5 minuti e scrive com'è andata (lavori_fatti)
 function statoCalendario() {
   const c = IMP.calendario;
   if (!c || c.esito === 'senza_indirizzo') return '<div class="imp-stato spento"><span class="pallino spento" aria-hidden="true"></span>Da collegare</div><p class="nota">Il Google della mail Lòngkai</p><p class="nota">Lo collega Simone</p>';
@@ -1257,7 +1258,7 @@ function statoCalendario() {
   const ok = String(c.esito || '').startsWith('ok');
   return `<div class="imp-stato${ok ? '' : ' rosso'}"><span class="pallino${ok ? '' : ' rosso'}" aria-hidden="true"></span>${ok ? 'Collegato' : 'Non si legge'}</div>
           <p class="nota">Il Google della mail Lòngkai</p>
-          <p class="nota">Si legge ogni 2 minuti, l'ultima ${giorno === OGGI ? `alle ${ora}` : ilGiorno(giorno)}</p>`;
+          <p class="nota">Si legge ogni 5 minuti, l'ultima ${giorno === OGGI ? `alle ${ora}` : ilGiorno(giorno)}</p>`;
 }
 // Le notifiche su questo telefono: si accendono e si spengono qui
 function notaPush() {
@@ -1455,18 +1456,21 @@ function apriMenu() {
   $('sopra2').querySelector('.foglio button').focus();
 }
 // La cintura (Simone, 20/10): il colore del grado, a destra del nome; col tocco il Sifu la cambia
-const coloreCintura = c => (CINTURE.find(([n]) => n === c) || CINTURE[0])[1];
-const cintura = a => `<button type="button" class="cintura" data-az="cintura" style="--colore:${coloreCintura(a.cintura)}" aria-label="Cintura ${esc(a.cintura || 'bianca')}: cambia"></button>`;
+const cinturaDi = k => CINTURE.find(c => c.k === k) || CINTURE[0];
+const nomeCintura = c => c.strisce ? c.nome : `${c.nome} · ${c.grado}`;           // "Giallo · 7° Kap", "Giallo chiaro · juniores", "3° Dyun"
+const fascia = c => `<span class="fascia${c.bordo ? ' bordo' : ''}" style="--colore:${c.colore}">${'<i></i>'.repeat(c.strisce || 0)}</span>`;
+const cintura = a => { const c = cinturaDi(a.cintura); return `<button type="button" class="cintura" data-az="cintura" aria-label="Cintura: ${esc(nomeCintura(c))}. Cambia">${fascia(c)}<span class="nodo" style="--colore:${c.colore}"></span></button>`; };
 function apriCintura() {
-  const a = allievo(pila.at(-1).nome);
+  const a = allievo(pila.at(-1).nome), ora = cinturaDi(a.cintura).k;
   $('sopra2').innerHTML = `
     <div class="velo" data-az="chiudi-velo">
       <div class="foglio gutter" role="dialog" aria-modal="true" aria-label="La cintura di ${esc(a.nome)}">
         <h2>${esc(a.nome)} · cintura</h2>
-        ${CINTURE.map(([n, colore]) => `<button type="button" data-az="imposta-cintura" data-v="${n}" aria-pressed="${n === (a.cintura || 'bianca')}"><span class="campione" style="--colore:${colore}" aria-hidden="true"></span>${maiuscola(n)}</button>`).join('')}
+        ${CINTURE.map(c => `<button type="button" data-az="imposta-cintura" data-v="${c.k}" aria-pressed="${c.k === ora}"><span class="campione" aria-hidden="true">${fascia(c)}</span>${esc(nomeCintura(c))}</button>`).join('')}
         <button type="button" data-az="chiudi-velo">Chiudi</button>
       </div>
     </div>`;
+  $('sopra2').querySelector('[aria-pressed="true"]')?.scrollIntoView({ block: 'center' });
 }
 function apriForma(f) {
   const a = allievo(pila.at(-1).nome), n = FORME.find(x => x[0] === f)[1], v = a.forme[f] || 0;
@@ -1613,7 +1617,7 @@ document.addEventListener('click', e => {
     case 'imposta-cintura': {
       const prima = foto(), a = allievo(pila.at(-1).nome);
       a.cintura = t.dataset.v;
-      $('sopra2').innerHTML = ''; disegnaPila(); salvato(`Cintura ${t.dataset.v}`, prima);
+      $('sopra2').innerHTML = ''; disegnaPila(); salvato(`Cintura: ${nomeCintura(cinturaDi(a.cintura))}`, prima);
       break;
     }
     case 'imposta-forma': {
@@ -1890,7 +1894,7 @@ $('apertura').addEventListener('click', chiudiApertura);
 setTimeout(chiudiApertura, 1400);
 
 // Solo in locale, per le prove automatiche (come nel prototipo)
-if (['localhost', '127.0.0.1'].includes(location.hostname)) globalThis.__app = { stato, IMP, CORSI, faiQuelloCheHoCapito, foto, ricarica };
+if (['localhost', '127.0.0.1'].includes(location.hostname)) globalThis.__app = { stato, IMP, CORSI, faiQuelloCheHoCapito, foto, ricarica, capisci };
 const RECUPERO = /type=recovery/.test(location.hash);    // il link "scegli la password" dell'email
 document.documentElement.dataset.tema = IMP.tema;
 registraServiceWorker();

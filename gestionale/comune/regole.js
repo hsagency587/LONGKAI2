@@ -50,9 +50,24 @@ export function adessoRoma(d = new Date()) {
 
 // --- Le forme, con quante sezioni ha ognuna ---------------------------------
 export const FORME = [['Siu Nim Tao', 3], ['Chum Kiu', 3], ['Biu Jee', 3], ['Muk Yan Jong', 8], ['Luk Dim Boon Kwan', 7], ['Baat Cham Dao', 8]];
-// Le cinture, dalla prima: il nome (come nel database) e il colore. Chi arriva parte dalla bianca.
-export const CINTURE = [['bianca', '#f4f1ea'], ['gialla', '#f2c230'], ['arancione', '#e8792b'], ['verde', '#2f8f4e'],
-  ['blu', '#2a5db0'], ['viola', '#7a4bb5'], ['marrone', '#7a4a2a'], ['nera', '#1b1b1b']];
+// Le cinture del Sistema Wing Chun Tradizionale (la tabella della scuola, Simone 20/10), in ordine: il percorso seniores
+// dal bianco (8° Kap) al nero (1° Kap, con il bordo d'oro) e dal 1° all'8° Dyun (le strisce d'oro); prima di ogni colore,
+// il passo chiaro del percorso juniores. Il 9° e il 10° Dyun non si assegnano. k: come nel database. Chi arriva parte dal bianco.
+const kap = (k, nome, grado, colore, chiaro) => [
+  ...(chiaro ? [{ k: `${k}-junior`, nome: `${nome} chiaro`, grado: 'juniores', colore: chiaro, junior: true }] : []),
+  { k, nome, grado, colore }];
+export const CINTURE = [
+  ...kap('bianca', 'Bianco', '8° Kap', '#f7f5f0'),
+  ...kap('gialla', 'Giallo', '7° Kap', '#f5e10a', '#fbf28a'),
+  ...kap('arancione', 'Arancione', '6° Kap', '#f7850f', '#fbb066'),
+  ...kap('verde', 'Verde', '5° Kap', '#22a52a', '#6fe36f'),
+  ...kap('marrone', 'Marrone', '4° Kap', '#7b5308', '#c48a1c'),
+  ...kap('blu', 'Blu', '3° Kap', '#13238f', '#3f8be8'),
+  ...kap('rossa', 'Rosso', '2° Kap', '#c1121b', '#f37b74'),
+  { k: 'nera-junior', nome: 'Nero', grado: 'juniores', colore: '#141414', junior: true },
+  { k: 'nera', nome: 'Nero', grado: '1° Kap', colore: '#141414', bordo: true },
+  ...[1, 2, 3, 4, 5, 6, 7, 8].map(n => ({ k: `dyun-${n}`, nome: `${n}° Dyun`, grado: 'Duan', colore: '#141414', strisce: n })),
+];
 export const TESSERAMENTO = 40;   // la quota di solito, in euro: a dicembre, nel conto di ogni allievo
 
 // --- I corsi: l'orario e le ore di una lezione -------------------------------
