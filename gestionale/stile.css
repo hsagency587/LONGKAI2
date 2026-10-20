@@ -490,3 +490,11 @@ button.colonna:active i { opacity: 0.7; }
 }
 .noscript { padding: 24px 16px; font-size: 17px; }
 .accesso-nota { margin: 0; font-size: 15px; color: rgb(246 243 239 / 0.8); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+/* La cintura, nel quarto di destra all'altezza del nome (Simone, 20/10): il colore del grado; col tocco si cambia */
+.testa-scheda { display: grid; grid-template-columns: minmax(0, 3fr) minmax(0, 1fr); column-gap: 12px; align-items: center; }
+.cintura { position: relative; height: 44px; }
+.cintura::before { content: ""; position: absolute; left: 0; right: 0; top: 50%; height: 14px; margin-top: -7px; border-radius: 3px; background: var(--colore); box-shadow: inset 0 0 0 1px rgb(0 0 0 / 0.28); }
+.cintura::after { content: ""; position: absolute; left: 50%; top: 50%; width: 14px; height: 22px; margin: -11px 0 0 -7px; border-radius: 3px; background: var(--colore); box-shadow: inset 0 0 0 1px rgb(0 0 0 / 0.32), 0 0 0 2px var(--crema); }
+.campione { display: inline-block; width: 30px; height: 12px; margin-right: 12px; border-radius: 3px; vertical-align: -1px; background: var(--colore); box-shadow: inset 0 0 0 1px rgb(0 0 0 / 0.28); }
+:root[data-tema="scuro"] .cintura::before, :root[data-tema="scuro"] .campione { box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.35); }
+:root[data-tema="scuro"] .cintura::after { box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.4), 0 0 0 2px var(--crema); }

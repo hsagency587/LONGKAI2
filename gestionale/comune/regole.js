@@ -50,6 +50,10 @@ export function adessoRoma(d = new Date()) {
 
 // --- Le forme, con quante sezioni ha ognuna ---------------------------------
 export const FORME = [['Siu Nim Tao', 3], ['Chum Kiu', 3], ['Biu Jee', 3], ['Muk Yan Jong', 8], ['Luk Dim Boon Kwan', 7], ['Baat Cham Dao', 8]];
+// Le cinture, dalla prima: il nome (come nel database) e il colore. Chi arriva parte dalla bianca.
+export const CINTURE = [['bianca', '#f4f1ea'], ['gialla', '#f2c230'], ['arancione', '#e8792b'], ['verde', '#2f8f4e'],
+  ['blu', '#2a5db0'], ['viola', '#7a4bb5'], ['marrone', '#7a4a2a'], ['nera', '#1b1b1b']];
+export const TESSERAMENTO = 40;   // la quota di solito, in euro: a dicembre, nel conto di ogni allievo
 
 // --- I corsi: l'orario e le ore di una lezione -------------------------------
 const minuti = s => Number(s.slice(0, 2)) * 60 + Number(s.slice(3, 5));
@@ -95,6 +99,7 @@ export function impostazioniDa(v = {}) {
   return {
     corsi, prezzoPrivata: euro(v.prezzo_privata_cent || 0), chiusura: v.chiusura ?? '08',
     notifiche: { ...NOTIFICHE, ...(v.notifiche || {}) }, testi: { ...(v.testi || {}) }, primoGiorno: v.primo_giorno || null,
+    tesseramento: v.tesseramento_cent == null ? TESSERAMENTO : euro(v.tesseramento_cent),
   };
 }
 
@@ -107,7 +112,7 @@ export function daDatabase({ allievi = [], lezioni = [], pagamenti = [] }) {
       prezzi: Object.fromEntries(Object.entries(r.prezzi || {}).map(([k, v]) => [k, euro(v)])),
       privata: r.prezzo_privata_cent == null ? null : euro(r.prezzo_privata_cent),
       giorno: r.giorno_pagamento || 1, cert: r.certificato || '', forme: { ...(r.forme || {}) }, cell: r.telefono || '',
-      uscito: !!r.uscito, pagato: {}, cifre: {}, dal: String(r.dal).slice(0, 7),
+      uscito: !!r.uscito, pagato: {}, cifre: {}, dal: String(r.dal).slice(0, 7), cintura: r.cintura || 'bianca',
     };
     if (r.protetto) a.protetto = true;
     perId.set(r.id, a);
@@ -158,7 +163,7 @@ export function versoDatabase({ allievi, lezioni, imp, testi = {} }) {
       id: a.id, nome: a.nome, telefono: a.cell || '', corsi: [...a.corsi], fa_private: !!a.private, private_mese: a.privateMese || 0,
       prezzi: Object.fromEntries(Object.entries(a.prezzi).map(([k, v]) => [k, cent(v)])),
       prezzo_privata_cent: a.privata == null ? null : cent(a.privata), giorno_pagamento: a.giorno, dal: `${a.dal}-01`,
-      certificato: a.cert || null, forme: { ...a.forme }, uscito: !!a.uscito,
+      certificato: a.cert || null, forme: { ...a.forme }, uscito: !!a.uscito, cintura: a.cintura || 'bianca',
     });
     for (const [m, il] of Object.entries(a.pagato)) {
       if (!il) continue;
@@ -183,7 +188,8 @@ export function versoDatabase({ allievi, lezioni, imp, testi = {} }) {
     corsi[k] = { giorni: [...c.giorni], inizio: c.inizio, fine: c.fine, prezzo_cent: cent(c.prezzo), settimane: c.settimane || 1 };
     if (c.prima && c.prima.length) corsi[k].prima = c.prima.map(p => ({ ...p, giorni: [...p.giorni] }));
   }
-  const valori = { corsi, prezzo_privata_cent: cent(imp.prezzoPrivata), chiusura: imp.chiusura, notifiche: { ...imp.notifiche }, testi: { ...testi } };
+  const valori = { corsi, prezzo_privata_cent: cent(imp.prezzoPrivata), chiusura: imp.chiusura, notifiche: { ...imp.notifiche }, testi: { ...testi },
+    tesseramento_cent: cent(imp.tesseramento ?? TESSERAMENTO) };
   return { allievi: righeAllievi, pagamenti: righePagamenti, lezioni: righeLezioni, valori };
 }
 
@@ -249,6 +255,7 @@ export function creaRegole(ctx) {
   //  - private: le private al mese (dalla scheda) per il prezzo della privata;
   //  - a fine mese contano i rapporti: le private fatte in meno sono credito, quelle in più si pagano, sul mese dopo.
   //    Non è venuto e annullata non sono fatte; una privata senza rapporto non conta finché il Sifu non la racconta;
+  //  - a dicembre, il tesseramento (Simone 20/10): la quota delle Impostazioni, per ogni allievo;
   //  - si segna pagato solo quando ci sono tutti i soldi (Simone): niente cifre a metà.
   const prezzoCorso = (a, c) => a.prezzi[c] ?? corsi()[c]?.prezzo ?? 0;
   const quotaCorsi = a => a.corsi.reduce((t, c) => t + prezzoCorso(a, c), 0);
@@ -258,14 +265,15 @@ export function creaRegole(ctx) {
     return { n: lez.filter(l => l.fatto && !l.nonFatta).length, senza: lez.filter(l => !l.fatto && !l.nonFatta).map(l => l.giorno).sort() };
   }
   function conto(a, m) {
-    const c = { corsi: chiuso(m) ? 0 : quotaCorsi(a), nPriv: a.privateMese, priv: a.privateMese * prezzoPrivata(a), mesePrima: meseDopo(m, -1), nDiff: 0, diff: 0, finora: null };
+    const c = { corsi: chiuso(m) ? 0 : quotaCorsi(a), nPriv: a.privateMese, priv: a.privateMese * prezzoPrivata(a), mesePrima: meseDopo(m, -1), nDiff: 0, diff: 0, finora: null,
+      tess: m.slice(5) === '12' ? (ctx.imp.tesseramento ?? TESSERAMENTO) : 0 };
     const p = c.mesePrima;
     if (p >= a.dal) {
       const f = privateFatte(a, p);
       if (p < ctx.mese) { c.nDiff = f.n - a.privateMese; c.diff = c.nDiff * prezzoPrivata(a); }   // mese finito: il conto delle private
       else if (a.privateMese || f.n) c.finora = f;                                      // mese in corso: si sa a fine mese
     }
-    c.tot = Math.max(0, c.corsi + c.priv + c.diff);
+    c.tot = Math.max(0, c.corsi + c.priv + c.diff + c.tess);
     return c;
   }
   const quoteRitardo = a => a.uscito ? [] : mesiDa(a).filter(m => !a.pagato[m] && ctx.oggi > scadenzaQuota(a, m) && conto(a, m).tot > 0);

@@ -2,7 +2,7 @@
    si caricano dal database (js/dati.js) all'apertura e quando l'app torna davanti; ogni cambio si salva subito;
    Annulla rimette com'era e salva. I conti stanno in comune/regole.js, uguali per l'app e per il server. */
 import {
-  GG, MESI, MESI3, ORDINALI, FORME, due, daChiave, sposta, dataLunga, dataMedia, dataBreve, dataCorta, elide, ilGiorno, dataPiena,
+  GG, MESI, MESI3, ORDINALI, FORME, CINTURE, TESSERAMENTO, due, daChiave, sposta, dataLunga, dataMedia, dataBreve, dataCorta, elide, ilGiorno, dataPiena,
   giorniFra, lunediDi, nomeMese, etichettaSettimana, etichettaIntervallo, meseDopo, dalGiorno, dataParole, ilData, delGiorno,
   maiuscola, adessoRoma, aggiornaOrario, oreFra, lezioniDeiCorsi, impostazioniDa, daDatabase, versoDatabase, creaRegole,
 } from '../comune/regole.js';
@@ -31,7 +31,7 @@ const TESTI = {
 const SEGNAPOSTI = { cert30: '{nome} · {data}', cert15: '{nome} · {data} · {tra}', scaduto: '{nome} · {data}', manca: '{nome}', mese: '{nome} · {mese} · {totale} · {dettaglio}', quota: '{nome} · {mese} · {totale}' };
 // Le impostazioni (menu ☰): i corsi sono gli stessi oggetti di CORSI. Il tema è di questo telefono.
 const IMP = { tema: db.temaSalvato(), corsi: CORSI, prezzoPrivata: 0, chiusura: '08', notifiche: { cert30: true, cert15: true, pagamenti: true, ora: '08:00' },
-  testi: JSON.parse(JSON.stringify(TESTI)), calendario: null };
+  testi: JSON.parse(JSON.stringify(TESTI)), calendario: null, tesseramento: TESSERAMENTO };
 
 const stato = { ora: adessoRoma().ora, giorno: OGGI, sezione: 'oggi', filtro: 'Tutti', cerca: '', vista: 'Lezioni', datiAperti: false, mostraUsciti: false,
   corso: 'Mortara', vistaCorso: 'Lezioni', vistaPrivate: 'Lezioni', scadenza: 'Pagamenti', piuAvanti: false, lezioni: [], allievi: [],
@@ -84,6 +84,7 @@ function righeConto(a, m) {
   if (c.nPriv) r.push([`${pl(c.nPriv, 'privata', 'private')} × ${prezzoPrivata(a)} €`, `${c.priv} €`]);
   if (c.nDiff < 0) r.push([`credito di ${mp}: ${pl(-c.nDiff, 'privata', 'private')}`, `−${-c.diff} €`]);
   if (c.nDiff > 0) r.push([`${pl(c.nDiff, 'privata', 'private')} in più a ${mp}`, `+${c.diff} €`]);
+  if (c.tess) r.push(['Tesseramento', `${c.tess} €`]);   // a dicembre, per ogni allievo
   return { c, r };
 }
 function segno(a) { return ritardo(a) ? '! pagamento' : certScaduto(a) ? '! certificato' : ''; }
@@ -210,6 +211,8 @@ const AZIONI_VOCE = {
       righe.push(`privata: ${az.prezzo_privata} € a lezione`);
     }
     if (az.telefono) { a.cell = String(az.telefono).trim(); righe.push(`cellulare: ${a.cell}`); }
+    const c = CINTURE.find(([n]) => n === String(az.cintura || '').trim().toLowerCase());
+    if (c && c[0] !== a.cintura) { a.cintura = c[0]; righe.push(`cintura ${c[0]}`); }
     if (typeof az.uscito === 'boolean' && az.uscito !== a.uscito) { a.uscito = az.uscito; righe.push(a.uscito ? 'non viene più' : 'torna a venire'); }
     return righe.length ? [{ luogo: `Scheda · ${a.nome}`, righe }] : [];
   },
@@ -255,7 +258,7 @@ function applicaAzioni(azioni) {
 
 function nuovoAllievo(nome, corsi, priv, privata, cell, privateMese = 0) {
   const g = Number(OGGI.slice(8));
-  const a = { id: db.nuovoId(), nome, corsi, private: priv, privateMese: priv ? privateMese : 0, prezzi: {}, privata: privata === IMP.prezzoPrivata ? null : privata, giorno: g, cert: '', forme: {}, cell, uscito: false,
+  const a = { id: db.nuovoId(), nome, corsi, private: priv, privateMese: priv ? privateMese : 0, prezzi: {}, privata: privata === IMP.prezzoPrivata ? null : privata, giorno: g, cert: '', forme: {}, cell, uscito: false, cintura: 'bianca',
     pagato: { [MESE]: OGGI }, cifre: {}, dal: MESE };
   a.cifre[MESE] = conto(a, MESE).tot;   // il primo mese lo paga quando comincia
   return a;
@@ -395,7 +398,7 @@ function scheda(a) {
     <div class="pannello" role="dialog" aria-modal="true" aria-label="Scheda di ${esc(a.nome)}">
       <header class="alto"><button type="button" class="indietro" data-az="chiudi">${ICONA.sx}${stato.sezione === 'scadenze' ? 'Scadenze' : 'Allievi'}</button></header>
       <div class="corpo-pannello gutter">
-        <h1>${esc(a.nome)}</h1>
+        <div class="testa-scheda"><h1>${esc(a.nome)}</h1>${cintura(a)}</div>
         <p class="sotto">${a.uscito ? 'non viene più' : esc(fa(a))}</p>
         ${avvisiPagamento(a)}
         ${creditoScheda(a)}
@@ -862,6 +865,7 @@ function messaggio(a, msg, m) {
     if (c.nPriv) parti.push(`${pl(c.nPriv, 'privata', 'private')} ${c.priv} €`);
     if (c.nDiff < 0) parti.push(`meno ${-c.diff} € di credito di ${mp}`);
     if (c.nDiff > 0) parti.push(`${pl(c.nDiff, 'privata', 'private')} in più a ${mp} ${c.diff} €`);
+    if (c.tess) parti.push(`tesseramento ${c.tess} €`);
     if (parti.length < 2) return riempi('quota', { nome, mese: nomeMese(m), totale: c.tot });
     return riempi('mese', { nome, mese: nomeMese(m), totale: c.tot, dettaglio: parti.join(', ') });
   }
@@ -1223,7 +1227,7 @@ function annulla() {
   stato.lezioni.splice(0, stato.lezioni.length, ...p.lezioni);
   stato.allievi.splice(0, stato.allievi.length, ...p.allievi);
   for (const k of Object.keys(CORSI)) { for (const x of Object.keys(CORSI[k])) delete CORSI[k][x]; Object.assign(CORSI[k], p.imp.corsi[k]); }
-  Object.assign(IMP, { tema: p.imp.tema, prezzoPrivata: p.imp.prezzoPrivata, chiusura: p.imp.chiusura, notifiche: p.imp.notifiche, testi: p.imp.testi });
+  Object.assign(IMP, { tema: p.imp.tema, prezzoPrivata: p.imp.prezzoPrivata, chiusura: p.imp.chiusura, notifiche: p.imp.notifiche, testi: p.imp.testi, tesseramento: p.imp.tesseramento });
   persisti(dopo);                                    // com'era prima: si salva anche questo
   delete $('avviso-posto').dataset.prima;
   $('avviso-posto').innerHTML = '';
@@ -1287,6 +1291,10 @@ function pannelloImpostazioni() {
         <section class="blocco"><h2 class="titolo-blocco">PRIVATE</h2>
           <div class="campo"><span class="nome-campo">Prezzo</span><div class="campo-valore"><input type="number" inputmode="numeric" min="0" data-imp="prezzoPrivata" value="${IMP.prezzoPrivata}" aria-label="Prezzo della privata, di solito, in euro"><span class="unita">€ a lezione</span></div></div>
           <p class="nota">Di solito. Per un allievo, nella sua scheda.</p>
+        </section>
+        <section class="blocco"><h2 class="titolo-blocco">TESSERAMENTO</h2>
+          <div class="campo"><span class="nome-campo">Quota</span><div class="campo-valore"><input type="number" inputmode="numeric" min="0" data-imp="tesseramento" value="${IMP.tesseramento}" aria-label="Quota del tesseramento in euro"><span class="unita">€ all'anno</span></div></div>
+          <p class="nota">Nel conto di dicembre, per ogni allievo.</p>
         </section>
         <section class="blocco"><h2 class="titolo-blocco">SCUOLA CHIUSA</h2>
           <div class="campo"><span class="nome-campo">Mese</span><div class="campo-valore"><select data-imp="chiusura" aria-label="Mese di chiusura">
@@ -1446,6 +1454,20 @@ function apriMenu() {
     </div>`;
   $('sopra2').querySelector('.foglio button').focus();
 }
+// La cintura (Simone, 20/10): il colore del grado, a destra del nome; col tocco il Sifu la cambia
+const coloreCintura = c => (CINTURE.find(([n]) => n === c) || CINTURE[0])[1];
+const cintura = a => `<button type="button" class="cintura" data-az="cintura" style="--colore:${coloreCintura(a.cintura)}" aria-label="Cintura ${esc(a.cintura || 'bianca')}: cambia"></button>`;
+function apriCintura() {
+  const a = allievo(pila.at(-1).nome);
+  $('sopra2').innerHTML = `
+    <div class="velo" data-az="chiudi-velo">
+      <div class="foglio gutter" role="dialog" aria-modal="true" aria-label="La cintura di ${esc(a.nome)}">
+        <h2>${esc(a.nome)} · cintura</h2>
+        ${CINTURE.map(([n, colore]) => `<button type="button" data-az="imposta-cintura" data-v="${n}" aria-pressed="${n === (a.cintura || 'bianca')}"><span class="campione" style="--colore:${colore}" aria-hidden="true"></span>${maiuscola(n)}</button>`).join('')}
+        <button type="button" data-az="chiudi-velo">Chiudi</button>
+      </div>
+    </div>`;
+}
 function apriForma(f) {
   const a = allievo(pila.at(-1).nome), n = FORME.find(x => x[0] === f)[1], v = a.forme[f] || 0;
   const voci = Array.from({ length: n + 1 }, (_, i) => i);
@@ -1488,6 +1510,7 @@ document.addEventListener('change', e => {
     const prima = foto();
     if (k === 'prezzoPrivata') IMP.prezzoPrivata = Number(t.value || 0);
     else if (k === 'chiusura') IMP.chiusura = t.value;
+    else if (k === 'tesseramento') IMP.tesseramento = Number(t.value || 0);
     else IMP.notifiche.ora = t.value;
     disegna(); salvato('Salvato', prima);
   } else if (t.matches('[data-imp-corso]')) {      // un corso: prezzo e orario (vale dalla prossima lezione)
@@ -1586,6 +1609,13 @@ document.addEventListener('click', e => {
     case 'mese-corso': apri({ tipo: 'mese-corso', corso: stato.corso, k: t.dataset.k }); break;
     case 'private-di': stato.vistaPrivate = 'Lezioni'; apri({ tipo: 'private', nome: t.dataset.nome }); break;
     case 'forma': apriForma(t.dataset.f); break;
+    case 'cintura': apriCintura(); break;
+    case 'imposta-cintura': {
+      const prima = foto(), a = allievo(pila.at(-1).nome);
+      a.cintura = t.dataset.v;
+      $('sopra2').innerHTML = ''; disegnaPila(); salvato(`Cintura ${t.dataset.v}`, prima);
+      break;
+    }
     case 'imposta-forma': {
       const prima = foto();
       allievo(pila.at(-1).nome).forme[t.dataset.f] = Number(t.dataset.v);
@@ -1667,7 +1697,7 @@ function usaDati(d) {
   const imp = impostazioniDa(d.valori);
   for (const k of Object.keys(CORSI)) delete CORSI[k];
   Object.assign(CORSI, imp.corsi);
-  Object.assign(IMP, { prezzoPrivata: imp.prezzoPrivata, chiusura: imp.chiusura, notifiche: imp.notifiche, calendario: d.calendario || null, testi: JSON.parse(JSON.stringify(TESTI)) });
+  Object.assign(IMP, { prezzoPrivata: imp.prezzoPrivata, chiusura: imp.chiusura, notifiche: imp.notifiche, calendario: d.calendario || null, testi: JSON.parse(JSON.stringify(TESTI)), tesseramento: imp.tesseramento });
   for (const [k, testo] of Object.entries(imp.testi)) if (IMP.testi[k]) IMP.testi[k].testo = testo;
   PRIMO_GIORNO = imp.primoGiorno && imp.primoGiorno <= OGGI ? imp.primoGiorno : OGGI;
   const { allievi, lezioni } = daDatabase(d);
