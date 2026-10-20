@@ -1,6 +1,492 @@
-:root { color-scheme: dark; }
-html, body { margin: 0; min-height: 100%; background: #1a1613; color: #f3ece2; font-family: system-ui, -apple-system, "Segoe UI", sans-serif; }
-main { min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; text-align: center; padding: 24px; }
-.marchio { margin: 0; font-size: 14px; letter-spacing: .3em; text-transform: uppercase; color: #d9b382; }
-h1 { margin: 0; font-size: 28px; font-weight: 600; letter-spacing: .02em; }
-.stato { margin: 18px 0 0; font-size: 17px; color: #a89b8a; }
+/* Lòngkai — stile.css: lo stile del prototipo approvato (prototipi/app.html, versione 16), con i font e il logo nei file dell'app. */
+@font-face { font-family: "Atkinson Hyperlegible"; font-style: normal; font-weight: 400; font-display: swap; src: url("font/atkinson-400.woff2") format("woff2"); }
+@font-face { font-family: "Atkinson Hyperlegible"; font-style: normal; font-weight: 700; font-display: swap; src: url("font/atkinson-700.woff2") format("woff2"); }
+@font-face { font-family: "Cinzel"; font-style: normal; font-weight: 400 900; font-display: swap; src: url("font/cinzel-ext.woff2") format("woff2"); unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF; }
+@font-face { font-family: "Cinzel"; font-style: normal; font-weight: 400 900; font-display: swap; src: url("font/cinzel.woff2") format("woff2"); unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
+/* Layout: una colonna da telefono (max 420 px) fissata allo schermo: riga in alto, elenco che scorre, barra in basso col microfono al centro */
+:root {
+  --crema: #f6f3ef;        /* fondo dell'app (brand --light) */
+  --carta: #fffdfa;        /* barre e fogli */
+  --tavolo: #e6dfd4;       /* fuori dalla colonna, su schermi larghi */
+  --inchiostro: #1e1e1e;   /* testo (brand --dark) */
+  --muto: #5f564e;         /* testo secondario */
+  --terra: #8b4a2f;        /* tasti e azioni (brand --primary) */
+  --terra-scuro: #70391f;
+  --terra-velo: #f1e4dc;   /* fondo dei tasti secondari */
+  --oro: #d9b382;          /* solo decoro (brand --secondary) */
+  --linea: #e2d9cc;
+  --verde: #2e7044;
+  --rosso: #b42318;
+  --rosso-velo: #fbe9e6;   /* fondo di quello che va sistemato */
+  --font-testo: "Atkinson Hyperlegible", "Segoe UI", system-ui, sans-serif;
+  --font-titolo: "Cinzel", Georgia, serif;
+  color-scheme: light;
+}
+body {
+  background: var(--tavolo);
+  color: var(--inchiostro);
+  font-family: var(--font-testo);
+  font-size: 17px;
+  line-height: 1.4;
+}
+.app, .app * { box-sizing: border-box; }
+button { font: inherit; color: inherit; background: none; border: 0; padding: 0; cursor: pointer; }
+button:focus-visible, input:focus-visible { outline: 3px solid var(--oro); outline-offset: 2px; }
+
+.app {
+  position: fixed; top: 0; bottom: 0; left: 0; right: 0;
+  max-width: 420px; margin: 0 auto;
+  display: flex; flex-direction: column;
+  background: var(--crema);
+  overflow: hidden;
+}
+@media (min-width: 440px) { .app { box-shadow: 0 0 0 1px var(--linea), 0 12px 40px rgb(30 30 30 / 0.12); } }
+
+.gutter {
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+
+/* Regola di Simone: nessuna riga va a capo. Se il testo non ci sta: l'inizio e i puntini; col tocco si apre intero. */
+.una-riga, .titolo, .riga, .capito h3, .capito p,
+.persona .nome, .persona .fa, .persona .ore, .persona .segno, .nome-campo, .valore, .periodo-titolo, .forma-nome, .forma-stato,
+.scad-nome, .scad-cosa, .scad-data, .conto-mese, .fp-nome span, .foglio h2, .capito-testa strong, .credito-cifra, .credito-perche {
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0;
+}
+
+/* Riga in alto */
+.alto {
+  display: flex; align-items: center; gap: 4px;
+  height: 52px; flex: none;
+  background: var(--carta);
+  border-bottom: 1px solid var(--linea);
+  padding-left: max(4px, env(safe-area-inset-left, 0px));
+  padding-right: max(4px, env(safe-area-inset-right, 0px));
+}
+.icona-tasto { width: 44px; height: 44px; display: grid; place-items: center; border-radius: 22px; flex: none; }
+.icona-tasto:disabled { opacity: 0.25; cursor: default; }
+.icona-tasto svg { width: 24px; height: 24px; }
+.data { flex: 1; display: flex; align-items: center; justify-content: center; min-width: 0; }
+.data strong { font-size: 18px; white-space: nowrap; }
+.cerca-box { position: relative; flex: 1; min-width: 0; display: flex; margin-left: 8px; }
+.cerca-box svg { position: absolute; left: 12px; top: 10px; width: 20px; height: 20px; color: var(--muto); pointer-events: none; }
+.cerca { flex: 1; min-width: 0; height: 40px; border: 1px solid var(--linea); border-radius: 20px; background: var(--crema); padding: 0 12px 0 38px; font: inherit; font-size: 16px; color: var(--inchiostro); }
+.aggiungi { flex: none; min-height: 40px; padding: 0 12px; border-radius: 20px; background: var(--terra-velo); color: var(--terra); font-weight: 700; font-size: 15px; white-space: nowrap; }
+
+/* Contenuto */
+main { flex: 1; overflow-y: auto; padding-block: 4px 24px; }
+main, .corpo-pannello, .foglio, .capito { scrollbar-width: none; }   /* niente barra laterale: si scorre col dito */
+main::-webkit-scrollbar, .corpo-pannello::-webkit-scrollbar, .foglio::-webkit-scrollbar, .capito::-webkit-scrollbar { display: none; }
+.vuoto { color: var(--muto); padding-block: 24px; }
+
+.lezione {
+  position: relative;
+  display: grid; grid-template-columns: 46px minmax(0, 1fr) auto; column-gap: 8px; align-items: start;
+  grid-template-areas: "ora titolo tasto" "ora stato tasto";   /* titolo all'altezza dell'inizio, stato della fine */
+  padding-block: 10px;
+  border-bottom: 1px solid var(--linea);
+}
+.lezione .titolo { grid-area: titolo; line-height: 24px; }
+.lezione .riga { line-height: 22px; }
+.lezione .stato { grid-area: stato; display: flex; flex-direction: column; min-width: 0; }
+.lezione .tasto, .lezione .freccia { grid-area: tasto; align-self: center; }
+.freccia { display: grid; place-items: center; width: 24px; color: var(--muto); }
+.freccia svg { width: 22px; height: 22px; }
+.lezione .tasto { padding: 0 12px; gap: 4px; font-size: 15px; }
+.lezione.arretrata { padding-block: 8px; }
+.lezione.arretrata .ora, .lezione.data-col .ora { font-size: 15px; }
+.lezione.evidenza { animation: lampo 1.2s ease-out; }
+@keyframes lampo { from { background: var(--terra-velo); } to { background: transparent; } }
+.stendi { position: absolute; inset: 0; z-index: 0; }
+.lezione .ora { grid-area: ora; grid-row: 1 / span 2; font-weight: 700; font-variant-numeric: tabular-nums; align-self: start; line-height: 24px; }
+.titolo { font-weight: 700; }
+.lezione .ora .fine { display: block; font-weight: 400; font-size: 14px; line-height: 22px; color: var(--muto); }
+.riga { font-size: 16px; color: var(--muto); }
+.riga .etich { font-weight: 700; color: var(--inchiostro); }
+.riga.ok { color: var(--inchiostro); }
+.riga.ok::before { content: "✓ "; color: var(--verde); font-weight: 700; }
+.riga.da-fare, .da-fare-testo { color: var(--terra); font-weight: 700; }
+.lezione.spenta .titolo, .lezione.spenta .ora { color: var(--muto); text-decoration: line-through; }
+
+.tasto {
+  display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+  min-height: 44px; padding: 0 16px; border-radius: 22px;
+  background: var(--terra); color: #fff; font-weight: 700; font-size: 16px;
+  position: relative; z-index: 1; white-space: nowrap;
+}
+.tasto:active { background: var(--terra-scuro); }
+.tasto svg { width: 20px; height: 20px; }
+.tasto.secondario { background: var(--terra-velo); color: var(--terra); }
+.tasto.grande { min-height: 56px; font-size: 18px; width: 100%; }
+.link { color: var(--terra); font-weight: 700; min-height: 44px; padding: 0 8px; position: relative; z-index: 1; white-space: nowrap; }
+.link.rosso { color: var(--rosso); }
+
+.blocco { margin-top: 24px; }
+.titolo-blocco { font-family: var(--font-titolo); font-weight: 600; font-size: 15px; letter-spacing: 0.06em; color: var(--muto); margin: 0 0 4px; white-space: nowrap; }
+
+/* Selettori */
+.selettore { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; background: var(--terra-velo); border-radius: 12px; padding: 3px; margin-block: 10px 6px; }
+.selettore button { min-height: 38px; border-radius: 9px; font-size: 15px; color: var(--terra); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding: 0 4px; }
+.selettore button[aria-pressed="true"] { background: var(--carta); font-weight: 700; color: var(--inchiostro); box-shadow: 0 1px 3px rgb(30 30 30 / 0.12); }
+@media (max-width: 340px) { .selettore button { font-size: 14px; padding: 0 2px; } }
+
+/* Allievi: la lista */
+.persona {
+  position: relative; display: grid; grid-template-columns: minmax(0, 1fr) auto 24px; column-gap: 8px; align-items: center;
+  grid-template-areas: "nome ore freccia" "fa segno freccia"; padding-block: 10px; border-bottom: 1px solid var(--linea);
+}
+.persona .nome { grid-area: nome; font-weight: 700; line-height: 24px; }
+.persona .fa { grid-area: fa; font-size: 15px; color: var(--muto); line-height: 22px; }
+.persona .ore { grid-area: ore; font-size: 15px; font-variant-numeric: tabular-nums; text-align: right; line-height: 24px; }
+.persona .segno { grid-area: segno; font-size: 15px; font-weight: 700; color: var(--rosso); text-align: right; line-height: 22px; }
+.persona .freccia { grid-area: freccia; grid-row: 1 / span 2; }
+.persona.uscito .nome, .persona.uscito .ore { color: var(--muto); }
+.usciti { display: flex; align-items: center; justify-content: space-between; width: 100%; min-height: 48px; color: var(--muto); font-size: 16px; }
+.usciti svg { width: 22px; height: 22px; flex: none; }
+
+/* La scheda */
+.ore-mese { display: flex; align-items: baseline; gap: 8px; white-space: nowrap; }
+.ore-mese strong { font-size: 30px; line-height: 1.1; }
+/* Le due barre: Corsi e Private, ognuna con il suo "N su M" */
+.conti { margin-top: 8px; }
+.conto { display: grid; grid-template-columns: 62px minmax(0, 1fr) 72px; align-items: center; column-gap: 10px; font-size: 15px; line-height: 24px; }
+.conto-nome { color: var(--muto); white-space: nowrap; }
+.conto-num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.nota { margin: 2px 0 0; font-size: 15px; color: var(--muto); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.dati-riga { position: relative; display: flex; align-items: center; gap: 8px; width: 100%; min-height: 52px; border-block: 1px solid var(--linea); text-align: left; margin-top: 16px; }
+.dati-riga strong { flex: none; }
+.dati-riga .valore { flex: 1; font-size: 15px; color: var(--muto); }
+.dati-riga svg { width: 22px; height: 22px; color: var(--muto); flex: none; transition: transform 0.15s; }
+.dati-riga[aria-expanded="true"] svg { transform: rotate(90deg); }
+.campo { display: grid; grid-template-columns: 112px minmax(0, 1fr); align-items: center; gap: 8px; min-height: 52px; border-bottom: 1px solid var(--linea); }
+.campo.largo { grid-template-columns: 1fr; gap: 6px; padding-block: 8px; }
+.nome-campo { font-size: 15px; color: var(--muto); }
+.campo-valore { display: flex; align-items: center; gap: 8px; min-width: 0; white-space: nowrap; }
+.campo-valore .valore { flex: 1; }
+.campo input { font: inherit; font-size: 16px; min-width: 0; height: 40px; border: 1px solid var(--linea); border-radius: 8px; padding: 0 10px; background: var(--carta); color: var(--inchiostro); }
+.campo input[type="number"] { width: 72px; flex: none; }
+.campo input[type="date"], .campo input[type="tel"], .campo input[type="text"] { flex: 1; width: 100%; }
+.campo .unita { font-size: 15px; color: var(--muto); }
+.scelte { display: flex; gap: 6px; }
+.scelta { min-height: 38px; padding: 0 12px; border-radius: 19px; border: 1px solid var(--terra); color: var(--terra); font-size: 15px; white-space: nowrap; }
+.scelta[aria-pressed="true"] { background: var(--terra); color: #fff; font-weight: 700; }
+.tasto.piccolo { min-height: 40px; padding: 0 12px; font-size: 15px; }
+.forma { position: relative; display: grid; grid-template-columns: auto minmax(0, 1fr) 24px; grid-template-areas: "nome tacche freccia" "stato stato freccia"; align-items: center; column-gap: 12px; padding-block: 8px; border-bottom: 1px solid var(--linea); }
+.forma-nome { grid-area: nome; font-size: 17px; font-weight: 700; line-height: 24px; }
+.forma .tacche { grid-area: tacche; }
+.forma-stato { grid-area: stato; font-size: 16px; color: var(--muto); line-height: 22px; }
+.forma .freccia { grid-area: freccia; grid-row: 1 / span 2; }
+.tacche { display: flex; gap: 3px; }
+.tacca { width: 13px; height: 13px; border-radius: 3px; border: 2px solid var(--oro); }
+.tacca.si { background: var(--oro); }
+.periodo { position: relative; display: grid; grid-template-columns: minmax(0, 1fr) 24px; column-gap: 8px; align-items: center; padding-block: 10px; border-bottom: 1px solid var(--linea); }
+.periodo .corpo { display: flex; flex-direction: column; min-width: 0; }
+.periodo-testa { display: flex; align-items: center; gap: 10px; min-width: 0; line-height: 24px; }
+.periodo-titolo { font-weight: 700; flex: 1; }
+.barretta { flex: 1; display: flex; height: 8px; border-radius: 4px; background: var(--linea); min-width: 24px; overflow: hidden; }
+.barretta span { display: block; height: 100%; flex: none; }
+.barretta .si { background: var(--oro); }
+.periodo-ore { flex: none; font-size: 15px; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.periodo .riga { line-height: 22px; }
+
+/* Barra in basso */
+.barra {
+  flex: none; display: grid; grid-template-columns: repeat(5, 1fr); align-items: start;
+  height: calc(64px + env(safe-area-inset-bottom, 0px));
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+  padding-left: env(safe-area-inset-left, 0px); padding-right: env(safe-area-inset-right, 0px);
+  background: var(--carta); border-top: 1px solid var(--linea);
+}
+.scheda-barra { position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; height: 64px; font-size: 13px; color: var(--muto); white-space: nowrap; }
+.scheda-barra svg { width: 24px; height: 24px; }
+.scheda-barra[aria-current="page"] { color: var(--terra); font-weight: 700; }
+.scheda-barra[aria-current="page"]::before { content: ""; position: absolute; top: 0; left: 25%; right: 25%; height: 3px; border-radius: 0 0 3px 3px; background: var(--terra); }
+.parla { justify-content: flex-end; padding-bottom: 6px; color: var(--terra); font-weight: 700; }
+.parla .cerchio { width: 60px; height: 60px; border-radius: 50%; margin-top: -26px; display: grid; place-items: center; background: var(--terra); color: #fff; box-shadow: inset 0 0 0 2px var(--oro), 0 0 0 4px var(--crema), 0 4px 12px rgb(139 74 47 / 0.35); }
+.parla .cerchio svg { width: 28px; height: 28px; }
+.contatore { position: absolute; top: 6px; left: calc(50% + 6px); min-width: 20px; height: 20px; border-radius: 10px; padding: 0 6px; background: var(--rosso); color: #fff; font-size: 12px; font-weight: 700; line-height: 20px; text-align: center; }
+
+/* Pannelli sopra l'app */
+/* I pannelli si fermano sopra la barra: Parla resta sempre a portata (solo la voce copre tutto) */
+.pannello { position: absolute; top: 0; left: 0; right: 0; bottom: calc(64px + env(safe-area-inset-bottom, 0px)); z-index: 10; display: flex; flex-direction: column; background: var(--crema); padding-top: env(safe-area-inset-top, 0px); }
+.pannello .corpo-pannello { flex: 1; overflow-y: auto; padding-block: 16px 32px; }
+.barra { position: relative; z-index: 15; }
+.pannello h1 { font-size: 22px; margin: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.sotto { color: var(--muto); margin: 2px 0 0; font-size: 16px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.piede { flex: none; display: flex; flex-direction: column; gap: 6px; align-items: center; padding-top: 12px; padding-bottom: 28px; background: var(--carta); border-top: 1px solid var(--linea); }   /* 28px: lascia posto al cerchio di Parla */
+.piede .sotto { font-size: 15px; text-align: center; }
+.indietro { display: inline-flex; align-items: center; gap: 2px; min-height: 44px; padding-right: 12px; font-weight: 700; color: var(--terra); white-space: nowrap; }
+.indietro svg { width: 24px; height: 24px; }
+.testo-blocco { margin: 0; }
+.testo-blocco + .testo-blocco { margin-top: 4px; }
+.testo-blocco.muto { color: var(--muto); font-size: 16px; }
+.nomi { display: grid; grid-template-columns: 1fr 1fr; gap: 2px 12px; margin-top: 6px; font-size: 16px; color: var(--muto); }
+.nomi span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+/* Voce */
+.voce-pannello { z-index: 25; bottom: 0; }
+.voce-pannello .corpo-pannello { display: flex; flex-direction: column; align-items: center; gap: 14px; padding-top: 28px; text-align: center; }
+.contesto { font-weight: 700; font-size: 18px; margin: 0; max-width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.tempo { font-size: 44px; font-variant-numeric: tabular-nums; font-weight: 700; margin: 0; }
+.onde { display: flex; gap: 6px; height: 48px; align-items: center; }
+.onde span { width: 6px; height: 12px; border-radius: 3px; background: var(--terra); animation: onda 0.9s ease-in-out infinite; }
+.onde span:nth-child(2) { animation-delay: 0.15s; } .onde span:nth-child(3) { animation-delay: 0.3s; }
+.onde span:nth-child(4) { animation-delay: 0.45s; } .onde span:nth-child(5) { animation-delay: 0.6s; }
+@keyframes onda { 0%, 100% { height: 12px; } 50% { height: 44px; } }
+@media (prefers-reduced-motion: reduce) { .onde span, .lezione.evidenza { animation: none; } .onde span { height: 28px; } .dati-riga svg { transition: none; } }
+.finta { width: 100%; max-width: 360px; background: var(--carta); border: 1px dashed var(--oro); border-radius: 12px; padding: 10px 12px; text-align: left; }
+.finta p { margin: 0 0 6px; font-size: 14px; color: var(--muto); }
+.fine-tasto { width: 96px; height: 96px; border-radius: 50%; background: var(--terra); color: #fff; font-size: 20px; font-weight: 700; flex: none; }
+.fine-tasto:active { background: var(--terra-scuro); }
+
+/* Ho capito così */
+.capito {
+  position: absolute; left: 8px; right: 8px; bottom: calc(72px + env(safe-area-inset-bottom, 0px)); z-index: 30;
+  max-height: 55%; overflow-y: auto;
+  background: var(--inchiostro); color: var(--crema); border-radius: 14px; padding: 12px 14px;
+  box-shadow: 0 8px 24px rgb(30 30 30 / 0.25);
+}
+.capito-testa { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.capito-testa strong { font-size: 16px; }
+.capito button { color: var(--oro); font-weight: 700; min-height: 40px; padding: 0 4px; }
+.capito h3 { font-size: 15px; margin: 8px 0 2px; color: var(--oro); }
+.capito p { margin: 0; font-size: 15px; }
+
+/* Corsi */
+.alto .selettore { flex: 1; margin: 0 2px 0 6px; }
+.grafico { margin-top: 8px; }
+.colonne { display: flex; align-items: flex-end; gap: 6px; height: 108px; margin-top: 4px; }
+.colonna { flex: 1; min-width: 0; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; gap: 2px; height: 100%; }
+.colonna b { font-size: 14px; font-variant-numeric: tabular-nums; line-height: 18px; }
+.colonna i { display: block; width: 100%; max-width: 28px; background: var(--oro); border-radius: 4px 4px 0 0; }
+.colonna span { font-size: 12px; color: var(--muto); white-space: nowrap; line-height: 16px; }
+.cosa-mese { display: grid; grid-template-columns: minmax(0, 1fr) auto; column-gap: 12px; font-size: 16px; line-height: 24px; }
+.cosa-mese span:first-child { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.cosa-mese span:last-child { color: var(--muto); font-size: 15px; white-space: nowrap; }
+
+/* Scadenze */
+.blocco.primo { margin-top: 12px; }
+.titolo-blocco.rosso { color: var(--rosso); }
+.barra-mese { display: flex; height: 10px; border-radius: 5px; overflow: hidden; background: var(--linea); margin-top: 6px; }
+.barra-mese span { display: block; height: 100%; flex: none; }
+.barra-mese .pagato { background: var(--verde); }
+.barra-mese .ritardo { background: var(--rosso); margin-left: auto; }
+.conto-mese { margin: 6px 0 0; font-size: 15px; color: var(--muto); }
+.conto-mese b { color: var(--inchiostro); }
+.conto-mese .r { color: var(--rosso); font-weight: 700; }
+/* Una riga con il tasto WhatsApp: il nome sopra, cosa c'è sotto */
+.scad { position: relative; display: grid; grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: "nome tasto" "cosa cosa"; column-gap: 8px; align-items: center; padding-block: 8px; border-bottom: 1px solid var(--linea); }
+.scad.con-freccia { grid-template-columns: minmax(0, 1fr) auto 24px; grid-template-areas: "nome tasto freccia" "cosa tasto freccia"; }
+.scad .scad-nome { grid-area: nome; font-weight: 700; line-height: 24px; }
+.scad .scad-cosa { grid-area: cosa; font-size: 15px; color: var(--muto); line-height: 22px; }
+.scad .tasto { grid-area: tasto; }
+.scad .freccia { grid-area: freccia; grid-row: 1 / span 2; }
+.scad.rossa .scad-nome, .scad.rossa .scad-cosa { color: var(--rosso); }
+/* Un pagamento in ritardo: la casella da spuntare a sinistra */
+.scad.con-spunta { grid-template-columns: 34px minmax(0, 1fr) auto; grid-template-areas: "spunta nome tasto" "spunta cosa tasto"; column-gap: 6px; padding-block: 6px; }
+.scad.con-spunta .scad-nome { line-height: 21px; }
+.scad.con-spunta .scad-cosa { line-height: 19px; }
+.spunta { grid-area: spunta; align-self: stretch; display: flex; align-items: center; position: relative; z-index: 1; }
+.casella-grande { width: 24px; height: 24px; border-radius: 6px; border: 2px solid var(--rosso); background: var(--carta); }
+.scad.avviso { margin-top: 10px; padding: 4px 6px 4px 8px; border-radius: 12px; border-bottom: 0; background: var(--rosso-velo); }
+@media (max-width: 340px) { .scad.con-spunta { grid-template-columns: 30px minmax(0, 1fr) auto; } .scad.avviso .scad-nome { font-size: 15px; } .scad.con-spunta .scad-cosa { font-size: 14px; } .scad.con-spunta .tasto.piccolo { padding: 0 10px; font-size: 14px; } }   /* "Settembre · 165 €" intero a 320 px */
+/* Il credito in alto nella scheda, solo se c'è: tocco → il conto del mese */
+.credito { position: relative; display: grid; grid-template-columns: minmax(0, 1fr) 24px; grid-template-areas: "cifra freccia" "perche freccia"; column-gap: 8px; align-items: center; width: 100%; margin-top: 10px; padding: 5px 6px 5px 12px; border: 1px solid var(--linea); border-radius: 12px; background: var(--carta); text-align: left; }
+.credito-cifra { grid-area: cifra; font-weight: 700; color: var(--verde); line-height: 21px; }
+.credito-perche { grid-area: perche; font-size: 15px; color: var(--muto); line-height: 19px; }
+.credito .freccia { grid-area: freccia; grid-row: 1 / span 2; }
+/* Il conto di un mese, riga per riga */
+.righe-conto { margin: 8px 0 4px; }
+.cosa-mese.totale { margin-top: 4px; padding-top: 4px; border-top: 1px solid var(--linea); font-weight: 700; }
+.cosa-mese.totale span:last-child { color: var(--inchiostro); font-size: 16px; }
+.foglio .tasto.grande { display: flex; justify-content: center; text-align: center; border-bottom: 0; margin: 12px 0 8px; }
+.scad-una { position: relative; display: grid; grid-template-columns: minmax(0, 1fr) auto 24px; column-gap: 8px; align-items: center; min-height: 48px; border-bottom: 1px solid var(--linea); }
+.scad-una .scad-nome { font-weight: 700; }
+.scad-data { font-size: 15px; color: var(--muto); font-variant-numeric: tabular-nums; }
+/* Il foglio dei pagamenti, come Google Sheets: linee sottili, la riga dei mesi ferma in alto */
+.fp { background: var(--carta); border: 1px solid var(--linea); }
+.fp-riga { display: grid; grid-template-columns: 80px repeat(3, minmax(0, 1fr)); min-height: 44px; border-top: 1px solid var(--linea); }
+.fp-testa { position: sticky; top: -4px; z-index: 2; min-height: 34px; border-top: 0; background: var(--carta); box-shadow: 0 1px 0 var(--linea); }
+.fp-mese { display: flex; align-items: center; padding: 0 5px; border-left: 1px solid var(--linea); font-size: 13px; color: var(--muto); white-space: nowrap; overflow: hidden; }
+.fp-mese.ora { color: var(--inchiostro); font-weight: 700; }
+.fp-nome { display: flex; align-items: center; min-width: 0; padding: 0 6px; font-size: 15px; font-weight: 700; text-align: left; }
+.fp-nome.rosso { color: var(--rosso); }
+.fp-cella { display: flex; flex-direction: column; justify-content: center; align-items: flex-start; gap: 1px; min-width: 0; padding: 4px 5px; border-left: 1px solid var(--linea); white-space: nowrap; overflow: hidden; font-variant-numeric: tabular-nums; text-align: left; }
+.fp-su { display: flex; align-items: center; gap: 4px; font-size: 13px; line-height: 17px; }
+.fp-giu { font-size: 12px; line-height: 15px; color: var(--muto); }
+.fp-cella.vuota .fp-su { font-weight: 700; }                       /* da pagare: la cifra in nero */
+.fp-cella.pagata .fp-su, .fp-cella.zero { color: var(--muto); }    /* già pagato: in grigio */
+.fp-cella.ritardo .fp-giu { color: var(--rosso); }
+.fp-cella.ritardo { background: var(--rosso-velo); color: var(--rosso); font-weight: 700; }
+.fp-cella.chiusa { background: var(--crema); color: var(--muto); }
+.casella { flex: none; display: grid; place-items: center; width: 13px; height: 13px; border-radius: 3px; border: 1.5px solid var(--muto); }
+.casella.si { background: var(--verde); border-color: var(--verde); }
+.casella svg { width: 10px; height: 10px; }
+@media (max-width: 340px) {
+  .fp-riga { grid-template-columns: 74px repeat(3, minmax(0, 1fr)); }
+  .fp-nome { padding: 0 6px; font-size: 14px; }
+  .fp-mese { font-size: 12px; padding: 0 4px; }
+  .fp-cella { padding: 4px; }
+  .fp-su { font-size: 12px; gap: 3px; }
+  .fp-giu { font-size: 11px; }
+  .casella { width: 11px; height: 11px; }
+}
+/* Il grafico dei certificati: dodici mesi, dicembre in evidenza */
+.colonne.dodici { gap: 2px; }
+.colonne.dodici .colonna span { font-size: 11px; }
+.colonna.dic b, .colonna.dic span { color: var(--terra); font-weight: 700; }
+.colonna.dic i { background: var(--terra); }
+button.colonna:active i { opacity: 0.7; }
+.nota.suggerimento { margin: 0 0 8px; }
+.messaggio { margin: 10px 0 4px; padding: 10px 12px; border-radius: 12px; background: var(--crema); border: 1px dashed var(--oro); font-size: 16px; line-height: 1.45; }
+.foglio .campo { border-bottom: 1px solid var(--linea); }
+.foglio button.rosso { color: var(--rosso); }
+.foglio button.con-freccia { display: flex; align-items: center; justify-content: space-between; }
+
+/* Il brand Lòngkai: il logo del sito (il drago con 詠春), una volta sola qui */
+.logo { display: inline-block; flex: none; background: url("icone/logo.png") center / contain no-repeat; }
+/* L'apertura: come il sito, scuro con il drago d'oro; un attimo, o un tocco */
+.apertura { position: absolute; inset: 0; z-index: 50; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; background: radial-gradient(circle at 50% 42%, #3a2117 0%, #1e0f0a 72%); color: var(--crema); transition: opacity 0.45s ease; }
+.apertura.via { opacity: 0; pointer-events: none; }
+.apertura-logo { width: 132px; height: 158px; }
+.apertura-nome { margin: 14px 0 0; font-family: var(--font-titolo); font-weight: 600; font-size: 30px; letter-spacing: 0.14em; color: var(--oro); }
+.apertura-sotto { margin: 0; font-size: 15px; color: rgb(246 243 239 / 0.78); white-space: nowrap; }
+@media (prefers-reduced-motion: reduce) { .apertura { transition: none; } }
+/* In cima al menu */
+.menu-testa { display: flex; align-items: center; gap: 12px; padding: 6px 0 10px; border-bottom: 1px solid var(--linea); }
+.menu-logo { width: 32px; height: 38px; }
+.menu-nome { margin: 0; font-family: var(--font-titolo); font-weight: 600; font-size: 19px; letter-spacing: 0.06em; color: var(--terra); white-space: nowrap; }
+.menu-sotto { margin: 0; font-size: 14px; color: var(--muto); white-space: nowrap; }
+/* Un giorno senza lezioni: il drago, leggero */
+.vuoto-logo { display: flex; flex-direction: column; align-items: center; padding-top: 32px; }
+.vuoto-logo .logo { width: 72px; height: 86px; opacity: 0.28; }
+.vuoto-logo .vuoto { padding-top: 8px; }
+
+/* Menu e fogli */
+.velo { position: absolute; inset: 0; z-index: 20; background: rgb(30 30 30 / 0.35); display: flex; align-items: flex-end; }
+.foglio { width: 100%; background: var(--carta); border-radius: 16px 16px 0 0; padding-top: 8px; padding-bottom: max(16px, env(safe-area-inset-bottom, 0px)); }
+.foglio { max-height: calc(100% - 32px); overflow-y: auto; }   /* un elenco lungo scorre dentro il foglio */
+.foglio .destra { display: flex; align-items: center; gap: 4px; flex: none; }
+.foglio h2 { font-size: 17px; margin: 8px 0 4px; white-space: nowrap; }
+.foglio button { display: block; width: 100%; text-align: left; min-height: 52px; border-bottom: 1px solid var(--linea); font-size: 17px; white-space: nowrap; }
+.foglio button[aria-pressed="true"] { font-weight: 700; color: var(--terra); }
+.foglio button:last-child { border-bottom: 0; color: var(--muto); }
+/* Il brand dentro l'app (Simone, 20/10): le barre in alto e in basso scure come il sito, l'oro per quello che è scelto,
+   la voce scura come l'apertura. Il contenuto resta chiaro, per leggere bene. */
+:root { --bruno: #24130c; --bruno-chiaro: #3a2117; --oro-velo: rgb(217 179 130 / 0.35); }
+.alto { background: var(--bruno); border-bottom: 1px solid var(--oro-velo); color: var(--crema); }
+.alto .icona-tasto { color: var(--crema); }
+.alto .indietro { color: var(--oro); }
+.alto .cerca { background: rgb(255 255 255 / 0.08); border-color: var(--oro-velo); color: var(--crema); }
+.alto .cerca::placeholder { color: rgb(246 243 239 / 0.6); }
+.alto .cerca-box svg { color: rgb(246 243 239 / 0.7); }
+.alto .aggiungi { background: var(--oro); color: var(--bruno); }
+.alto .selettore { background: rgb(255 255 255 / 0.08); }
+.alto .selettore button { color: rgb(246 243 239 / 0.85); }
+.alto .selettore button[aria-pressed="true"] { background: var(--oro); color: var(--bruno); box-shadow: none; }
+.barra { background: var(--bruno); border-top: 1px solid var(--oro-velo); }
+.scheda-barra { color: rgb(246 243 239 / 0.72); }
+.scheda-barra[aria-current="page"] { color: var(--oro); }
+.scheda-barra[aria-current="page"]::before { background: var(--oro); }
+.parla { color: var(--oro); }
+/* Parla: il drago del logo intorno al microfono (Simone) */
+.parla .cerchio { background: var(--bruno) url("icone/anello.png") center / 100% no-repeat; box-shadow: 0 0 0 4px var(--bruno), 0 4px 14px rgb(0 0 0 / 0.45); }
+.parla .cerchio svg { width: 18px; height: 18px; padding: 8px; box-sizing: content-box; border-radius: 50%; background: var(--bruno); color: var(--crema); }
+.contatore { box-shadow: 0 0 0 2px var(--bruno); }
+.titolo-blocco { color: var(--terra); }
+.voce-pannello { background: radial-gradient(circle at 50% 30%, var(--bruno-chiaro) 0%, var(--bruno) 72%); color: var(--crema); }
+.voce-pannello .sotto { color: rgb(246 243 239 / 0.75); }
+.voce-pannello .onde span { background: var(--oro); }
+.voce-pannello .link { color: var(--oro); }
+.voce-pannello .finta { color: var(--inchiostro); }
+.voce-pannello .fine-tasto { box-shadow: inset 0 0 0 3px var(--oro); }
+/* Il menu: Impostazioni e PDF del mese */
+.imp-riga { position: relative; display: grid; grid-template-columns: auto minmax(0, 1fr) 24px; column-gap: 12px; align-items: center; width: 100%; min-height: 48px; border-bottom: 1px solid var(--linea); text-align: left; }
+.imp-riga.fissa { grid-template-columns: auto minmax(0, 1fr); }
+.imp-riga.spenta .imp-nome, .imp-riga.spenta .imp-valore { color: var(--muto); font-weight: 400; }
+.imp-nome { font-weight: 700; white-space: nowrap; }
+.imp-valore { min-width: 0; font-size: 15px; color: var(--muto); text-align: right; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.imp-sw { display: grid; grid-template-columns: minmax(0, 1fr) auto; column-gap: 12px; align-items: center; min-height: 52px; border-bottom: 1px solid var(--linea); }
+.imp-sw > span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.imp-sw input[type="time"], .orari input[type="time"] { width: 108px; height: 40px; padding: 0 8px; border: 1px solid var(--linea); border-radius: 8px; background: var(--carta); font: inherit; font-size: 16px; color: var(--inchiostro); }
+.imp-stato { display: flex; align-items: center; gap: 8px; min-height: 40px; font-weight: 700; color: var(--verde); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.pallino { flex: none; width: 10px; height: 10px; border-radius: 50%; background: var(--verde); }
+.campo select { min-width: 0; height: 40px; padding: 0 8px; border: 1px solid var(--linea); border-radius: 8px; background: var(--carta); font: inherit; font-size: 16px; color: var(--inchiostro); }
+.giorni { display: flex; gap: 4px; }
+.orari { display: flex; align-items: center; gap: 8px; }
+.foglio .giorni .scelta { display: grid; place-items: center; width: 36px; min-height: 38px; padding: 0; border: 1px solid var(--terra); color: var(--terra); font-size: 14px; text-align: center; }
+.foglio .giorni .scelta[aria-pressed="true"] { color: #fff; }
+.foglio textarea { display: block; width: 100%; min-height: 150px; margin-top: 8px; padding: 10px; border: 1px solid var(--linea); border-radius: 10px; background: var(--crema); font: inherit; font-size: 16px; line-height: 1.45; color: var(--inchiostro); resize: vertical; }
+/* Il PDF del mese, come si vedrà */
+.pagina-pdf { margin-top: 12px; padding: 14px 12px 18px; background: #fff; border: 1px solid var(--linea); border-radius: 6px; box-shadow: 0 2px 10px rgb(30 30 30 / 0.08); }
+.pdf-testa { display: flex; align-items: center; gap: 10px; padding-bottom: 10px; border-bottom: 2px solid var(--oro); }
+.pdf-testa .logo { width: 30px; height: 36px; }
+.pdf-nome { margin: 0; font-family: var(--font-titolo); font-weight: 600; font-size: 17px; color: var(--terra); white-space: nowrap; }
+.pdf-mese { margin: 0; font-size: 14px; color: var(--muto); white-space: nowrap; }
+.pagina-pdf .blocco { margin-top: 18px; }
+.pagina-pdf .riga, .pagina-pdf .nota { font-size: 14px; }
+.pdf-allievo, .pdf-corso { padding-block: 6px; border-bottom: 1px solid var(--linea); }
+.pdf-allievo > .cosa-mese:first-child span:first-child, .pdf-corso > .cosa-mese:first-child span:first-child { font-weight: 700; }
+.cosa-mese.piccola { font-size: 14px; line-height: 21px; }
+/* Il tema scuro (Impostazioni → Aspetto): gli stessi nomi dei colori, con i valori scuri. Le barre restano come sono. */
+:root[data-tema="scuro"] {
+  color-scheme: dark;
+  --crema: #1a120d; --carta: #24180f; --tavolo: #0e0906;
+  --inchiostro: #f1e9df; --muto: #b9ab9d;
+  --terra: #e0956b; --terra-scuro: #c97c53; --terra-velo: #3b251a;
+  --linea: #3b2b20; --verde: #6cc08a; --rosso: #ff8a7a; --rosso-velo: #3d1f1a;
+}
+:root[data-tema="scuro"] .tasto:not(.secondario), :root[data-tema="scuro"] .scelta[aria-pressed="true"],
+:root[data-tema="scuro"] .foglio .giorni .scelta[aria-pressed="true"], :root[data-tema="scuro"] .fine-tasto { color: #1a120d; }
+:root[data-tema="scuro"] .contatore { background: #b42318; color: #fff; }
+/* sulle barre scure, nella voce e nell'apertura il testo resta chiaro anche nel tema scuro */
+:root[data-tema="scuro"] .alto, :root[data-tema="scuro"] .alto .icona-tasto, :root[data-tema="scuro"] .alto .cerca,
+:root[data-tema="scuro"] .voce-pannello, :root[data-tema="scuro"] .parla .cerchio svg, :root[data-tema="scuro"] .apertura { color: #f6f3ef; }
+:root[data-tema="scuro"] .capito { background: #f1e9df; color: #1a120d; }
+:root[data-tema="scuro"] .capito button, :root[data-tema="scuro"] .capito h3 { color: #8b4a2f; }
+:root[data-tema="scuro"] .pagina-pdf { --crema: #f6f3ef; --carta: #fffdfa; --inchiostro: #1e1e1e; --muto: #5f564e; --terra: #8b4a2f; --linea: #e2d9cc; --verde: #2e7044; --rosso: #b42318; color: var(--inchiostro); }
+/* La segnalazione: le parole sue */
+.finta textarea { display: block; width: 100%; min-height: 72px; margin-top: 8px; padding: 8px 10px; border: 1px solid var(--linea); border-radius: 8px; background: var(--crema); font: inherit; font-size: 15px; line-height: 1.4; color: var(--inchiostro); resize: vertical; }
+
+/* ------------------------------------------------------------------ L'app vera: quello che il prototipo non aveva */
+[hidden] { display: none !important; }
+/* Sotto la barra di stato del telefono (app installata) la riga in alto scende, scura come lei */
+.app > .alto, .pannello > .alto { height: calc(52px + env(safe-area-inset-top, 0px)); padding-top: env(safe-area-inset-top, 0px); }
+.pannello { padding-top: 0; }
+.voce-pannello { padding-top: env(safe-area-inset-top, 0px); }
+
+/* L'accesso: come l'apertura, scuro con il drago d'oro */
+.accesso { position: absolute; inset: 0; z-index: 45; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; padding: 24px 16px; background: radial-gradient(circle at 50% 30%, #3a2117 0%, #1e0f0a 72%); color: #f6f3ef; overflow-y: auto; scrollbar-width: none; }
+.accesso .apertura-logo { width: 88px; height: 105px; }
+.accesso .apertura-nome { margin: 8px 0 12px; font-size: 26px; }
+.accesso-modulo { width: 100%; max-width: 320px; display: flex; flex-direction: column; gap: 12px; }
+.accesso-campo { display: flex; flex-direction: column; gap: 4px; font-size: 15px; color: rgb(246 243 239 / 0.8); }
+.accesso-campo input { height: 46px; padding: 0 12px; border: 1px solid var(--oro-velo); border-radius: 10px; background: rgb(255 255 255 / 0.08); font: inherit; font-size: 17px; color: #f6f3ef; }
+.accesso-errore { min-height: 22px; margin: 0; font-size: 15px; color: #ffb4a8; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.accesso-entra { height: 50px; border-radius: 25px; background: var(--oro); color: var(--bruno); font-weight: 700; font-size: 18px; }
+.accesso-entra:disabled { opacity: 0.6; }
+.accesso .link { color: var(--oro); align-self: center; }
+
+/* Lo stato del calendario e delle notifiche */
+.imp-stato.spento { color: var(--muto); }
+.imp-stato.rosso { color: var(--rosso); }
+.pallino.spento { background: var(--muto); }
+.pallino.rosso { background: var(--rosso); }
+.imp-riga .link { justify-self: end; }
+
+/* Una registrazione che aspetta la rete */
+.attesa { color: var(--muto); }
+
+/* La stampa del PDF del mese: solo il foglio, bianco */
+#stampa { display: none; }
+#stampa, #stampa * { box-sizing: border-box; }
+@media print {
+  @page { size: A4; margin: 14mm; }
+  html, body { background: #fff !important; }
+  .app { display: none !important; }
+  #stampa { display: block; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  #stampa .pagina-pdf { margin: 0; padding: 0; border: 0; box-shadow: none; }
+  #stampa .pdf-allievo, #stampa .pdf-corso { break-inside: avoid; }
+}
+.noscript { padding: 24px 16px; font-size: 17px; }
+.accesso-nota { margin: 0; font-size: 15px; color: rgb(246 243 239 / 0.8); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }

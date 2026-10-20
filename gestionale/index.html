@@ -1,19 +1,75 @@
 <!doctype html>
-<html lang="it">
+<html lang="it" data-tema="chiaro">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; base-uri 'self'; form-action 'self'; object-src 'none'">
-  <meta name="robots" content="noindex">
-  <title>Longkai · Gestionale</title>
-  <link rel="stylesheet" href="./stile.css">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self' https://*.supabase.co wss://*.supabase.co; manifest-src 'self'; worker-src 'self'; base-uri 'self'; form-action 'self'; object-src 'none'">
+<meta name="robots" content="noindex">
+<title>Lòngkai</title>
+<meta name="description" content="Il gestionale del Sifu di Lòngkai.">
+<meta name="theme-color" content="#24130c">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Lòngkai">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" sizes="32x32" href="icone/favicon-32.png">
+<link rel="apple-touch-icon" href="icone/apple-touch-icon.png">
+<link rel="stylesheet" href="stile.css">
 </head>
 <body>
-  <main>
-    <p class="marchio">Longkai</p>
-    <h1>Gestionale</h1>
-    <p class="stato">Lavori in corso</p>
-  </main>
-  <script src="./avvio.js"></script>
+<div class="app" id="app">
+  <div class="apertura" id="apertura" aria-hidden="true">
+    <span class="logo apertura-logo"></span>
+    <p class="apertura-nome">LÒNGKAI</p>
+    <p class="apertura-sotto">Wing Chun · Mortara e Vigevano</p>
+  </div>
+  <div class="accesso" id="accesso" hidden>
+    <span class="logo apertura-logo" aria-hidden="true"></span>
+    <h1 class="apertura-nome">LÒNGKAI</h1>
+    <form class="accesso-modulo" id="modulo-accesso" novalidate>
+      <label class="accesso-campo" id="a-riga-email"><span>Email</span><input id="a-email" type="email" autocomplete="username" inputmode="email" required></label>
+      <label class="accesso-campo"><span id="a-nome-password">Password</span><input id="a-password" type="password" autocomplete="current-password" required></label>
+      <label class="accesso-campo" id="a-riga-ripeti" hidden><span>Ripetila</span><input id="a-ripeti" type="password" autocomplete="new-password"></label>
+      <p class="accesso-errore" id="a-errore" role="alert"></p>
+      <button type="submit" class="accesso-entra" id="a-entra">Entra</button>
+      <button type="button" class="link" id="a-dimenticata">Password dimenticata</button>
+    </form>
+  </div>
+  <header class="alto" id="alto"></header>
+  <main class="gutter" id="lista"></main>
+  <nav class="barra" aria-label="Sezioni">
+    <button type="button" class="scheda-barra" data-az="sezione" data-s="oggi">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>
+      Oggi
+    </button>
+    <button type="button" class="scheda-barra" data-az="sezione" data-s="allievi">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c.8-3.6 3.4-5.5 6.5-5.5s5.7 1.9 6.5 5.5"/><path d="M16 4.8a3.5 3.5 0 0 1 0 6.4M18.5 14.8c1.6.8 2.6 2.5 3 5.2"/></svg>
+      Allievi
+    </button>
+    <button type="button" class="scheda-barra parla" data-az="parla">
+      <span class="cerchio"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg></span>
+      Parla
+    </button>
+    <button type="button" class="scheda-barra" data-az="sezione" data-s="corsi">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5.5C6.5 4 9.5 4 12 5.5v14C9.5 18 6.5 18 4 19.5zM20 5.5C17.5 4 14.5 4 12 5.5v14c2.5-1.5 5.5-1.5 8 0z"/></svg>
+      Corsi
+    </button>
+    <button type="button" class="scheda-barra" data-az="sezione" data-s="scadenze">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2.5M9 2h6"/></svg>
+      Scadenze
+      <span class="contatore" id="contatore"></span>
+    </button>
+  </nav>
+  <div id="sopra"></div>
+  <div id="sopra2"></div>
+  <div id="avviso-posto"></div>
+</div>
+
+<div id="stampa" aria-hidden="true"></div>
+<noscript><p class="noscript">Lòngkai ha bisogno di JavaScript per funzionare.</p></noscript>
+<script src="vendor/supabase.js"></script>
+<script src="config.js"></script>
+<script type="module" src="js/app.js"></script>
 </body>
 </html>
