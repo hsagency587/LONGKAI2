@@ -1220,6 +1220,52 @@ function avvisa(testo) {
   $('avviso-posto').innerHTML = `<div class="capito" role="status"><p>${esc(testo)}</p></div>`;
   timerAvviso = setTimeout(() => { $('avviso-posto').innerHTML = ''; }, 4000);
 }
+// L'avviso si manda via col dito, a destra o a sinistra (Simone, 21/10): sparisce l'avviso, il cambio resta.
+// Si "prende" solo dopo qualche pixel di movimento: un tocco su Annulla resta un tocco.
+function chiudiAvviso() {
+  clearTimeout(timerAvviso);
+  delete $('avviso-posto').dataset.prima;
+  $('avviso-posto').innerHTML = '';
+}
+{
+  let dito = null;                                   // { x, y, box, id, preso }
+  const posto = $('avviso-posto');
+  posto.addEventListener('pointerdown', e => {
+    const box = e.target.closest('.capito');
+    if (box && e.isPrimary) dito = { x: e.clientX, y: e.clientY, box, id: e.pointerId, preso: false };
+  });
+  posto.addEventListener('pointermove', e => {
+    if (!dito || e.pointerId !== dito.id) return;
+    const dx = e.clientX - dito.x;
+    if (!dito.preso) {
+      if (Math.abs(dx) < 8 || Math.abs(dx) < Math.abs(e.clientY - dito.y)) return;   // fermo, o scorre in verticale
+      dito.preso = true;
+      clearTimeout(timerAvviso);
+      dito.box.style.transition = 'none';
+      try { dito.box.setPointerCapture(e.pointerId); } catch { /* niente */ }
+    }
+    dito.box.style.transform = `translateX(${dx}px)`;
+    dito.box.style.opacity = String(Math.max(0.25, 1 - Math.abs(dx) / 280));
+  });
+  const lascia = e => {
+    if (!dito || e.pointerId !== dito.id) return;
+    const { box, preso } = dito, dx = e.clientX - dito.x;
+    dito = null;
+    if (!preso) return;
+    box.style.transition = 'transform 0.18s ease-out, opacity 0.18s ease-out';
+    if (Math.abs(dx) > 70) {                          // abbastanza lontano: vola via
+      box.style.transform = `translateX(${dx > 0 ? 110 : -110}%)`;
+      box.style.opacity = '0';
+      setTimeout(chiudiAvviso, 180);
+    } else {                                          // torna al suo posto, e sparisce da solo come sempre
+      box.style.transform = '';
+      box.style.opacity = '';
+      timerAvviso = setTimeout(chiudiAvviso, 4000);
+    }
+  };
+  posto.addEventListener('pointerup', lascia);
+  posto.addEventListener('pointercancel', lascia);
+}
 function annulla() {
   const prima = $('avviso-posto').dataset.prima;
   if (!prima) return;

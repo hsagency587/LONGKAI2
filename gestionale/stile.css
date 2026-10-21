@@ -246,6 +246,9 @@ main::-webkit-scrollbar, .corpo-pannello::-webkit-scrollbar, .foglio::-webkit-sc
   background: var(--inchiostro); color: var(--crema); border-radius: 14px; padding: 12px 14px;
   box-shadow: 0 8px 24px rgb(30 30 30 / 0.25);
 }
+/* L'avviso si manda via col dito, di lato (Simone, 21/10): il movimento in verticale resta allo scorrimento */
+.capito { touch-action: pan-y; user-select: none; -webkit-user-select: none; }
+@media (prefers-reduced-motion: reduce) { .capito { transition: none !important; } }
 .capito-testa { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
 .capito-testa strong { font-size: 16px; }
 .capito button { color: var(--oro); font-weight: 700; min-height: 40px; padding: 0 4px; }
