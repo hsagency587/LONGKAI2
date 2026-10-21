@@ -206,11 +206,13 @@ const AZIONI_VOCE = {
     let m = /^\d{4}-\d{2}$/.test(az.mese || '') ? az.mese : null;
     if (!m) m = quoteRitardo(a)[0] || (a.dal <= MESE && !a.pagato[MESE] && conto(a, MESE).tot ? MESE : null);
     if (!m) { dubbi.push(`${a.nome}: non ha niente da pagare`); return []; }
+    const il = giornoValido(az.il) && az.il <= OGGI ? az.il : null;   // il giorno in cui ha pagato, se lo dice
+    if (a.pagato[m] && il) { a.pagato[m] = il; return [{ luogo: 'Pagamenti', righe: [`${a.nome} · ${nomeMese(m)} pagato ${ilGiorno(il)}`] }]; }
     if (a.pagato[m]) { dubbi.push(`${a.nome}: ${nomeMese(m)} è già pagato`); return []; }
     if (m < a.dal || m > meseDopo(MESE, 1) || !conto(a, m).tot) { dubbi.push(`${a.nome}: ${nomeMese(m)} non è da pagare`); return []; }
     const tot = conto(a, m).tot;
-    a.cifre[m] = tot; a.pagato[m] = OGGI;
-    return [{ luogo: 'Pagamenti', righe: [`${a.nome} · ${nomeMese(m)} pagato${m > MESE ? ' in anticipo' : ''}, ${tot} €`] }];
+    a.cifre[m] = tot; a.pagato[m] = il || OGGI;
+    return [{ luogo: 'Pagamenti', righe: [`${a.nome} · ${nomeMese(m)} pagato${m > MESE ? ' in anticipo' : ''}, ${tot} €${il ? ` (${ilGiorno(il)})` : ''}`] }];
   },
   certificato(az, dubbi) {     // il giorno in cui l'ha fatto (oggi, se dice solo che l'ha rinnovato); vale un anno
     const a = allievoDa(az, dubbi); if (!a) return [];
@@ -286,6 +288,22 @@ const AZIONI_VOCE = {
       aggiornaOrario(k);
       righe.push(`${c}: ${giorniCorso(k)} · ${k.orario}`);
     }
+    if (az.chiusura != null) {                        // il mese di chiusura, o nessuno
+      const s = String(az.chiusura).trim().toLowerCase(), i = MESI.indexOf(s);
+      if (i >= 0) { IMP.chiusura = due(i + 1); righe.push(`scuola chiusa: ${MESI[i]}`); }
+      else if (s === 'nessuno') { IMP.chiusura = ''; righe.push('scuola chiusa: nessun mese'); }
+    }
+    const n = az.notifiche || {};
+    for (const [k, nome] of [['cert30', 'certificato a 30 giorni'], ['cert15', 'certificato a 15 giorni'], ['pagamenti', 'pagamento in ritardo']]) {
+      if (typeof n[k] === 'boolean') { IMP.notifiche[k] = n[k]; righe.push(`notifica ${nome}: ${n[k] ? 'sì' : 'no'}`); }
+    }
+    if (oraValida(n.ora)) { IMP.notifiche.ora = n.ora; righe.push(`ora degli avvisi: ${n.ora}`); }
+    for (const x of az.messaggi || []) {             // un messaggio WhatsApp nuovo; senza testo, quello di prima
+      if (!TESTI[x.messaggio]) continue;
+      IMP.testi[x.messaggio].testo = String(x.testo || '').trim() || TESTI[x.messaggio].testo;
+      righe.push(`messaggio «${IMP.testi[x.messaggio].nome}»: ${String(x.testo || '').trim() ? 'cambiato' : 'quello di prima'}`);
+    }
+    if (az.tema === 'chiaro' || az.tema === 'scuro') { IMP.tema = az.tema; righe.push(`tema ${az.tema}`); }
     return righe.length ? [{ luogo: 'Impostazioni', righe }] : [];
   },
   forma(az, dubbi) {           // dove è arrivato: quante sezioni di una forma
@@ -1193,8 +1211,9 @@ function faiQuelloCheHoCapito(testo, risposta, ctx) {
   }
   if (risposta.non_capito) dubbi.push(String(risposta.non_capito));
   const cambiato = foto() !== prima;
+  if (!gruppi.length && !dubbi.length) { avvisa(`Non ho capito: «${testo}»`); return; }
+  if (!gruppi.length) { mostraCapito([{ luogo: '', righe: dubbi }], null, 'Non ho capito'); return; }   // niente è cambiato
   if (dubbi.length) gruppi.push({ luogo: 'Non ho capito', righe: dubbi });
-  if (!gruppi.length) { avvisa(`Non ho capito: «${testo}»`); return; }
   disegna();
   mostraCapito(gruppi, cambiato ? prima : null);
 }
@@ -1223,6 +1242,8 @@ function contestoVoce(ctx) {
     allievi: stato.allievi.map(a => ({ nome: a.nome, corsi: a.corsi, private: a.private, non_viene_piu: a.uscito })),
     corsi: Object.entries(CORSI).map(([corso, c]) => ({ corso, prezzo: c.prezzo, giorni: giorniCorso(c), orario: c.orario })),
     prezzo_privata: IMP.prezzoPrivata, tesseramento: IMP.tesseramento,
+    scuola_chiusa: IMP.chiusura ? MESI[Number(IMP.chiusura) - 1] : 'nessuno', notifiche: IMP.notifiche, tema: IMP.tema,
+    messaggi: Object.fromEntries(Object.entries(IMP.testi).map(([k, x]) => [k, { nome: x.nome, testo: x.testo }])),
     forme: FORME.map(([forma, sezioni]) => ({ forma, sezioni })),
   };
 }
@@ -1278,7 +1299,7 @@ function mostraCapito(gruppi, prima, titolo = 'Ho capito così') {
   $('avviso-posto').innerHTML = `
     <div class="capito" role="status">
       <div class="capito-testa"><strong>${esc(titolo)}</strong>${prima ? '<button type="button" data-az="annulla">Annulla</button>' : ''}</div>
-      ${gruppi.map(g => `<h3>${esc(g.luogo)}</h3>${g.righe.map(r => `<p>${esc(r)}</p>`).join('')}`).join('')}
+      ${gruppi.map(g => `${g.luogo ? `<h3>${esc(g.luogo)}</h3>` : ''}${g.righe.map(r => `<p>${esc(r)}</p>`).join('')}`).join('')}
     </div>`;
   timerAvviso = setTimeout(() => { $('avviso-posto').innerHTML = ''; }, 8000);
 }
