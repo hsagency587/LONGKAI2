@@ -4,7 +4,7 @@
 import {
   GG, MESI, MESI3, ORDINALI, FORME, CINTURE, TESSERAMENTO, due, daChiave, sposta, dataLunga, dataMedia, dataBreve, dataCorta, elide, ilGiorno, dataPiena,
   giorniFra, lunediDi, nomeMese, etichettaSettimana, etichettaIntervallo, meseDopo, dalGiorno, dataParole, ilData, delGiorno,
-  maiuscola, adessoRoma, aggiornaOrario, oreFra, lezioniDeiCorsi, impostazioniDa, daDatabase, versoDatabase, creaRegole,
+  maiuscola, adessoRoma, scadenzaCertificato, spostaAnni, aggiornaOrario, oreFra, lezioniDeiCorsi, impostazioniDa, daDatabase, versoDatabase, creaRegole,
 } from '../comune/regole.js';
 import * as db from './dati.js';
 import { apriMicrofono, estensioneDi, registrazioni } from './voce.js';
@@ -117,6 +117,8 @@ function allievoDa(az, dubbi) {
   return a;
 }
 const assentiDi = (l, nomi) => (nomi || []).map(n => conNome(n)?.nome).filter(n => n && iscrittiDi(l).includes(n));
+// Il certificato: si scrive il giorno in cui l'ha fatto, la scadenza è un anno dopo (Simone, 21/10)
+function segnaCertificato(a, fatto) { a.certFatto = fatto || ''; a.cert = scadenzaCertificato(a.certFatto); }
 function aggiungiAllievo(a) {
   stato.allievi.push(a);
   stato.allievi.sort((x, y) => x.nome.localeCompare(y.nome, 'it'));
@@ -165,13 +167,14 @@ const AZIONI_VOCE = {
     a.cifre[m] = tot; a.pagato[m] = OGGI;
     return [{ luogo: 'Pagamenti', righe: [`${a.nome} · ${nomeMese(m)} pagato${m > MESE ? ' in anticipo' : ''}, ${tot} €`] }];
   },
-  certificato(az, dubbi) {
+  certificato(az, dubbi) {     // il giorno in cui l'ha fatto (oggi, se dice solo che l'ha rinnovato); vale un anno
     const a = allievoDa(az, dubbi); if (!a) return [];
-    if (!giornoValido(az.fino)) { dubbi.push(`${a.nome}: fino a quando vale il certificato?`); return []; }
-    a.cert = az.fino;
-    const al = elide(az.fino) ? "all'" : 'al ';
-    return dentroScheda(a) ? [{ luogo: `Scheda · ${a.nome}`, righe: [`certificato fino ${al}${dataPiena(az.fino)}`] }]
-      : [{ luogo: 'Certificati', righe: [`${a.nome} · certificato fino ${al}${dataPiena(az.fino)}`] }];
+    const fatto = giornoValido(az.fatto) ? az.fatto : giornoValido(az.fino) ? spostaAnni(az.fino, -1) : OGGI;
+    if (fatto > OGGI) { dubbi.push(`${a.nome}: il certificato non può essere fatto dopo oggi`); return []; }
+    segnaCertificato(a, fatto);
+    const al = elide(a.cert) ? "all'" : 'al ';
+    return dentroScheda(a) ? [{ luogo: `Scheda · ${a.nome}`, righe: [`certificato fino ${al}${dataPiena(a.cert)}`] }]
+      : [{ luogo: 'Certificati', righe: [`${a.nome} · certificato fino ${al}${dataPiena(a.cert)}`] }];
   },
   nuovo_allievo(az, dubbi) {
     const nome = String(az.nome || '').trim().replace(/\s+/g, ' ');
@@ -180,7 +183,7 @@ const AZIONI_VOCE = {
     const corsi = [...new Set((az.corsi || []).map(corsoVero).filter(Boolean))];
     const priv = !!az.private;
     const a = nuovoAllievo(nome, corsi, priv, IMP.prezzoPrivata, String(az.telefono || '').trim(), Number.isInteger(az.private_mese) ? az.private_mese : 4);
-    if (giornoValido(az.certificato)) a.cert = az.certificato;
+    if (giornoValido(az.certificato) && az.certificato <= OGGI) segnaCertificato(a, az.certificato);
     aggiungiAllievo(a);
     return [{ luogo: 'Allievi', righe: [`${nome} · ${fa(a)}${a.corsi.length ? ` · ${quotaCorsi(a)} € al mese` : ''}`] }];
   },
@@ -259,7 +262,7 @@ function applicaAzioni(azioni) {
 
 function nuovoAllievo(nome, corsi, priv, privata, cell, privateMese = 0) {
   const g = Number(OGGI.slice(8));
-  const a = { id: db.nuovoId(), nome, corsi, private: priv, privateMese: priv ? privateMese : 0, prezzi: {}, privata: privata === IMP.prezzoPrivata ? null : privata, giorno: g, cert: '', forme: {}, cell, uscito: false, cintura: 'bianca',
+  const a = { id: db.nuovoId(), nome, corsi, private: priv, privateMese: priv ? privateMese : 0, prezzi: {}, privata: privata === IMP.prezzoPrivata ? null : privata, giorno: g, cert: '', certFatto: '', forme: {}, cell, uscito: false, cintura: 'bianca',
     pagato: { [MESE]: OGGI }, cifre: {}, dal: MESE };
   a.cifre[MESE] = conto(a, MESE).tot;   // il primo mese lo paga quando comincia
   return a;
@@ -447,8 +450,10 @@ function creditoScheda(a) {      // in alto nella scheda, solo se c'è: il credi
 function dati(a) {
   const ult = ultimoPagamento(a);
   return `
-    <div class="campo"><span class="nome-campo">Certificato</span>
-      <div class="campo-valore"><input type="date" id="c-cert" data-campo="cert" value="${a.cert}" aria-label="Certificato fino al"></div></div>
+    <div class="campo"><span class="nome-campo">Certificato del</span>
+      <div class="campo-valore"><input type="date" id="c-cert" data-campo="certFatto" value="${a.certFatto || ''}" max="${OGGI}" aria-label="Certificato fatto il"></div></div>
+    <div class="campo"><span class="nome-campo">Vale fino al</span>
+      <div class="campo-valore"><span class="valore">${a.cert ? dataPiena(a.cert) : 'manca'}</span></div></div>
     ${a.corsi.map(k => `<div class="campo"><span class="nome-campo">${k}</span>
       <div class="campo-valore"><input type="number" inputmode="numeric" min="0" id="c-prezzo-${k}" data-prezzo="${k}" value="${prezzoCorso(a, k)}" aria-label="Prezzo di ${k} al mese in euro"><span class="unita">€ al mese</span></div></div>`).join('')}
     <div class="campo"><span class="nome-campo">Corsi</span>
@@ -545,7 +550,7 @@ function nuovoForm() {
           <div class="campo"><span class="nome-campo">Corsi</span><div class="campo-valore"><span class="valore">${n.fa.filter(c => c !== 'Private').reduce((s, c) => s + CORSI[c].prezzo, 0)} € al mese</span></div></div>
           ${n.fa.includes('Private') ? `<div class="campo"><span class="nome-campo">Private al mese</span><div class="campo-valore"><input type="number" inputmode="numeric" min="0" id="n-privateMese" data-nuovo="privateMese" value="${n.privateMese}" aria-label="Quante private al mese"><span class="unita">al mese</span></div></div>
           <div class="campo"><span class="nome-campo">Prezzo privata</span><div class="campo-valore"><input type="number" inputmode="numeric" min="0" id="n-privata" data-nuovo="privata" value="${n.privata}" aria-label="Prezzo della privata in euro"><span class="unita">€ a lezione</span></div></div>` : ''}
-          <div class="campo"><span class="nome-campo">Certificato</span><div class="campo-valore"><input type="date" id="n-cert" data-nuovo="cert" value="${n.cert}" aria-label="Certificato fino al"></div></div>
+          <div class="campo"><span class="nome-campo">Certificato del</span><div class="campo-valore"><input type="date" id="n-cert" data-nuovo="certFatto" value="${n.certFatto}" max="${OGGI}" aria-label="Certificato fatto il"></div></div>
         </section>
       </div>
       <div class="piede gutter"><button type="button" class="tasto grande" data-az="aggiungi">Aggiungi</button></div>
@@ -915,7 +920,8 @@ function apriCert(nome) {
   $('sopra2').innerHTML = velo(`Certificato di ${nome}`, `
       <h2>${esc(nome)}</h2>
       <p class="sotto">Certificato medico</p>
-      <div class="campo"><span class="nome-campo">Fino al</span><div class="campo-valore"><input type="date" data-cert="${esc(nome)}" value="${a.cert}" aria-label="Certificato fino al"></div></div>
+      <div class="campo"><span class="nome-campo">Fatto il</span><div class="campo-valore"><input type="date" data-cert="${esc(nome)}" value="${a.certFatto || ''}" max="${OGGI}" aria-label="Certificato fatto il"></div></div>
+      <div class="campo"><span class="nome-campo">Vale fino al</span><div class="campo-valore"><span class="valore">${a.cert ? dataPiena(a.cert) : 'manca'}</span></div></div>
       <button type="button" class="con-freccia" data-az="scheda" data-nome="${esc(nome)}"><span>La sua scheda</span>${FRECCIA}</button>`);
 }
 function apriMeseCert(n) {     // tocco su una colonna del grafico: chi scade in quel mese
@@ -1539,6 +1545,7 @@ document.addEventListener('change', e => {
     const a = allievo(pila.at(-1).nome), k = t.dataset.campo;
     a[k] = t.type === 'number' ? Number(t.value || 0) : t.value;
     if (k === 'privata' && a.privata === IMP.prezzoPrivata) a.privata = null;   // uguale a quello di solito: segue le Impostazioni
+    if (k === 'certFatto') segnaCertificato(a, t.value);                          // la scadenza: un anno dopo
     salvato('Salvato', prima);
     disegna();
   } else if (t.matches('[data-prezzo]')) {        // il prezzo di un corso per questo allievo
@@ -1576,7 +1583,7 @@ document.addEventListener('change', e => {
     disegna(); salvato('Salvato', prima);
   } else if (t.matches('[data-cert]')) {
     const prima = foto();
-    allievo(t.dataset.cert).cert = t.value;
+    segnaCertificato(allievo(t.dataset.cert), t.value);
     $('sopra2').innerHTML = ''; disegna(); salvato('Salvato', prima);
   }
 });
@@ -1709,7 +1716,7 @@ document.addEventListener('click', e => {
       break;
     }
     case 'torna': { const prima = foto(); allievo(pila.at(-1).nome).uscito = false; disegna(); salvato('Torna a venire', prima); break; }
-    case 'nuovo': stato.nuovo = { nome: '', cell: '', fa: [], privata: IMP.prezzoPrivata, privateMese: 4, cert: '' }; apri({ tipo: 'nuovo' }); break;
+    case 'nuovo': stato.nuovo = { nome: '', cell: '', fa: [], privata: IMP.prezzoPrivata, privateMese: 4, certFatto: '' }; apri({ tipo: 'nuovo' }); break;
     case 'nuovo-fa': {
       const c = t.dataset.c, f = stato.nuovo.fa;
       stato.nuovo.fa = f.includes(c) ? f.filter(x => x !== c) : [...f, c];
@@ -1722,7 +1729,7 @@ document.addEventListener('click', e => {
       if (conNome(nome)) { avvisa('C\'è già un allievo con questo nome.'); $('n-nome').focus(); break; }   // il calendario riconosce dal nome
       const prima = foto();
       const a = nuovoAllievo(nome, n.fa.filter(c => c !== 'Private'), n.fa.includes('Private'), n.privata, n.cell, n.privateMese);
-      a.cert = n.cert;
+      segnaCertificato(a, n.certFatto);
       aggiungiAllievo(a);
       pila.length = 0; disegna(); salvato(`${nome} aggiunto`, prima);
       break;

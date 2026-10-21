@@ -33,6 +33,9 @@ export const etichettaSettimana = lun => etichettaIntervallo(lun, sposta(lun, 6)
 export const meseDopo = (m, n) => { const d = new Date(Number(m.slice(0, 4)), Number(m.slice(5, 7)) - 1 + n, 1); return `${d.getFullYear()}-${due(d.getMonth() + 1)}`; };
 export const fineMese = m => new Date(Number(m.slice(0, 4)), Number(m.slice(5, 7)), 0).getDate();
 export const giornoNel = (m, g) => `${m}-${due(Math.min(g, fineMese(m)))}`;     // il 31 in un mese di 30 giorni: il 30
+export const spostaAnni = (k, n) => giornoNel(`${Number(k.slice(0, 4)) + n}${k.slice(4, 7)}`, Number(k.slice(8, 10)));   // il 29/2 diventa il 28/2
+// Il certificato medico vale un anno dal giorno in cui l'ha fatto (Simone, 21/10): la scadenza la calcola l'app
+export const scadenzaCertificato = fatto => fatto ? spostaAnni(fatto, 1) : '';
 export const dalGiorno = k => elide(k) ? `dall'${dataCorta(k)}` : `dal ${dataCorta(k)}`;
 export const alGiorno = k => elide(k) ? `all'${dataCorta(k)}` : `al ${dataCorta(k)}`;
 export const delGiorno = k => elide(k) ? `dell'${dataCorta(k)}` : `del ${dataCorta(k)}`;
@@ -126,7 +129,7 @@ export function daDatabase({ allievi = [], lezioni = [], pagamenti = [] }) {
       id: r.id, nome: r.nome, corsi: [...(r.corsi || [])], private: !!r.fa_private, privateMese: r.private_mese || 0,
       prezzi: Object.fromEntries(Object.entries(r.prezzi || {}).map(([k, v]) => [k, euro(v)])),
       privata: r.prezzo_privata_cent == null ? null : euro(r.prezzo_privata_cent),
-      giorno: r.giorno_pagamento || 1, cert: r.certificato || '', forme: { ...(r.forme || {}) }, cell: r.telefono || '',
+      giorno: r.giorno_pagamento || 1, certFatto: r.certificato_fatto || '', cert: scadenzaCertificato(r.certificato_fatto || ''), forme: { ...(r.forme || {}) }, cell: r.telefono || '',
       uscito: !!r.uscito, pagato: {}, cifre: {}, dal: String(r.dal).slice(0, 7), cintura: r.cintura || 'bianca',
     };
     if (r.protetto) a.protetto = true;
@@ -178,7 +181,7 @@ export function versoDatabase({ allievi, lezioni, imp, testi = {} }) {
       id: a.id, nome: a.nome, telefono: a.cell || '', corsi: [...a.corsi], fa_private: !!a.private, private_mese: a.privateMese || 0,
       prezzi: Object.fromEntries(Object.entries(a.prezzi).map(([k, v]) => [k, cent(v)])),
       prezzo_privata_cent: a.privata == null ? null : cent(a.privata), giorno_pagamento: a.giorno, dal: `${a.dal}-01`,
-      certificato: a.cert || null, forme: { ...a.forme }, uscito: !!a.uscito, cintura: a.cintura || 'bianca',
+      certificato_fatto: a.certFatto || null, forme: { ...a.forme }, uscito: !!a.uscito, cintura: a.cintura || 'bianca',
     });
     for (const [m, il] of Object.entries(a.pagato)) {
       if (!il) continue;
