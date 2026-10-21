@@ -503,3 +503,7 @@ button.colonna:active i { opacity: 0.7; }
 .campione { position: relative; display: inline-block; width: 44px; height: 14px; margin-right: 12px; vertical-align: -2px; }
 :root[data-tema="scuro"] .fascia:not(.bordo) { box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.35); }
 :root[data-tema="scuro"] .nodo { box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.4), 0 0 0 2px var(--crema); }
+/* Il certificato: la scadenza subito sotto la data, nello stesso campo (Simone, 21/10) */
+.campo-valore.colonna { flex-direction: column; align-items: stretch; gap: 2px; padding-block: 6px; }
+.sotto-campo { font-size: 14px; color: var(--muto); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.foglio button.con-freccia { gap: 10px; }                                          /* il nome e le caselle non si toccano */

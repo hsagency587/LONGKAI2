@@ -4,7 +4,7 @@
 import {
   GG, MESI, MESI3, ORDINALI, FORME, CINTURE, TESSERAMENTO, due, daChiave, sposta, dataLunga, dataMedia, dataBreve, dataCorta, elide, ilGiorno, dataPiena,
   giorniFra, lunediDi, nomeMese, etichettaSettimana, etichettaIntervallo, meseDopo, dalGiorno, dataParole, ilData, delGiorno,
-  maiuscola, adessoRoma, scadenzaCertificato, spostaAnni, aggiornaOrario, oreFra, lezioniDeiCorsi, impostazioniDa, daDatabase, versoDatabase, creaRegole,
+  maiuscola, adessoRoma, scadenzaCertificato, spostaAnni, annullata, stessoNome, GIORNI, aggiornaOrario, oreFra, lezioniDeiCorsi, impostazioniDa, daDatabase, versoDatabase, creaRegole,
 } from '../comune/regole.js';
 import * as db from './dati.js';
 import { apriMicrofono, estensioneDi, registrazioni } from './voce.js';
@@ -37,6 +37,9 @@ const stato = { ora: adessoRoma().ora, giorno: OGGI, sezione: 'oggi', filtro: 'T
   corso: 'Mortara', vistaCorso: 'Lezioni', vistaPrivate: 'Lezioni', scadenza: 'Pagamenti', piuAvanti: false, lezioni: [], allievi: [],
   email: '', push: 'spento', inAttesa: [], aggiornamento: null };
 
+// Solo sul PC, per le prove: con ?prova carica allievi finti (segnaposto) e non salva niente nel database
+const PROVA = ['localhost', '127.0.0.1'].includes(location.hostname) && new URLSearchParams(location.search).has('prova');
+
 // --- Regole: i conti sono in comune/regole.js, gli stessi del server -------
 const {
   allievo, roster, iniziata, iscrittiDi, presentiDi, cEra, lezioniDi, oreDi, conteggio, chiuso, scadenzaQuota, mesiDa,
@@ -65,7 +68,10 @@ function riassunto(l) {     // il testo vero: se non ci sta, i puntini
   return l.fatto.gruppo + (soli ? ` · da solo ${soli}` : '');
 }
 const nonFattaTesto = l => l.motivo === 'assente' ? 'non è venuto' : l.motivo === 'annullata' ? 'annullata' : 'non si è fatta';
-function segnaAppello(l, assenti) { l.iscritti = iscrittiDi(l); l.appello = { assenti: [...assenti] }; }
+function segnaAppello(l, assenti) {   // chi c'era senza scheda resta (Simone, 21/10)
+  const senzaScheda = l.appello && l.appello.senzaScheda;
+  l.iscritti = iscrittiDi(l); l.appello = { assenti: [...assenti], ...(senzaScheda ? { senzaScheda } : {}) };
+}
 const contoRiga = (nome, x) => `<div class="conto"><span class="conto-nome">${nome}</span><span class="barretta" aria-hidden="true"><span class="si" style="width:${x.tot ? Math.round(x.fatte / x.tot * 100) : 0}%"></span></span><span class="conto-num">${x.fatte} su ${x.tot}</span></div>`;
 function conti(c) {
   const righe = [];
@@ -119,10 +125,41 @@ function allievoDa(az, dubbi) {
 const assentiDi = (l, nomi) => (nomi || []).map(n => conNome(n)?.nome).filter(n => n && iscrittiDi(l).includes(n));
 // Il certificato: si scrive il giorno in cui l'ha fatto, la scadenza è un anno dopo (Simone, 21/10)
 function segnaCertificato(a, fatto) { a.certFatto = fatto || ''; a.cert = scadenzaCertificato(a.certFatto); }
-function aggiungiAllievo(a) {
+const valeFino = a => a.cert ? `<span class="sotto-campo">vale fino ${elide(a.cert) ? "all'" : 'al '}${dataPiena(a.cert)}</span>` : '';   // subito sotto la data (Simone, 21/10)
+function aggiungiAllievo(a) {   // risponde in quante lezioni di prima c'era senza scheda: da ora contano
   stato.allievi.push(a);
   stato.allievi.sort((x, y) => x.nome.localeCompare(y.nome, 'it'));
+  let n = 0;
+  for (const l of stato.lezioni) {
+    const senza = l.appello && l.appello.senzaScheda;
+    if (senza && senza.some(x => stessoNome(x, a.nome))) {
+      l.iscritti = [...new Set([...iscrittiDi(l), a.nome])];
+      l.appello.senzaScheda = senza.filter(x => !stessoNome(x, a.nome));
+      if (!l.appello.senzaScheda.length) delete l.appello.senzaScheda;
+      n++;
+    }
+    if (l.fatto && l.fatto.soli) for (const s of l.fatto.soli) if (s.chi !== a.nome && !allievo(s.chi) && stessoNome(s.chi, a.nome)) s.chi = a.nome;
+  }
+  return n;
 }
+const lezioniDiPrima = n => `contate ${n} ${n === 1 ? 'lezione' : 'lezioni'} di prima, senza scheda`;
+
+// Chi c'era oltre agli iscritti (Simone, 21/10): un allievo di un altro corso entra fra gli iscritti; chi non ha ancora
+// la scheda resta con il suo nome, e quando nasce la scheda le ore contano (aggiungiAllievo). La lista è sempre intera.
+const nomeSenzaScheda = n => maiuscola(String(n || '').trim().replace(/ +/g, ' '));
+function presentiAltri(l, nomi) {
+  if (!l.appello) segnaAppello(l, []);
+  const senza = [];
+  for (const n of nomi) {
+    const a = conNome(n);
+    if (a) {
+      if (!l.iscritti.includes(a.nome)) l.iscritti.push(a.nome);
+      l.appello.assenti = l.appello.assenti.filter(x => x !== a.nome);
+    } else if (nomeSenzaScheda(n) && !senza.some(x => x.toLowerCase() === nomeSenzaScheda(n).toLowerCase())) senza.push(nomeSenzaScheda(n));
+  }
+  if (senza.length) l.appello.senzaScheda = senza; else delete l.appello.senzaScheda;
+}
+const righeAppello = l => !l.appello ? [] : [testoAppello(l), ...(l.appello.senzaScheda ? [`senza scheda: ${l.appello.senzaScheda.join(', ')}`] : [])];
 
 const AZIONI_VOCE = {
   racconto(az, dubbi) {        // cosa si è fatto: il gruppo e chi da solo (corso), il testo (privata); il contenuto intero
@@ -132,15 +169,17 @@ const AZIONI_VOCE = {
     if (!iniziata(l)) return AZIONI_VOCE.previsto({ lezione: l.id, testo }, dubbi);   // prima della lezione è il previsto
     l.nonFatta = false; delete l.motivo;
     if (l.tipo === 'privata') { l.fatto = { testo }; aggiornaForme(l.allievo, testo); return [{ luogo: luogoLezione(l), righe: [testo] }]; }
-    const soli = (az.soli || []).map(s => ({ chi: conNome(s.allievo)?.nome, cosa: String(s.cosa || '').trim() })).filter(s => s.chi && s.cosa);
+    const soli = (az.soli || []).map(s => ({ chi: conNome(s.allievo)?.nome || nomeSenzaScheda(s.allievo), cosa: String(s.cosa || '').trim() })).filter(s => s.chi && s.cosa);
     l.fatto = { gruppo: testo, soli };
     if (Array.isArray(az.assenti)) segnaAppello(l, assentiDi(l, az.assenti));
-    return [{ luogo: luogoLezione(l), righe: [`gruppo: ${testo}`, ...soli.map(s => `da solo · ${s.chi}: ${s.cosa}`), ...(l.appello ? [testoAppello(l)] : [])] }];
+    if (Array.isArray(az.presenti_altri)) presentiAltri(l, az.presenti_altri);
+    return [{ luogo: luogoLezione(l), righe: [`gruppo: ${testo}`, ...soli.map(s => `da solo · ${s.chi}: ${s.cosa}`), ...righeAppello(l)] }];
   },
   appello(az, dubbi) {         // chi mancava: tutta la lista, anche quando si corregge
     const l = lezioneDa(az, dubbi); if (!l || l.tipo !== 'corso') return [];
     segnaAppello(l, assentiDi(l, az.assenti));
-    return [{ luogo: luogoLezione(l), righe: [testoAppello(l)] }];
+    if (Array.isArray(az.presenti_altri)) presentiAltri(l, az.presenti_altri);
+    return [{ luogo: luogoLezione(l), righe: righeAppello(l) }];
   },
   previsto(az, dubbi) {
     const l = lezioneDa(az, dubbi); if (!l) return [];
@@ -153,11 +192,17 @@ const AZIONI_VOCE = {
     l.nonFatta = true;
     if (l.tipo === 'corso') { delete l.motivo; return [{ luogo: luogoLezione(l), righe: ['non si è fatta', 'niente ore, niente assenze'] }]; }
     if (az.motivo === 'assente' && iniziata(l)) { l.motivo = 'assente'; return [{ luogo: luogoLezione(l), righe: ['non è venuto', 'niente ore, niente da pagare'] }]; }
-    l.motivo = 'annullata';
-    return [{ luogo: luogoLezione(l), righe: ['annullata', 'niente ore, niente da pagare'] }];
+    l.motivo = 'annullata';                          // sparisce dall'app (Simone, 21/10); Annulla la rimette
+    return [{ luogo: luogoLezione(l), righe: ['annullata: non compare più', 'niente ore, niente da pagare'] }];
   },
   pagato(az, dubbi) {          // il mese più vecchio da pagare, se non lo dice; tutto il conto, mai a metà
     const a = allievoDa(az, dubbi); if (!a) return [];
+    if (az.tolto) {                                  // "ho sbagliato, non ha pagato": via la spunta (il mese detto, o l'ultimo pagato)
+      const m = az.mese && a.pagato[az.mese] ? az.mese : Object.keys(a.pagato).filter(x => a.pagato[x]).sort().at(-1);
+      if (!m || (az.mese && m !== az.mese)) { dubbi.push(`${a.nome}: non c'è un pagamento da togliere`); return []; }
+      delete a.pagato[m]; delete a.cifre[m];
+      return [{ luogo: 'Pagamenti', righe: [`${a.nome} · ${nomeMese(m)}: tolta la spunta`] }];
+    }
     let m = /^\d{4}-\d{2}$/.test(az.mese || '') ? az.mese : null;
     if (!m) m = quoteRitardo(a)[0] || (a.dal <= MESE && !a.pagato[MESE] && conto(a, MESE).tot ? MESE : null);
     if (!m) { dubbi.push(`${a.nome}: non ha niente da pagare`); return []; }
@@ -184,8 +229,8 @@ const AZIONI_VOCE = {
     const priv = !!az.private;
     const a = nuovoAllievo(nome, corsi, priv, IMP.prezzoPrivata, String(az.telefono || '').trim(), Number.isInteger(az.private_mese) ? az.private_mese : 4);
     if (giornoValido(az.certificato) && az.certificato <= OGGI) segnaCertificato(a, az.certificato);
-    aggiungiAllievo(a);
-    return [{ luogo: 'Allievi', righe: [`${nome} · ${fa(a)}${a.corsi.length ? ` · ${quotaCorsi(a)} € al mese` : ''}`] }];
+    const prima = aggiungiAllievo(a);
+    return [{ luogo: 'Allievi', righe: [`${nome} · ${fa(a)}${a.corsi.length ? ` · ${quotaCorsi(a)} € al mese` : ''}`, ...(prima ? [lezioniDiPrima(prima)] : [])] }];
   },
   scheda(az, dubbi) {          // i cambi nella scheda: corsi, prezzi, private, cellulare, non viene più o torna
     const a = allievoDa(az, dubbi); if (!a) return [];
@@ -219,6 +264,29 @@ const AZIONI_VOCE = {
     if (c && c.k !== a.cintura) { a.cintura = c.k; righe.push(`cintura: ${nomeCintura(c)}`); }
     if (typeof az.uscito === 'boolean' && az.uscito !== a.uscito) { a.uscito = az.uscito; righe.push(a.uscito ? 'non viene più' : 'torna a venire'); }
     return righe.length ? [{ luogo: `Scheda · ${a.nome}`, righe }] : [];
+  },
+  impostazioni(az) {           // per tutti (Impostazioni): i prezzi dei corsi e della privata, il tesseramento, giorni e orari
+    const righe = [];
+    for (const p of az.prezzi_corsi || []) {
+      const c = corsoVero(p.corso), v = Number(p.euro);
+      if (!c || !Number.isFinite(v) || v < 0) continue;
+      CORSI[c].prezzo = v; righe.push(`${c}: ${v} € al mese`);
+    }
+    if (typeof az.prezzo_privata === 'number' && az.prezzo_privata >= 0) { IMP.prezzoPrivata = az.prezzo_privata; righe.push(`privata: ${az.prezzo_privata} € a lezione`); }
+    if (typeof az.tesseramento === 'number' && az.tesseramento >= 0) { IMP.tesseramento = az.tesseramento; righe.push(`tesseramento: ${az.tesseramento} €`); }
+    for (const o of az.orari || []) {
+      const c = corsoVero(o.corso);
+      const giorni = [...new Set((o.giorni || []).map(g => GIORNI.indexOf(String(g).trim().toLowerCase())).filter(g => g >= 0))];
+      if (!c || (!giorni.length && !oraValida(o.inizio) && !oraValida(o.fine))) continue;
+      const k = CORSI[c];
+      tieniOrarioDiPrima(k);                         // vale dalla prossima lezione
+      if (giorni.length) k.giorni = giorni;
+      if (oraValida(o.inizio)) k.inizio = o.inizio;
+      if (oraValida(o.fine) && o.fine > k.inizio) k.fine = o.fine;
+      aggiornaOrario(k);
+      righe.push(`${c}: ${giorniCorso(k)} · ${k.orario}`);
+    }
+    return righe.length ? [{ luogo: 'Impostazioni', righe }] : [];
   },
   forma(az, dubbi) {           // dove è arrivato: quante sezioni di una forma
     const a = allievoDa(az, dubbi); if (!a) return [];
@@ -329,7 +397,7 @@ const colonnaOra = l => ({ su: l.inizio, giu: l.tipo === 'corso' ? (l.fineCorso 
 const colonnaData = l => { const d = daChiave(l.giorno); return { data: true, su: `${d.getDate()}/${d.getMonth() + 1}`, giu: GG[d.getDay()] }; };
 
 function listaOggi() {
-  const lez = stato.lezioni.filter(l => l.giorno === stato.giorno).sort((a, b) => a.inizio.localeCompare(b.inizio));
+  const lez = stato.lezioni.filter(l => l.giorno === stato.giorno && !annullata(l)).sort((a, b) => a.inizio.localeCompare(b.inizio));
   let html = lez.length ? lez.map(l => rigaLezione(l, statoOggi(l), colonnaOra(l), true)).join('') : '<div class="vuoto-logo"><span class="logo" aria-hidden="true"></span><p class="vuoto">Niente lezioni</p></div>';
   if (stato.giorno === OGGI) {
     const arretrate = daRaccontare();
@@ -421,6 +489,7 @@ function scheda(a) {
         <section class="blocco">
           <h2 class="titolo-blocco">DOVE È ARRIVATO</h2>
           ${forme || '<p class="testo-blocco muto">Tutte le forme completate.</p>'}
+          <button type="button" class="usciti" data-az="tutte-forme"><span>Tutte le forme</span>${ICONA.dx}</button>
         </section>
 
         <section class="blocco">
@@ -451,9 +520,7 @@ function dati(a) {
   const ult = ultimoPagamento(a);
   return `
     <div class="campo"><span class="nome-campo">Certificato del</span>
-      <div class="campo-valore"><input type="date" id="c-cert" data-campo="certFatto" value="${a.certFatto || ''}" max="${OGGI}" aria-label="Certificato fatto il"></div></div>
-    <div class="campo"><span class="nome-campo">Vale fino al</span>
-      <div class="campo-valore"><span class="valore">${a.cert ? dataPiena(a.cert) : 'manca'}</span></div></div>
+      <div class="campo-valore colonna"><input type="date" id="c-cert" data-campo="certFatto" value="${a.certFatto || ''}" max="${OGGI}" aria-label="Certificato fatto il">${valeFino(a)}</div></div>
     ${a.corsi.map(k => `<div class="campo"><span class="nome-campo">${k}</span>
       <div class="campo-valore"><input type="number" inputmode="numeric" min="0" id="c-prezzo-${k}" data-prezzo="${k}" value="${prezzoCorso(a, k)}" aria-label="Prezzo di ${k} al mese in euro"><span class="unita">€ al mese</span></div></div>`).join('')}
     <div class="campo"><span class="nome-campo">Corsi</span>
@@ -920,8 +987,7 @@ function apriCert(nome) {
   $('sopra2').innerHTML = velo(`Certificato di ${nome}`, `
       <h2>${esc(nome)}</h2>
       <p class="sotto">Certificato medico</p>
-      <div class="campo"><span class="nome-campo">Fatto il</span><div class="campo-valore"><input type="date" data-cert="${esc(nome)}" value="${a.certFatto || ''}" max="${OGGI}" aria-label="Certificato fatto il"></div></div>
-      <div class="campo"><span class="nome-campo">Vale fino al</span><div class="campo-valore"><span class="valore">${a.cert ? dataPiena(a.cert) : 'manca'}</span></div></div>
+      <div class="campo"><span class="nome-campo">Fatto il</span><div class="campo-valore colonna"><input type="date" data-cert="${esc(nome)}" value="${a.certFatto || ''}" max="${OGGI}" aria-label="Certificato fatto il">${valeFino(a)}</div></div>
       <button type="button" class="con-freccia" data-az="scheda" data-nome="${esc(nome)}"><span>La sua scheda</span>${FRECCIA}</button>`);
 }
 function apriMeseCert(n) {     // tocco su una colonna del grafico: chi scade in quel mese
@@ -960,6 +1026,7 @@ function dettaglioLezione(l) {
   if (l.tipo === 'privata') chi = `<p class="testo-blocco">${esc(l.allievo)} · ${l.calendario ? 'dal calendario Google' : 'detta a voce'}</p>`;
   else if (l.nonFatta) chi = '<p class="testo-blocco muto">Nessuno: non si è fatta.</p>';
   else if (l.appello) chi = `<p class="testo-blocco">${esc(appelloBreve(l))}</p><div class="nomi">${presentiDi(l).map(n => `<span>${esc(n)}</span>`).join('')}</div>` +
+    (l.appello.senzaScheda ? `<p class="testo-blocco muto">senza scheda: ${esc(l.appello.senzaScheda.join(', '))}</p>` : '') +
     (l.appello.assenti.length ? `<p class="testo-blocco muto" style="margin-top:8px">mancavano</p><div class="nomi">${l.appello.assenti.map(n => `<span>${esc(n)}</span>`).join('')}</div>` : '');
   else chi = '<p class="testo-blocco muto">Non ancora detto.</p>';
   const sotto = pila.length > 1 ? (pila.at(-2).nome || (pila.at(-2).corso ? `Corso ${pila.at(-2).corso}` : 'Indietro'))
@@ -1138,7 +1205,7 @@ function descrivi(l) {
     id: l.id, giorno: l.giorno, ora: `${l.inizio}-${l.tipo === 'corso' ? l.fineCorso : l.fine}`, tipo: l.tipo,
     stato: l.nonFatta ? 'non fatta' : l.fatto ? 'raccontata' : iniziata(l) ? 'da raccontare' : 'non ancora cominciata',
   };
-  if (l.tipo === 'corso') Object.assign(lezione, { corso: l.corso, iscritti: iscrittiDi(l), assenti: l.appello ? l.appello.assenti : null });
+  if (l.tipo === 'corso') Object.assign(lezione, { corso: l.corso, iscritti: iscrittiDi(l), assenti: l.appello ? l.appello.assenti : null, senza_scheda: (l.appello && l.appello.senzaScheda) || [] });
   else lezione.allievo = l.allievo;
   if (l.fatto) lezione.fatto = l.tipo === 'corso' ? { gruppo: l.fatto.gruppo, soli: l.fatto.soli.map(s => ({ allievo: s.chi, cosa: s.cosa })) } : { testo: l.fatto.testo };
   if (l.previsto) lezione.previsto = l.previsto;
@@ -1151,10 +1218,11 @@ function contestoVoce(ctx) {
     dove: ctx.tipo === 'lezione' ? 'lezione' : ctx.scheda ? 'scheda' : ctx.sezione,
     lezione: ctx.tipo === 'lezione' ? ctx.id : null,
     allievo: ctx.scheda,
-    lezioni: stato.lezioni.filter(l => l.giorno >= sposta(OGGI, -14) && l.giorno <= OGGI)
+    lezioni: stato.lezioni.filter(l => l.giorno >= sposta(OGGI, -14) && l.giorno <= OGGI && !annullata(l))
       .sort((a, b) => (a.giorno + a.inizio).localeCompare(b.giorno + b.inizio)).map(descrivi),
     allievi: stato.allievi.map(a => ({ nome: a.nome, corsi: a.corsi, private: a.private, non_viene_piu: a.uscito })),
-    corsi: Object.keys(CORSI),
+    corsi: Object.entries(CORSI).map(([corso, c]) => ({ corso, prezzo: c.prezzo, giorni: giorniCorso(c), orario: c.orario })),
+    prezzo_privata: IMP.prezzoPrivata, tesseramento: IMP.tesseramento,
     forme: FORME.map(([forma, sezioni]) => ({ forma, sezioni })),
   };
 }
@@ -1196,6 +1264,7 @@ const foto = () => JSON.stringify({ lezioni: stato.lezioni, allievi: stato.allie
 const testiCambiati = testi => Object.fromEntries(Object.entries(testi).filter(([k, x]) => TESTI[k] && x.testo !== TESTI[k].testo).map(([k, x]) => [k, x.testo]));
 const righeDi = f => versoDatabase({ allievi: f.allievi, lezioni: f.lezioni, imp: f.imp, testi: testiCambiati(f.imp.testi) });
 function persisti(prima) {
+  if (PROVA) return;
   const d = righeDi({ allievi: stato.allievi, lezioni: stato.lezioni, imp: IMP });
   db.salvaTema(IMP.tema);
   db.aggiornaCopia(d);
@@ -1459,7 +1528,7 @@ function pannelloPdfMese(m) {
       </div>`;
   }).join('');
   const priv = attivi.map(a => {
-    const lez = stato.lezioni.filter(l => l.tipo === 'privata' && l.allievo === a.nome && l.giorno.startsWith(m)).sort((x, y) => x.giorno.localeCompare(y.giorno));
+    const lez = stato.lezioni.filter(l => l.tipo === 'privata' && l.allievo === a.nome && l.giorno.startsWith(m) && !annullata(l)).sort((x, y) => x.giorno.localeCompare(y.giorno));
     if (!lez.length) return '';
     const fatte = lez.filter(l => l.fatto && !l.nonFatta).length;
     return `
@@ -1524,14 +1593,27 @@ function apriCintura() {
     </div>`;
   $('sopra2').querySelector('[aria-pressed="true"]')?.scrollIntoView({ block: 'center' });
 }
-function apriForma(f) {
+// Tutte le forme (Simone, 21/10): si segnano in qualsiasi ordine, anche tutte complete, senza passare per forza alla prossima
+const tacche = (n, v) => `<span class="tacche" aria-hidden="true">${Array.from({ length: n }, (_, i) => `<span class="tacca${i < v ? ' si' : ''}"></span>`).join('')}</span>`;
+function apriTutteForme() {
+  const a = allievo(pila.at(-1).nome);
+  $('sopra2').innerHTML = `
+    <div class="velo" data-az="chiudi-velo">
+      <div class="foglio gutter" role="dialog" aria-modal="true" aria-label="Le forme di ${esc(a.nome)}">
+        <h2>${esc(a.nome)} · le forme</h2>
+        ${FORME.map(([f, n]) => `<button type="button" class="con-freccia" data-az="forma" data-f="${f}" data-lista="1" aria-label="${f}: ${statoForma({ v: a.forme[f] || 0, n })}, cambia"><span class="una-riga">${f}</span><span class="destra">${tacche(n, a.forme[f] || 0)}${FRECCIA}</span></button>`).join('')}
+        <button type="button" data-az="chiudi-velo">Chiudi</button>
+      </div>
+    </div>`;
+}
+function apriForma(f, daLista = false) {
   const a = allievo(pila.at(-1).nome), n = FORME.find(x => x[0] === f)[1], v = a.forme[f] || 0;
   const voci = Array.from({ length: n + 1 }, (_, i) => i);
   $('sopra2').innerHTML = `
     <div class="velo" data-az="chiudi-velo">
       <div class="foglio gutter" role="dialog" aria-modal="true" aria-label="${f}">
         <h2>${f} · dove è arrivato</h2>
-        ${voci.map(i => `<button type="button" data-az="imposta-forma" data-f="${f}" data-v="${i}" aria-pressed="${i === v}">${statoForma({ v: i, n })}</button>`).join('')}
+        ${voci.map(i => `<button type="button" data-az="imposta-forma" data-f="${f}" data-v="${i}"${daLista ? ' data-lista="1"' : ''} aria-pressed="${i === v}">${statoForma({ v: i, n })}</button>`).join('')}
         <button type="button" data-az="chiudi-velo">Chiudi</button>
       </div>
     </div>`;
@@ -1665,7 +1747,8 @@ document.addEventListener('click', e => {
     case 'settimana-corso': apri({ tipo: 'settimana-corso', corso: stato.corso, k: t.dataset.k }); break;
     case 'mese-corso': apri({ tipo: 'mese-corso', corso: stato.corso, k: t.dataset.k }); break;
     case 'private-di': stato.vistaPrivate = 'Lezioni'; apri({ tipo: 'private', nome: t.dataset.nome }); break;
-    case 'forma': apriForma(t.dataset.f); break;
+    case 'forma': apriForma(t.dataset.f, !!t.dataset.lista); break;
+    case 'tutte-forme': apriTutteForme(); break;
     case 'cintura': apriCintura(); break;
     case 'imposta-cintura': {
       const prima = foto(), a = allievo(pila.at(-1).nome);
@@ -1677,6 +1760,7 @@ document.addEventListener('click', e => {
       const prima = foto();
       allievo(pila.at(-1).nome).forme[t.dataset.f] = Number(t.dataset.v);
       $('sopra2').innerHTML = ''; disegnaPila(); salvato('Salvato', prima);
+      if (t.dataset.lista) apriTutteForme();          // dall'elenco: si torna all'elenco, per segnarne altre
       break;
     }
     case 'fa': {
@@ -1730,8 +1814,10 @@ document.addEventListener('click', e => {
       const prima = foto();
       const a = nuovoAllievo(nome, n.fa.filter(c => c !== 'Private'), n.fa.includes('Private'), n.privata, n.cell, n.privateMese);
       segnaCertificato(a, n.certFatto);
-      aggiungiAllievo(a);
-      pila.length = 0; disegna(); salvato(`${nome} aggiunto`, prima);
+      const diPrima = aggiungiAllievo(a);
+      pila.length = 0; disegna();
+      if (diPrima) mostraCapito([{ luogo: 'Allievi', righe: [`${nome} aggiunto`, lezioniDiPrima(diPrima)] }], prima, 'Salvato');
+      else salvato(`${nome} aggiunto`, prima);
       break;
     }
   }
@@ -1744,6 +1830,7 @@ document.addEventListener('keydown', e => {
 });
 // --- I dati: dal database, o dalla copia sul telefono se manca la rete; sopra, i cambi ancora in coda ---------
 async function carica() {
+  if (PROVA) { usaDati(await (await fetch('/__prova_dati.json', { cache: 'no-store' })).json()); return true; }
   let d = null;
   try { await db.svuota(); d = await db.scarica(); } catch { d = db.copiaSalvata(); }
   if (!d) return false;
@@ -1808,7 +1895,7 @@ setInterval(() => {
   if (stato.lezioni.filter(iniziata).length !== cominciate && !occupato()) disegna();
 }, 20000);
 document.addEventListener('visibilitychange', () => {
-  if (document.visibilityState !== 'visible' || !stato.email) return;
+  if (document.visibilityState !== 'visible' || !stato.email || PROVA) return;
   ricarica();
   elaboraAttese();
 });

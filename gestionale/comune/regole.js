@@ -42,6 +42,13 @@ export const delGiorno = k => elide(k) ? `dell'${dataCorta(k)}` : `del ${dataCor
 export const dataParole = k => { const d = daChiave(k); return `${d.getDate()} ${MESI[d.getMonth()]}`; };   // 12 novembre
 export const ilData = k => `${elide(k) ? "l'" : 'il '}${dataParole(k)}`;
 export const maiuscola = s => s.charAt(0).toUpperCase() + s.slice(1);
+// Una privata annullata sparisce dall'app (Simone, 21/10): resta nel database, non si conta e non si mostra
+export const annullata = l => l.tipo === 'privata' && !!l.nonFatta && l.motivo === 'annullata';
+// Un nome detto è di una scheda se è lo stesso (senza badare alle maiuscole), o se è solo il nome e la scheda comincia così
+export function stessoNome(detto, scheda) {
+  const d = String(detto || '').trim().toLowerCase(), s = String(scheda || '').trim().toLowerCase();
+  return !!d && (d === s || (!d.includes(' ') && s.split(/ +/)[0] === d));
+}
 
 /** Il giorno e l'ora a Roma, qualunque sia il fuso del telefono o del server. */
 export function adessoRoma(d = new Date()) {
@@ -156,9 +163,10 @@ export function daDatabase({ allievi = [], lezioni = [], pagamenti = [] }) {
     }
     if (r.iscritti) l.iscritti = nomi(r.iscritti);
     if (r.assenti) l.appello = { assenti: nomi(r.assenti) };
+    if (l.appello && r.presenti_senza_scheda && r.presenti_senza_scheda.length) l.appello.senzaScheda = [...r.presenti_senza_scheda];
     if (r.fatto) {
-      l.fatto = r.tipo === 'corso'
-        ? { gruppo: r.fatto.gruppo || '', soli: (r.fatto.soli || []).map(s => ({ chi: nome(s.allievo_id), cosa: s.cosa })).filter(s => s.chi) }
+      l.fatto = r.tipo === 'corso'   // chi lavora da solo: un allievo, o un nome senza scheda
+        ? { gruppo: r.fatto.gruppo || '', soli: (r.fatto.soli || []).map(s => ({ chi: nome(s.allievo_id) || s.nome, cosa: s.cosa })).filter(s => s.chi) }
         : { testo: r.fatto.testo || '' };
     }
     if (r.previsto) l.previsto = r.previsto;
@@ -193,11 +201,12 @@ export function versoDatabase({ allievi, lezioni, imp, testi = {} }) {
     if (vuota) continue;
     const corso = l.tipo === 'corso';
     let fatto = null;
-    if (l.fatto) fatto = corso ? { gruppo: l.fatto.gruppo, soli: l.fatto.soli.map(s => ({ allievo_id: idDi.get(s.chi), cosa: s.cosa })).filter(s => s.allievo_id) } : { testo: l.fatto.testo };
+    if (l.fatto) fatto = corso ? { gruppo: l.fatto.gruppo, soli: l.fatto.soli.map(s => (idDi.has(s.chi) ? { allievo_id: idDi.get(s.chi), cosa: s.cosa } : { nome: s.chi, cosa: s.cosa })) } : { testo: l.fatto.testo };
     righeLezioni.set(l.id, {
       id: l.id, giorno: l.giorno, tipo: l.tipo, corso: corso ? l.corso : null, allievo_id: corso ? null : (idDi.get(l.allievo) || null),
       inizio: l.inizio, fine: corso ? l.fineCorso : l.fine, ore: l.ore ?? 1,
       iscritti: l.iscritti ? ids(l.iscritti) : null, assenti: l.appello ? ids(l.appello.assenti) : null, fatto,
+      presenti_senza_scheda: l.appello && l.appello.senzaScheda && l.appello.senzaScheda.length ? [...l.appello.senzaScheda] : null,
       previsto: l.previsto || null, non_fatta: !!l.nonFatta, motivo: l.nonFatta ? (l.motivo || null) : null, dal_calendario: !!l.calendario,
     });
   }
@@ -219,7 +228,8 @@ export function creaRegole(ctx) {
   const roster = corso => ctx.allievi.filter(a => a.corsi.includes(corso) && !a.uscito).map(a => a.nome);
   const iniziata = l => l.giorno < ctx.oggi || (l.giorno === ctx.oggi && l.inizio <= ctx.ora);
   const iscrittiDi = l => l.iscritti || roster(l.corso);
-  const presentiDi = l => iscrittiDi(l).filter(a => !l.appello.assenti.includes(a));
+  // chi c'era: gli iscritti meno gli assenti, più chi non ha ancora la scheda (Simone, 21/10)
+  const presentiDi = l => [...iscrittiDi(l).filter(a => !l.appello.assenti.includes(a)), ...(l.appello.senzaScheda || [])];
 
   // Le ore e le presenze di un allievo
   const durata = l => l.ore ?? (l.tipo === 'corso' ? corsi()[l.corso].ore : 1);
@@ -229,6 +239,7 @@ export function creaRegole(ctx) {
     return !!l.appello && iscrittiDi(l).includes(nome) && !l.appello.assenti.includes(nome);
   }
   const lezioniDi = nome => ctx.lezioni
+    .filter(l => !annullata(l))
     .filter(l => l.giorno <= ctx.oggi && (l.tipo === 'privata' ? l.allievo === nome : iscrittiDi(l).includes(nome)))
     .filter(l => l.giorno < ctx.oggi || iniziata(l))
     .sort((a, b) => (b.giorno + b.inizio).localeCompare(a.giorno + a.inizio));

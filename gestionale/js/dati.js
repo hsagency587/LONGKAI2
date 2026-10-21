@@ -171,7 +171,7 @@ export function conCoda(d) {
   }
   return { ...d, allievi: [...t.allievi.values()], lezioni: [...t.lezioni.values()], pagamenti: [...t.pagamenti.values()], valori };
 }
-const contenuto = r => ({ iscritti: r.iscritti, assenti: r.assenti, fatto: r.fatto, previsto: r.previsto, non_fatta: r.non_fatta, motivo: r.motivo });
+const contenuto = r => ({ iscritti: r.iscritti, assenti: r.assenti, presenti_senza_scheda: r.presenti_senza_scheda, fatto: r.fatto, previsto: r.previsto, non_fatta: r.non_fatta, motivo: r.motivo });
 
 // Un errore di rete (o del server che non risponde) non fa perdere niente: si riprova. Gli altri si dicono.
 const temporaneo = r => !navigator.onLine || !r.status || r.status >= 500 || r.status === 401 || r.status === 408 || r.status === 429
