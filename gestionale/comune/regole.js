@@ -98,6 +98,7 @@ export function lezioniDeiCorsi(corsi, primoGiorno, oggi, esistenti) {
   for (let k = primoGiorno; k <= oggi; k = sposta(k, 1)) {
     const dow = daChiave(k).getDay();
     for (const [corso, c] of Object.entries(corsi)) {
+      if (c.dal && k < c.dal) continue;
       const v = orarioNel(c, k);
       const id = `corso:${corso}:${k}`;
       if (!v.giorni.includes(dow) || esistenti.has(id)) continue;
@@ -119,6 +120,7 @@ export function impostazioniDa(v = {}) {
   for (const [k, c] of Object.entries(v.corsi || {})) {
     corsi[k] = { giorni: [...(c.giorni || [])], inizio: c.inizio, fine: c.fine, prezzo: euro(c.prezzo_cent || 0), settimane: c.settimane || 1 };
     if (c.prima && c.prima.length) corsi[k].prima = c.prima.map(p => ({ fino: p.fino, giorni: [...p.giorni], inizio: p.inizio, fine: p.fine }));
+    if (c.dal) corsi[k].dal = c.dal;                  // un corso nuovo: le sue lezioni da quel giorno
     aggiornaOrario(corsi[k]);
   }
   return {
@@ -198,7 +200,9 @@ export function versoDatabase({ allievi, lezioni, imp, testi = {} }) {
   }
   for (const l of lezioni) {
     const solito = l.tipo === 'corso' && imp.corsi[l.corso] ? orarioNel(imp.corsi[l.corso], l.giorno) : null;
-    const comeSempre = !solito || (l.inizio === solito.inizio && l.fineCorso === solito.fine);   // l'orario di quella sola, cambiato: si tiene
+    const delCorso = solito && solito.giorni.includes(daChiave(l.giorno).getDay()) && !(imp.corsi[l.corso].dal && l.giorno < imp.corsi[l.corso].dal);
+    // l'orario di quella sola cambiato, o una lezione in più in un altro giorno: si tiene anche senza racconto
+    const comeSempre = !solito || (delCorso && l.inizio === solito.inizio && l.fineCorso === solito.fine);
     const vuota = l.tipo === 'corso' && !l.appello && !l.fatto && !l.previsto && !l.nonFatta && comeSempre;
     if (vuota) continue;
     const corso = l.tipo === 'corso';
@@ -216,6 +220,7 @@ export function versoDatabase({ allievi, lezioni, imp, testi = {} }) {
   for (const [k, c] of Object.entries(imp.corsi)) {
     corsi[k] = { giorni: [...c.giorni], inizio: c.inizio, fine: c.fine, prezzo_cent: cent(c.prezzo), settimane: c.settimane || 1 };
     if (c.prima && c.prima.length) corsi[k].prima = c.prima.map(p => ({ ...p, giorni: [...p.giorni] }));
+    if (c.dal) corsi[k].dal = c.dal;
   }
   const valori = { corsi, prezzo_privata_cent: cent(imp.prezzoPrivata), chiusura: imp.chiusura, notifiche: { ...imp.notifiche }, testi: { ...testi },
     tesseramento_cent: cent(imp.tesseramento ?? TESSERAMENTO) };

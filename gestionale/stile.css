@@ -158,7 +158,7 @@ main::-webkit-scrollbar, .corpo-pannello::-webkit-scrollbar, .foglio::-webkit-sc
 .dati-riga .valore { flex: 1; font-size: 15px; color: var(--muto); }
 .dati-riga svg { width: 22px; height: 22px; color: var(--muto); flex: none; transition: transform 0.15s; }
 .dati-riga[aria-expanded="true"] svg { transform: rotate(90deg); }
-.campo { display: grid; grid-template-columns: 112px minmax(0, 1fr); align-items: center; gap: 8px; min-height: 52px; border-bottom: 1px solid var(--linea); }
+.campo { display: grid; grid-template-columns: 112px minmax(0, 1fr); align-items: center; gap: 8px; min-height: 48px; border-bottom: 1px solid var(--linea); }
 .campo.largo { grid-template-columns: 1fr; gap: 6px; padding-block: 8px; }
 .nome-campo { font-size: 15px; color: var(--muto); }
 .campo-valore { display: flex; align-items: center; gap: 8px; min-width: 0; white-space: nowrap; }
@@ -507,3 +507,9 @@ button.colonna:active i { opacity: 0.7; }
 .campo-valore.colonna { flex-direction: column; align-items: stretch; gap: 2px; padding-block: 6px; }
 .sotto-campo { font-size: 14px; color: var(--muto); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .foglio button.con-freccia { gap: 10px; }                                          /* il nome e le caselle non si toccano */
+/* I Dati più corti (Simone, 22/10): Non viene più e Cancella sulla stessa riga */
+.campo.azioni-scheda { display: flex; justify-content: space-between; }
+.campo.azioni-scheda .link { padding: 0; }
+/* Un tasto dentro "Ho capito così": WhatsApp e le notifiche vogliono un tocco del Sifu */
+.capito .capito-tasto { display: block; margin-top: 6px; min-height: 44px; padding: 0 14px; border-radius: 10px; background: var(--oro); color: var(--inchiostro); }
+:root[data-tema="scuro"] .capito .capito-tasto { background: #8b4a2f; color: #f1e9df; }

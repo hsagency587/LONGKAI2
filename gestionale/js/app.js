@@ -51,7 +51,7 @@ const {
 const trova = id => stato.lezioni.find(l => l.id === id);
 const titolo = l => l.tipo === 'corso' ? `Corso ${l.corso}` : `Privata · ${l.allievo}`;
 const breve = l => l.tipo === 'corso' ? `Corso ${l.corso}` : `Priv. · ${l.allievo}`;   // nelle righe: niente a capo
-const orario = l => l.tipo === 'corso' ? (l.orarioCorso || CORSI[l.corso].orario) : `${l.inizio}-${l.fine}`;
+const orario = l => l.tipo === 'corso' ? (l.orarioCorso || CORSI[l.corso]?.orario || '') : `${l.inizio}-${l.fine}`;
 const quando = l => l.giorno === OGGI ? 'oggi' : dataBreve(l.giorno);
 const mancano = assenti => `${assenti.length === 1 ? 'manca' : 'mancano'} ${assenti.join(', ')}`;
 const presenti = n => `${n} ${n === 1 ? 'presente' : 'presenti'}`;
@@ -113,8 +113,19 @@ const giornoValido = g => /^\d{4}-\d{2}-\d{2}$/.test(g || '');
 const oraValida = o => /^\d{2}:\d{2}$/.test(o || '');
 const dentroScheda = a => pila.at(-1)?.tipo === 'scheda' && pila.at(-1).nome === a.nome;
 function lezioneDa(az, dubbi) {
-  const l = trova(az.lezione);
+  const l = trova(az.lezione) || lezioneInPiu(az.lezione);
   if (!l) dubbi.push('non trovo la lezione');
+  return l;
+}
+// Una lezione in più di un corso (un giorno che non è il suo, o un corso spostato): "corso:Mortara:2026-10-22", all'orario
+// di solito se non lo dice. Solo fino a oggi, dal primo giorno d'uso.
+function lezioneInPiu(id, inizio, fine) {
+  const m = /^corso:(.+):([0-9]{4}-[0-9]{2}-[0-9]{2})$/.exec(String(id || ''));
+  const c = m && CORSI[m[1]];
+  if (!c || m[2] < PRIMO_GIORNO || m[2] > OGGI || trova(id)) return null;
+  const i = oraValida(inizio) ? inizio : c.inizio, f = oraValida(fine) && fine > i ? fine : c.fine;
+  const l = { id, giorno: m[2], tipo: 'corso', corso: m[1], inizio: i, fineCorso: f, orarioCorso: orarioDi(i, f), ore: oreFra(i, f) };
+  stato.lezioni.push(l);
   return l;
 }
 function allievoDa(az, dubbi) {
@@ -355,6 +366,80 @@ const AZIONI_VOCE = {
     if (typeof az.uscito === 'boolean' && az.uscito !== a.uscito) { a.uscito = az.uscito; righe.push(a.uscito ? 'non viene più' : 'torna a venire'); }
     return righe.length ? [{ luogo: `Scheda · ${a.nome}`, righe }] : [];
   },
+  corso_nuovo(az, dubbi) {     // un corso nuovo: giorni, orario, prezzo; le sue lezioni da oggi
+    const nome = maiuscola(String(az.nome || '').trim().replace(/ +/g, ' '));
+    const giorni = [...new Set((az.giorni || []).map(g => GIORNI.indexOf(String(g).trim().toLowerCase())).filter(g => g >= 0))];
+    if (!nome || nome === 'Private' || nome === 'Tutti') { dubbi.push('il nome del corso nuovo'); return []; }
+    if (corsoVero(nome)) { dubbi.push(`il corso ${corsoVero(nome)} c'è già`); return []; }
+    if (!giorni.length || !oraValida(az.inizio) || !oraValida(az.fine) || az.fine <= az.inizio) { dubbi.push(`il corso ${nome}: che giorni e a che ora?`); return []; }
+    CORSI[nome] = { giorni, inizio: az.inizio, fine: az.fine, prezzo: Number(az.prezzo) >= 0 ? Number(az.prezzo) : 0, settimane: giorni.length === 1 ? 2 : 1, dal: OGGI };
+    aggiornaOrario(CORSI[nome]);
+    stato.lezioni.push(...lezioniDeiCorsi({ [nome]: CORSI[nome] }, OGGI, OGGI, new Set(stato.lezioni.map(l => l.id))));   // se oggi è un suo giorno
+    return [{ luogo: 'Impostazioni', righe: [`corso nuovo: ${nome}`, `${giorniCorso(CORSI[nome])} · ${CORSI[nome].orario} · ${CORSI[nome].prezzo} € al mese`] }];
+  },
+  togli_corso(az, dubbi) {     // solo se nessuno lo fa più: le lezioni già fatte restano nella storia
+    const c = corsoVero(az.corso);
+    if (!c) { dubbi.push(`non trovo il corso «${az.corso || ''}»`); return []; }
+    const chi = stato.allievi.filter(a => !a.uscito && a.corsi.includes(c)).map(a => a.nome);
+    if (chi.length) { dubbi.push(`${c} lo fanno ancora ${chi.length}: prima toglilo a loro`); return []; }
+    delete CORSI[c];
+    return [{ luogo: 'Impostazioni', righe: [`corso tolto: ${c}`, 'le lezioni fatte restano nella storia'] }];
+  },
+  lezione_in_piu(az, dubbi) {  // un corso in un giorno in più (o spostato: con "non fatta" sul giorno di prima)
+    const c = corsoVero(az.corso);
+    if (!c || !giornoValido(az.giorno)) { dubbi.push('la lezione in più: quale corso e che giorno?'); return []; }
+    const id = `corso:${c}:${az.giorno}`;
+    if (trova(id)) { dubbi.push(`${c} il ${dataCorta(az.giorno)} c'è già`); return []; }
+    const l = lezioneInPiu(id, az.inizio, az.fine);
+    if (!l) { dubbi.push('la lezione in più: un giorno fino a oggi'); return []; }
+    return [{ luogo: luogoLezione(l), righe: [`lezione in più, ${l.orarioCorso}`] }];
+  },
+  apri(az, dubbi) {            // andare in una schermata, una scheda, una lezione, un giorno, il PDF di un mese
+    const dove = az.dove, a = az.allievo ? conNome(az.allievo) : null;
+    if (az.allievo && !a) { dubbi.push(`non trovo l'allievo «${az.allievo}»`); return []; }
+    poi.push(() => {
+      $('sopra2').innerHTML = '';
+      if (['oggi', 'allievi', 'corsi', 'scadenze'].includes(dove)) { stato.sezione = dove; pila.length = 0; }
+      if (dove === 'certificati' || dove === 'pagamenti') { stato.sezione = 'scadenze'; stato.scadenza = dove === 'certificati' ? 'Certificati' : 'Pagamenti'; pila.length = 0; }
+      if (dove === 'oggi' && giornoValido(az.giorno) && az.giorno >= PRIMO_GIORNO && az.giorno <= OGGI) stato.giorno = az.giorno;
+      if (dove === 'corsi' && corsoVero(az.corso)) stato.corso = corsoVero(az.corso);
+      if (['scheda', 'dati', 'private', 'conto'].includes(dove) && a) { stato.datiAperti = dove === 'dati'; pila.length = 0; pila.push({ tipo: 'scheda', nome: a.nome }); }
+      if (dove === 'private' && a) { stato.vistaPrivate = 'Lezioni'; pila.push({ tipo: 'private', nome: a.nome }); }
+      if (dove === 'usciti') { stato.sezione = 'allievi'; stato.mostraUsciti = true; pila.length = 0; }
+      if (dove === 'lezione' && trova(az.lezione)) pila.push({ tipo: 'lezione', id: az.lezione });
+      if (dove === 'impostazioni') { pila.length = 0; pila.push({ tipo: 'impostazioni' }); }
+      const mese = /^[0-9]{4}-[0-9]{2}$/.test(az.mese || '') ? az.mese : null;
+      if (dove === 'pdf') { pila.length = 0; pila.push({ tipo: 'pdf' }); if (mese && mese < MESE) pila.push({ tipo: 'pdf-mese', m: mese }); }
+      disegna();
+      if (dove === 'conto' && a) apriConto(a.nome, mese && mese >= a.dal && mese <= MESE ? mese : MESE);
+      if (dove === 'pdf' && az.stampa && mese && mese < MESE) stampaPdf(mese);
+    });
+    const cosa = { scheda: 'la scheda', dati: 'i dati', private: 'le private', conto: 'il conto', pdf: 'il PDF del mese', lezione: 'la lezione', usciti: 'chi non viene più' }[dove] || dove;
+    return [{ luogo: '', righe: [a ? `apro ${cosa === 'la scheda' ? 'la scheda' : cosa} di ${a.nome}` : `apro: ${cosa}`] }];
+  },
+  whatsapp(az, dubbi) {        // il messaggio già scritto: WhatsApp si apre con un tocco (il telefono lo vuole)
+    const a = allievoDa(az, dubbi); if (!a) return [];
+    const m = quoteRitardo(a)[0] || (a.dal <= MESE && !a.pagato[MESE] && conto(a, MESE).tot ? MESE : null);
+    const msg = az.messaggio === 'mese' && m ? 'mese' : az.messaggio === 'cert' ? 'cert' : 'chat';
+    return [{ luogo: `WhatsApp · ${a.nome}`, righe: [msg === 'mese' ? `il messaggio di ${nomeMese(m)}, ${conto(a, m).tot} €` : msg === 'cert' ? 'il messaggio del certificato' : 'la chat'],
+      tasto: { testo: 'Apri WhatsApp', dati: `data-az="whatsapp" data-nome="${esc(a.nome)}" data-msg="${msg}"${msg === 'mese' ? ` data-m="${m}"` : ''}` } }];
+  },
+  annulla_ultimo() {           // "annulla", "torna indietro": l'ultimo cambio, come il tasto Annulla
+    const prima = $('avviso-posto').dataset.prima;
+    if (!prima) return [{ luogo: '', righe: ['non c\'è niente da annullare'] }];
+    ripristina(prima);                              // subito: il riquadro nuovo ha il suo Annulla, che lo rimette
+    return [{ luogo: '', righe: ['rimesso com\'era prima dell\'ultimo cambio'] }];
+  },
+  aggiorna_app() {
+    if (!stato.aggiornamento) return [{ luogo: '', righe: ['è già la versione nuova'] }];
+    poi.push(() => aggiorna());
+    return [{ luogo: '', righe: ['aggiorno l\'app'] }];
+  },
+  esci_app() { poi.push(() => esci()); return [{ luogo: '', righe: ['esco dall\'app su questo telefono'] }]; },
+  notifiche_telefono(az) {     // spegnerle si fa subito; accenderle vuole un tocco (il telefono chiede il permesso)
+    if (az.accese === false) { poi.push(() => cambiaPush(false)); return [{ luogo: '', righe: ['spengo le notifiche su questo telefono'] }]; }
+    return [{ luogo: 'Notifiche', righe: ['il telefono vuole un tocco per accenderle'], tasto: { testo: 'Accendi le notifiche', dati: 'data-az="push" data-v="si"' } }];
+  },
   impostazioni(az) {           // per tutti (Impostazioni): i prezzi dei corsi e della privata, il tesseramento, giorni e orari
     const righe = [];
     for (const p of az.prezzi_corsi || []) {
@@ -367,14 +452,15 @@ const AZIONI_VOCE = {
     for (const o of az.orari || []) {
       const c = corsoVero(o.corso);
       const giorni = [...new Set((o.giorni || []).map(g => GIORNI.indexOf(String(g).trim().toLowerCase())).filter(g => g >= 0))];
-      if (!c || (!giorni.length && !oraValida(o.inizio) && !oraValida(o.fine))) continue;
+      if (!c || (!giorni.length && !oraValida(o.inizio) && !oraValida(o.fine) && !o.settimane)) continue;
       const k = CORSI[c];
       tieniOrarioDiPrima(k);                         // vale dalla prossima lezione
       if (giorni.length) k.giorni = giorni;
       if (oraValida(o.inizio)) k.inizio = o.inizio;
       if (oraValida(o.fine) && o.fine > k.inizio) k.fine = o.fine;
+      if (o.settimane === 1 || o.settimane === 2) k.settimane = o.settimane;
       aggiornaOrario(k);
-      righe.push(`${c}: ${giorniCorso(k)} · ${k.orario}`);
+      righe.push(`${c}: ${giorniCorso(k)} · ${k.orario}${o.settimane ? ` · a ${o.settimane === 1 ? 'una settimana' : 'due settimane'}` : ''}`);
     }
     if (az.chiusura != null) {                        // il mese di chiusura, o nessuno
       const s = String(az.chiusura).trim().toLowerCase(), i = MESI.indexOf(s);
@@ -426,8 +512,10 @@ const AZIONI_VOCE = {
 };
 
 // Le azioni, una per una; i gruppi con lo stesso luogo si uniscono. Le segnalazioni partono a parte.
+let poi = [];                     // quello che le azioni fanno dopo "Ho capito così" (aprire una schermata, uscire…)
 function applicaAzioni(azioni) {
   const gruppi = [], dubbi = [], segnalazioni = [];
+  poi = [];
   for (const az of Array.isArray(azioni) ? azioni : []) {
     if (az && az.tipo === 'segnalazione') { if (String(az.testo || '').trim()) segnalazioni.push(String(az.testo).trim()); continue; }
     const fn = az && Object.hasOwn(AZIONI_VOCE, az.tipo) ? AZIONI_VOCE[az.tipo] : null;
@@ -436,7 +524,7 @@ function applicaAzioni(azioni) {
   const uniti = [];
   for (const g of gruppi) {
     const c = uniti.find(x => x.luogo === g.luogo);
-    if (c) c.righe.push(...g.righe.filter(r => !c.righe.includes(r))); else uniti.push({ luogo: g.luogo, righe: [...g.righe] });
+    if (c && !g.tasto && !c.tasto) c.righe.push(...g.righe.filter(r => !c.righe.includes(r))); else uniti.push({ ...g, righe: [...g.righe] });
   }
   return { gruppi: uniti, dubbi, segnalazioni };
 }
@@ -506,7 +594,7 @@ function rigaLezione(l, statoHtml, colonna, conTasto) {
       ${tasto}
     </article>`;
 }
-const colonnaOra = l => ({ su: l.inizio, giu: l.tipo === 'corso' ? (l.fineCorso || CORSI[l.corso].fine) : l.fine });
+const colonnaOra = l => ({ su: l.inizio, giu: l.tipo === 'corso' ? (l.fineCorso || CORSI[l.corso]?.fine) : l.fine });
 const colonnaData = l => { const d = daChiave(l.giorno); return { data: true, su: `${d.getDate()}/${d.getMonth() + 1}`, giu: GG[d.getDay()] }; };
 
 function listaOggi() {
@@ -553,7 +641,7 @@ function listaAllievi() {
   const passa = a => (f === 'Tutti' || (f === 'Private' ? a.private : a.corsi.includes(f))) && (!q || a.nome.toLowerCase().includes(q));
   const attivi = stato.allievi.filter(a => !a.uscito && passa(a));
   const usciti = stato.allievi.filter(a => a.uscito && passa(a));
-  let html = selettore(['Tutti', 'Mortara', 'Vigevano', 'Private'], f, 'filtro');
+  let html = selettore(['Tutti', ...Object.keys(CORSI), 'Private'], f, 'filtro');
   html += attivi.length ? attivi.map(rigaPersona).join('') : '<p class="vuoto">Nessun allievo</p>';
   if (usciti.length) {
     html += `<button type="button" class="usciti" data-az="mostra-usciti"><span>Non vengono più · ${usciti.length}</span>${stato.mostraUsciti ? '' : ICONA.dx}</button>`;
@@ -630,38 +718,28 @@ function creditoScheda(a) {      // in alto nella scheda, solo se c'è: il credi
 }
 
 function dati(a) {
-  const ult = ultimoPagamento(a);
   return `
     <div class="campo"><span class="nome-campo">Nome</span>
       <div class="campo-valore">${a.protetto ? '<span class="valore">bloccato</span>' : `<input type="text" id="c-nome" data-nome-allievo value="${esc(a.nome)}" autocomplete="off" aria-label="Nome">`}</div></div>
     <div class="campo"><span class="nome-campo">Certificato del</span>
       <div class="campo-valore colonna"><input type="date" id="c-cert" data-campo="certFatto" value="${a.certFatto || ''}" max="${OGGI}" aria-label="Certificato fatto il">${valeFino(a)}</div></div>
+    <div class="campo largo"><span class="nome-campo">Fa${a.corsi.length ? ` · corsi ${quotaCorsi(a)} € al mese` : ''}</span>
+      <div class="scelte">${[...Object.keys(CORSI), 'Private'].map(c => {
+        const si = c === 'Private' ? a.private : a.corsi.includes(c);
+        return `<button type="button" class="scelta" data-az="fa" data-c="${c}" aria-pressed="${si}">${c}</button>`; }).join('')}</div></div>
     ${a.corsi.map(k => `<div class="campo"><span class="nome-campo">${k}</span>
       <div class="campo-valore"><input type="number" inputmode="numeric" min="0" id="c-prezzo-${k}" data-prezzo="${k}" value="${prezzoCorso(a, k)}" aria-label="Prezzo di ${k} al mese in euro"><span class="unita">€ al mese</span></div></div>`).join('')}
-    <div class="campo"><span class="nome-campo">Corsi</span>
-      <div class="campo-valore"><span class="valore">${quotaCorsi(a)} € al mese</span></div></div>
-    ${a.private ? `<div class="campo"><span class="nome-campo">Private al mese</span>
-      <div class="campo-valore"><input type="number" inputmode="numeric" min="0" id="c-privateMese" data-campo="privateMese" value="${a.privateMese}" aria-label="Quante private al mese"><span class="unita">al mese</span></div></div>
-    <div class="campo"><span class="nome-campo">Prezzo privata</span>
-      <div class="campo-valore"><input type="number" inputmode="numeric" min="0" id="c-privata" data-campo="privata" value="${prezzoPrivata(a)}" aria-label="Prezzo della privata in euro"><span class="unita">€ a lezione</span></div></div>` : ''}
+    ${a.private ? `<div class="campo largo"><span class="nome-campo">Private</span>
+      <div class="campo-valore"><input type="number" inputmode="numeric" min="0" id="c-privateMese" data-campo="privateMese" value="${a.privateMese}" aria-label="Quante private al mese"><span class="unita">al mese</span><input type="number" inputmode="numeric" min="0" id="c-privata" data-campo="privata" value="${prezzoPrivata(a)}" aria-label="Prezzo della privata in euro"><span class="unita">€ l'una</span></div></div>` : ''}
     <div class="campo"><span class="nome-campo">Paga entro il</span>
       <div class="campo-valore"><span class="valore">${prossimaScadenza(a)}</span></div></div>
     <div class="campo largo"><span class="nome-campo">Il primo mese, e il giorno entro cui paga</span>
       <div class="campo-valore"><input type="month" data-campo="dal" value="${a.dal}" aria-label="Il primo mese che paga"><input type="number" inputmode="numeric" min="1" max="31" data-campo="giorno" value="${a.giorno}" aria-label="Il giorno entro cui paga il primo mese"></div></div>
-    <div class="campo"><span class="nome-campo">Ultimo pag.</span>
-      <div class="campo-valore"><span class="valore">${ult ? dataPiena(ult) : 'mai'}</span></div></div>
-    <div class="campo largo"><span class="nome-campo">Fa</span>
-      <div class="scelte">${['Mortara', 'Vigevano', 'Private'].map(c => {
-        const si = c === 'Private' ? a.private : a.corsi.includes(c);
-        return `<button type="button" class="scelta" data-az="fa" data-c="${c}" aria-pressed="${si}">${c}</button>`; }).join('')}</div></div>
     <div class="campo largo"><span class="nome-campo">Cellulare</span>
       <div class="campo-valore"><input type="tel" id="c-cell" data-campo="cell" value="${esc(a.cell)}" aria-label="Cellulare"><button type="button" class="tasto secondario piccolo" data-az="whatsapp">WhatsApp</button></div></div>
-    <div class="campo"><span class="nome-campo"></span>
-      <div class="campo-valore">${a.uscito
+    <div class="campo azioni-scheda">${a.uscito
         ? '<button type="button" class="link" data-az="torna">Torna a venire</button>'
-        : '<button type="button" class="link rosso" data-az="esce">Non viene più</button>'}</div></div>
-    ${a.protetto ? '' : `<div class="campo"><span class="nome-campo"></span>
-      <div class="campo-valore"><button type="button" class="link rosso" data-az="cancella">Cancella</button></div></div>`}`;
+        : '<button type="button" class="link rosso" data-az="esce">Non viene più</button>'}${a.protetto ? '' : '<button type="button" class="link rosso" data-az="cancella">Cancella</button>'}</div>`;
 }
 
 function statoStoria(l, nome) {
@@ -731,7 +809,7 @@ function nuovoForm() {
         <section class="blocco">
           <div class="campo"><span class="nome-campo">Nome</span><div class="campo-valore"><input type="text" id="n-nome" data-nuovo="nome" value="${esc(n.nome)}" aria-label="Nome"></div></div>
           <div class="campo"><span class="nome-campo">Cellulare</span><div class="campo-valore"><input type="tel" id="n-cell" data-nuovo="cell" value="${esc(n.cell)}" aria-label="Cellulare"></div></div>
-          <div class="campo largo"><span class="nome-campo">Fa</span><div class="scelte">${['Mortara', 'Vigevano', 'Private'].map(c =>
+          <div class="campo largo"><span class="nome-campo">Fa</span><div class="scelte">${[...Object.keys(CORSI), 'Private'].map(c =>
             `<button type="button" class="scelta" data-az="nuovo-fa" data-c="${c}" aria-pressed="${n.fa.includes(c)}">${c}</button>`).join('')}</div></div>
           <div class="campo"><span class="nome-campo">Corsi</span><div class="campo-valore"><span class="valore">${n.fa.filter(c => c !== 'Private').reduce((s, c) => s + CORSI[c].prezzo, 0)} € al mese</span></div></div>
           ${n.fa.includes('Private') ? `<div class="campo"><span class="nome-campo">Private al mese</span><div class="campo-valore"><input type="number" inputmode="numeric" min="0" id="n-privateMese" data-nuovo="privateMese" value="${n.privateMese}" aria-label="Quante private al mese"><span class="unita">al mese</span></div></div>
@@ -756,7 +834,8 @@ function notaRapporti(gg) {
 }
 
 function altoCorsi() {
-  return `${selettore(['Mortara', 'Vigevano', 'Private'], stato.corso, 'corso')}
+  if (stato.corso !== 'Private' && !CORSI[stato.corso]) stato.corso = Object.keys(CORSI)[0] || 'Private';   // un corso tolto
+  return `${selettore([...Object.keys(CORSI), 'Private'], stato.corso, 'corso')}
     <button type="button" class="icona-tasto" data-az="menu" aria-label="Menu">${ICONA.menu}</button>`;
 }
 
@@ -854,6 +933,7 @@ function listaPrivate() {
 }
 
 function listaCorsi() {
+  if (stato.corso !== 'Private' && !CORSI[stato.corso]) stato.corso = Object.keys(CORSI)[0] || 'Private';
   if (stato.corso === 'Private') return listaPrivate();
   const lez = lezioniCorso(stato.corso);
   const nomi = CORSI[stato.corso].settimane === 2 ? { Settimane: '2 settimane' } : {};   // Vigevano va a due settimane
@@ -1319,6 +1399,7 @@ function faiQuelloCheHoCapito(testo, risposta, ctx) {
   pulisciPila();
   disegna();
   mostraCapito(gruppi, cambiato ? prima : null);
+  for (const f of poi.splice(0)) f();
 }
 
 // Quello che sa la voce: oggi, dove si è, le lezioni delle ultime due settimane, gli allievi, i corsi, le forme
@@ -1343,7 +1424,7 @@ function contestoVoce(ctx) {
     lezioni: stato.lezioni.filter(l => l.giorno >= sposta(OGGI, -14) && l.giorno <= OGGI)
       .sort((a, b) => (a.giorno + a.inizio).localeCompare(b.giorno + b.inizio)).map(descrivi),
     allievi: stato.allievi.map(a => ({ nome: a.nome, corsi: a.corsi, private: a.private, non_viene_piu: a.uscito })),
-    corsi: Object.entries(CORSI).map(([corso, c]) => ({ corso, prezzo: c.prezzo, giorni: giorniCorso(c), orario: c.orario })),
+    corsi: Object.entries(CORSI).map(([corso, c]) => ({ corso, prezzo: c.prezzo, giorni: giorniCorso(c), orario: c.orario, settimane: c.settimane })),
     prezzo_privata: IMP.prezzoPrivata, tesseramento: IMP.tesseramento,
     scuola_chiusa: IMP.chiusura ? MESI[Number(IMP.chiusura) - 1] : 'nessuno', notifiche: IMP.notifiche, tema: IMP.tema,
     messaggi: Object.fromEntries(Object.entries(IMP.testi).map(([k, x]) => [k, { nome: x.nome, testo: x.testo }])),
@@ -1402,9 +1483,9 @@ function mostraCapito(gruppi, prima, titolo = 'Ho capito così') {
   $('avviso-posto').innerHTML = `
     <div class="capito" role="status">
       <div class="capito-testa"><strong>${esc(titolo)}</strong>${prima ? '<button type="button" data-az="annulla">Annulla</button>' : ''}</div>
-      ${gruppi.map(g => `${g.luogo ? `<h3>${esc(g.luogo)}</h3>` : ''}${g.righe.map(r => `<p>${esc(r)}</p>`).join('')}`).join('')}
+      ${gruppi.map(g => `${g.luogo ? `<h3>${esc(g.luogo)}</h3>` : ''}${g.righe.map(r => `<p>${esc(r)}</p>`).join('')}${g.tasto ? `<button type="button" class="capito-tasto" ${g.tasto.dati}>${esc(g.tasto.testo)}</button>` : ''}`).join('')}
     </div>`;
-  timerAvviso = setTimeout(() => { $('avviso-posto').innerHTML = ''; }, 8000);
+  timerAvviso = setTimeout(() => { $('avviso-posto').innerHTML = ''; }, gruppi.some(g => g.tasto) ? 15000 : 8000);
 }
 function salvato(testo, prima) {
   clearTimeout(timerAvviso);
@@ -1469,19 +1550,24 @@ function annulla() {
   const prima = $('avviso-posto').dataset.prima;
   if (!prima) return;
   const dopo = foto();
-  const p = JSON.parse(prima);
-  const nomeDiPrima = new Map(p.allievi.map(a => [a.id, a.nome]));   // un nome cambiato torna com'era anche nei pannelli
-  for (const x of pila) { const a = x.nome && stato.allievi.find(y => y.nome === x.nome); if (a && nomeDiPrima.has(a.id)) x.nome = nomeDiPrima.get(a.id); }
-  stato.lezioni.splice(0, stato.lezioni.length, ...p.lezioni);
-  stato.allievi.splice(0, stato.allievi.length, ...p.allievi);
-  for (const k of Object.keys(CORSI)) { for (const x of Object.keys(CORSI[k])) delete CORSI[k][x]; Object.assign(CORSI[k], p.imp.corsi[k]); }
-  Object.assign(IMP, { tema: p.imp.tema, prezzoPrivata: p.imp.prezzoPrivata, chiusura: p.imp.chiusura, notifiche: p.imp.notifiche, testi: p.imp.testi, tesseramento: p.imp.tesseramento });
+  ripristina(prima);
   persisti(dopo);                                    // com'era prima: si salva anche questo
   delete $('avviso-posto').dataset.prima;
   $('avviso-posto').innerHTML = '';
   $('sopra2').innerHTML = '';
   pulisciPila();
   disegna();
+}
+// Tutto com'era in una foto: allievi, lezioni, corsi, Impostazioni (Annulla, anche detto a voce)
+function ripristina(prima) {
+  const p = JSON.parse(prima);
+  const nomeDiPrima = new Map(p.allievi.map(a => [a.id, a.nome]));   // un nome cambiato torna com'era anche nei pannelli
+  for (const x of pila) { const a = x.nome && stato.allievi.find(y => y.nome === x.nome); if (a && nomeDiPrima.has(a.id)) x.nome = nomeDiPrima.get(a.id); }
+  stato.lezioni.splice(0, stato.lezioni.length, ...p.lezioni);
+  stato.allievi.splice(0, stato.allievi.length, ...p.allievi);
+  for (const k of Object.keys(CORSI)) delete CORSI[k];   // anche un corso nuovo o tolto torna com'era
+  Object.assign(CORSI, p.imp.corsi);
+  Object.assign(IMP, { tema: p.imp.tema, prezzoPrivata: p.imp.prezzoPrivata, chiusura: p.imp.chiusura, notifiche: p.imp.notifiche, testi: p.imp.testi, tesseramento: p.imp.tesseramento });
 }
 // Dopo Annulla o dopo aver ricaricato: via i pannelli di quello che non c'è più
 function pulisciPila() {
@@ -1913,8 +1999,8 @@ document.addEventListener('click', e => {
       break;
     }
     case 'whatsapp':                                 // con il testo già scritto; dalla scheda, la chat e basta
-      if (t.dataset.msg) apriMessaggio(t.dataset.nome, t.dataset.msg, t.dataset.m);
-      else apriWhatsApp(allievo(pila.at(-1).nome), '');
+      if (t.dataset.msg && t.dataset.msg !== 'chat') apriMessaggio(t.dataset.nome, t.dataset.msg, t.dataset.m);
+      else apriWhatsApp(allievo(t.dataset.nome || pila.at(-1).nome), '');
       break;
     // Scadenze
     case 'scadenza': stato.scadenza = t.dataset.v; $('lista').scrollTop = 0; disegna(); break;
@@ -2142,9 +2228,10 @@ $('a-dimenticata').addEventListener('click', async () => {
 });
 
 async function entra() {
-  const s = await db.sessione().catch(() => null);
+  // in prova (solo sul PC) si entra anche senza accesso, con gli allievi finti; la voce vuole l'accesso
+  const s = (await db.sessione().catch(() => null)) || (PROVA ? { user: { email: 'prova' } } : null);
   if (!s) { mostraAccesso('entra'); return; }
-  if (navigator.onLine) {                             // solo chi ha un profilo attivo (il Sifu e Simone)
+  if (navigator.onLine && !PROVA) {                   // solo chi ha un profilo attivo (il Sifu e Simone)
     const p = await db.profilo().catch(() => undefined);
     if (p === null || (p && !p.attivo)) {
       await db.esci().catch(() => {});
