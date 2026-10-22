@@ -4,7 +4,7 @@
 import {
   GG, MESI, MESI3, ORDINALI, FORME, CINTURE, TESSERAMENTO, due, daChiave, sposta, dataLunga, dataMedia, dataBreve, dataCorta, elide, ilGiorno, dataPiena,
   giorniFra, lunediDi, nomeMese, etichettaSettimana, etichettaIntervallo, meseDopo, dalGiorno, dataParole, ilData, delGiorno,
-  maiuscola, adessoRoma, scadenzaCertificato, spostaAnni, annullata, stessoNome, GIORNI, aggiornaOrario, oreFra, lezioniDeiCorsi, impostazioniDa, daDatabase, versoDatabase, creaRegole,
+  maiuscola, adessoRoma, scadenzaCertificato, spostaAnni, annullata, stessoNome, GIORNI, orarioDi, aggiornaOrario, oreFra, lezioniDeiCorsi, impostazioniDa, daDatabase, versoDatabase, creaRegole,
 } from '../comune/regole.js';
 import * as db from './dati.js';
 import { apriMicrofono, estensioneDi, registrazioni } from './voce.js';
@@ -216,6 +216,50 @@ const AZIONI_VOCE = {
     if (Array.isArray(az.presenti_altri)) presentiAltri(l, az.presenti_altri);
     return [{ luogo: luogoLezione(l), righe: righeAppello(l) }];
   },
+  lezione_fatta(az, dubbi) {    // "il corso c'è stato", "la privata non era annullata": torna una lezione normale
+    const l = lezioneDa(az, dubbi); if (!l || !l.nonFatta) return [];
+    l.nonFatta = false; delete l.motivo;
+    return [{ luogo: luogoLezione(l), righe: [l.fatto ? 'si è fatta' : 'si è fatta: da raccontare'] }];
+  },
+  svuota_lezione(az, dubbi) {   // via il racconto, chi c'era, il previsto, o tutto
+    const l = lezioneDa(az, dubbi); if (!l) return [];
+    const cosa = az.cosa || 'tutto', ogni = x => cosa === x || cosa === 'tutto', righe = [];
+    if (ogni('racconto') && l.fatto) { delete l.fatto; righe.push('tolto il racconto'); }
+    if (ogni('chi_cera') && l.appello) { delete l.appello; if (l.tipo === 'corso') delete l.iscritti; righe.push("tolto chi c'era"); }
+    if (ogni('previsto') && l.previsto) { delete l.previsto; righe.push('tolto il previsto'); }
+    return righe.length ? [{ luogo: luogoLezione(l), righe }] : [];
+  },
+  modifica_lezione(az, dubbi) { // l'orario di quella lezione sola; per una privata anche l'allievo, e il giorno se è detta a voce
+    const l = lezioneDa(az, dubbi); if (!l) return [];
+    const righe = [], corso = l.tipo === 'corso';
+    if (oraValida(az.inizio) || oraValida(az.fine)) {
+      const i = oraValida(az.inizio) ? az.inizio : l.inizio, f = oraValida(az.fine) ? az.fine : (corso ? l.fineCorso : l.fine);
+      if (f <= i) dubbi.push("l'orario: la fine viene prima dell'inizio");
+      else {
+        l.inizio = i; l.ore = oreFra(i, f);
+        if (corso) { l.fineCorso = f; l.orarioCorso = orarioDi(i, f); } else l.fine = f;
+        righe.push(`orario: ${i}-${f}`);
+      }
+    }
+    if (!corso && az.allievo) {
+      const a = conNome(az.allievo);
+      if (!a) dubbi.push(`non trovo l'allievo «${az.allievo}»`);
+      else if (a.nome !== l.allievo) { l.allievo = a.nome; righe.push(`con ${a.nome}`); }
+    }
+    if (!corso && giornoValido(az.giorno) && az.giorno !== l.giorno) {
+      if (l.calendario) dubbi.push('una privata del calendario si sposta nel calendario');
+      else if (az.giorno < PRIMO_GIORNO || az.giorno > OGGI) dubbi.push('la privata: un giorno fino a oggi');
+      else { l.giorno = az.giorno; righe.push(`giorno: ${dataCorta(az.giorno)}`); }
+    }
+    return righe.length ? [{ luogo: luogoLezione(l), righe }] : [];
+  },
+  cancella_lezione(az, dubbi) { // una privata detta a voce per sbaglio; un corso si dice "non si è fatto", una privata del calendario si annulla
+    const l = lezioneDa(az, dubbi); if (!l) return [];
+    if (l.tipo !== 'privata' || l.calendario) { dubbi.push(l.tipo === 'corso' ? 'un corso non si cancella: si dice che non si è fatto' : 'una privata del calendario si annulla, non si cancella'); return []; }
+    const luogo = luogoLezione(l);
+    stato.lezioni.splice(stato.lezioni.indexOf(l), 1);
+    return [{ luogo, righe: ['cancellata'] }];
+  },
   previsto(az, dubbi) {
     const l = lezioneDa(az, dubbi); if (!l) return [];
     const testo = String(az.testo || '').trim(); if (!testo) return [];
@@ -242,15 +286,21 @@ const AZIONI_VOCE = {
     if (!m) m = quoteRitardo(a)[0] || (a.dal <= MESE && !a.pagato[MESE] && conto(a, MESE).tot ? MESE : null);
     if (!m) { dubbi.push(`${a.nome}: non ha niente da pagare`); return []; }
     const il = giornoValido(az.il) && az.il <= OGGI ? az.il : null;   // il giorno in cui ha pagato, se lo dice
-    if (a.pagato[m] && il) { a.pagato[m] = il; return [{ luogo: 'Pagamenti', righe: [`${a.nome} · ${nomeMese(m)} pagato ${ilGiorno(il)}`] }]; }
+    const cifra = typeof az.cifra === 'number' && az.cifra >= 0 ? az.cifra : null;   // quanto ha dato, se lo dice
+    if (a.pagato[m] && (il || cifra !== null)) {      // un mese già pagato: si cambiano il giorno o la cifra
+      if (il) a.pagato[m] = il;
+      if (cifra !== null) a.cifre[m] = cifra;
+      return [{ luogo: 'Pagamenti', righe: [`${a.nome} · ${nomeMese(m)} pagato ${ilGiorno(a.pagato[m])}, ${a.cifre[m] ?? conto(a, m).tot} €`] }];
+    }
     if (a.pagato[m]) { dubbi.push(`${a.nome}: ${nomeMese(m)} è già pagato`); return []; }
     if (m < a.dal || m > meseDopo(MESE, 1) || !conto(a, m).tot) { dubbi.push(`${a.nome}: ${nomeMese(m)} non è da pagare`); return []; }
-    const tot = conto(a, m).tot;
+    const tot = cifra ?? conto(a, m).tot;
     a.cifre[m] = tot; a.pagato[m] = il || OGGI;
     return [{ luogo: 'Pagamenti', righe: [`${a.nome} · ${nomeMese(m)} pagato${m > MESE ? ' in anticipo' : ''}, ${tot} €${il ? ` (${ilGiorno(il)})` : ''}`] }];
   },
   certificato(az, dubbi) {     // il giorno in cui l'ha fatto (oggi, se dice solo che l'ha rinnovato); vale un anno
     const a = allievoDa(az, dubbi); if (!a) return [];
+    if (az.nessuno) { segnaCertificato(a, ''); return [{ luogo: dentroScheda(a) ? `Scheda · ${a.nome}` : 'Certificati', righe: [`${dentroScheda(a) ? '' : `${a.nome} · `}certificato tolto`] }]; }
     const fatto = giornoValido(az.fatto) ? az.fatto : giornoValido(az.fino) ? spostaAnni(az.fino, -1) : OGGI;
     if (fatto > OGGI) { dubbi.push(`${a.nome}: il certificato non può essere fatto dopo oggi`); return []; }
     segnaCertificato(a, fatto);
@@ -297,7 +347,9 @@ const AZIONI_VOCE = {
       a.privata = az.prezzo_privata === IMP.prezzoPrivata ? null : az.prezzo_privata;
       righe.push(`privata: ${az.prezzo_privata} € a lezione`);
     }
-    if (az.telefono) { a.cell = String(az.telefono).trim(); righe.push(`cellulare: ${a.cell}`); }
+    if (typeof az.telefono === 'string' && az.telefono.trim() !== a.cell) { a.cell = az.telefono.trim(); righe.push(a.cell ? `cellulare: ${a.cell}` : 'cellulare tolto'); }
+    if (/^[0-9]{4}-[0-9]{2}$/.test(az.primo_mese || '') && az.primo_mese !== a.dal) { a.dal = az.primo_mese; righe.push(`primo mese: ${nomeMese(a.dal)} ${a.dal.slice(0, 4)}`); }
+    if (Number.isInteger(az.giorno_pagamento) && az.giorno_pagamento >= 1 && az.giorno_pagamento <= 31) { a.giorno = az.giorno_pagamento; righe.push(`il primo mese paga entro il ${a.giorno}`); }
     const c = CINTURE.find(x => x.k === String(az.cintura || '').trim().toLowerCase());
     if (c && c.k !== a.cintura) { a.cintura = c.k; righe.push(`cintura: ${nomeCintura(c)}`); }
     if (typeof az.uscito === 'boolean' && az.uscito !== a.uscito) { a.uscito = az.uscito; righe.push(a.uscito ? 'non viene più' : 'torna a venire'); }
@@ -594,6 +646,8 @@ function dati(a) {
       <div class="campo-valore"><input type="number" inputmode="numeric" min="0" id="c-privata" data-campo="privata" value="${prezzoPrivata(a)}" aria-label="Prezzo della privata in euro"><span class="unita">€ a lezione</span></div></div>` : ''}
     <div class="campo"><span class="nome-campo">Paga entro il</span>
       <div class="campo-valore"><span class="valore">${prossimaScadenza(a)}</span></div></div>
+    <div class="campo largo"><span class="nome-campo">Il primo mese, e il giorno entro cui paga</span>
+      <div class="campo-valore"><input type="month" data-campo="dal" value="${a.dal}" aria-label="Il primo mese che paga"><input type="number" inputmode="numeric" min="1" max="31" data-campo="giorno" value="${a.giorno}" aria-label="Il giorno entro cui paga il primo mese"></div></div>
     <div class="campo"><span class="nome-campo">Ultimo pag.</span>
       <div class="campo-valore"><span class="valore">${ult ? dataPiena(ult) : 'mai'}</span></div></div>
     <div class="campo largo"><span class="nome-campo">Fa</span>
@@ -1031,6 +1085,7 @@ function apriConto(nome, m) {     // il conto di un mese: di cosa è fatto il to
   let azioni;
   if (il) {
     azioni = `<div class="campo"><span class="nome-campo">Pagato il</span><div class="campo-valore"><input type="date" data-pag="il" ${dati} value="${il}" aria-label="Pagato il"></div></div>
+      <div class="campo"><span class="nome-campo">Cifra</span><div class="campo-valore"><input type="number" inputmode="numeric" min="0" data-pag="cifra" ${dati} value="${a.cifre[m] ?? c.tot}" aria-label="La cifra pagata in euro"><span class="unita">€</span></div></div>
       <button type="button" class="rosso" data-az="togli" ${dati}>Togli la spunta</button>`;
   } else if (c.tot) azioni = `<button type="button" class="tasto grande" data-az="paga" ${dati}>Segna pagato oggi</button>`;
   else azioni = '';
@@ -1261,6 +1316,7 @@ function faiQuelloCheHoCapito(testo, risposta, ctx) {
   if (!gruppi.length && !dubbi.length) { avvisa(`Non ho capito: «${testo}»`); return; }
   if (!gruppi.length) { mostraCapito([{ luogo: '', righe: dubbi }], null, 'Non ho capito'); return; }   // niente è cambiato
   if (dubbi.length) gruppi.push({ luogo: 'Non ho capito', righe: dubbi });
+  pulisciPila();
   disegna();
   mostraCapito(gruppi, cambiato ? prima : null);
 }
@@ -1284,7 +1340,7 @@ function contestoVoce(ctx) {
     dove: ctx.tipo === 'lezione' ? 'lezione' : ctx.scheda ? 'scheda' : ctx.sezione,
     lezione: ctx.tipo === 'lezione' ? ctx.id : null,
     allievo: ctx.scheda,
-    lezioni: stato.lezioni.filter(l => l.giorno >= sposta(OGGI, -14) && l.giorno <= OGGI && !annullata(l))
+    lezioni: stato.lezioni.filter(l => l.giorno >= sposta(OGGI, -14) && l.giorno <= OGGI)
       .sort((a, b) => (a.giorno + a.inizio).localeCompare(b.giorno + b.inizio)).map(descrivi),
     allievi: stato.allievi.map(a => ({ nome: a.nome, corsi: a.corsi, private: a.private, non_viene_piu: a.uscito })),
     corsi: Object.entries(CORSI).map(([corso, c]) => ({ corso, prezzo: c.prezzo, giorni: giorniCorso(c), orario: c.orario })),
@@ -1712,6 +1768,8 @@ document.addEventListener('change', e => {
     a[k] = t.type === 'number' ? Number(t.value || 0) : t.value;
     if (k === 'privata' && a.privata === IMP.prezzoPrivata) a.privata = null;   // uguale a quello di solito: segue le Impostazioni
     if (k === 'certFatto') segnaCertificato(a, t.value);                          // la scadenza: un anno dopo
+    if (k === 'giorno') a.giorno = Math.min(31, Math.max(1, Math.round(a.giorno) || 1));
+    if (k === 'dal' && !/^[0-9]{4}-[0-9]{2}$/.test(a.dal)) a.dal = JSON.parse(prima).allievi.find(x => x.id === a.id).dal;
     salvato('Salvato', prima);
     disegna();
   } else if (t.matches('[data-prezzo]')) {        // il prezzo di un corso per questo allievo

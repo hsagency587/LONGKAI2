@@ -1,8 +1,8 @@
 /* Lòngkai — service worker
    Tiene i file dell'app per aprirla senza rete. Il numero di versione lo scrive l'azione di rilascio
-   al posto di 2026-10-22-fd5bd1e; in locale resta così e la cache si chiama "locale".
+   al posto di 2026-10-22-491e686; in locale resta così e la cache si chiama "locale".
    Niente di Supabase va in cache: una risposta vecchia sarebbe un errore silenzioso. */
-const VERSIONE = '2026-10-22-fd5bd1e';
+const VERSIONE = '2026-10-22-491e686';
 const LOCALE = VERSIONE.startsWith('__');
 const CACHE = 'longkai|' + (LOCALE ? 'locale' : VERSIONE) + '|' + self.registration.scope;
 

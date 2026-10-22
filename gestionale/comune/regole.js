@@ -197,7 +197,9 @@ export function versoDatabase({ allievi, lezioni, imp, testi = {} }) {
     }
   }
   for (const l of lezioni) {
-    const vuota = l.tipo === 'corso' && !l.appello && !l.fatto && !l.previsto && !l.nonFatta;
+    const solito = l.tipo === 'corso' && imp.corsi[l.corso] ? orarioNel(imp.corsi[l.corso], l.giorno) : null;
+    const comeSempre = !solito || (l.inizio === solito.inizio && l.fineCorso === solito.fine);   // l'orario di quella sola, cambiato: si tiene
+    const vuota = l.tipo === 'corso' && !l.appello && !l.fatto && !l.previsto && !l.nonFatta && comeSempre;
     if (vuota) continue;
     const corso = l.tipo === 'corso';
     let fatto = null;
