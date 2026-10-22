@@ -35,7 +35,7 @@ const IMP = { tema: db.temaSalvato(), corsi: CORSI, prezzoPrivata: 0, chiusura: 
 
 const stato = { ora: adessoRoma().ora, giorno: OGGI, sezione: 'oggi', filtro: 'Tutti', cerca: '', vista: 'Lezioni', datiAperti: false, mostraUsciti: false,
   corso: 'Mortara', vistaCorso: 'Lezioni', vistaPrivate: 'Lezioni', scadenza: 'Pagamenti', piuAvanti: false, lezioni: [], allievi: [],
-  email: '', push: 'spento', inAttesa: [], aggiornamento: null };
+  email: '', push: 'spento', inAttesa: [], domande: [], aggiornamento: null };
 
 // Solo sul PC, per le prove: con ?prova carica allievi finti (segnaposto) e non salva niente nel database
 const PROVA = ['localhost', '127.0.0.1'].includes(location.hostname) && new URLSearchParams(location.search).has('prova');
@@ -207,19 +207,62 @@ function presentiAltri(l, nomi) {
 }
 const righeAppello = l => !l.appello ? [] : [testoAppello(l), ...(l.appello.senzaScheda ? [`senza scheda: ${l.appello.senzaScheda.join(', ')}`] : [])];
 
+// Il racconto (Simone, 22/10): il titolo corto per le liste (gruppo, cosa, testo) e il dettaglio, per filo e per segno, con
+// le parole del Sifu, che si legge aprendo la lezione. "aggiungi": il nuovo va dopo quello che c'era, senza toccarlo.
+const pulito = x => String(x || '').trim();
+const conDettaglio = (o, d) => (pulito(d) ? { ...o, dettaglio: pulito(d) } : o);
+const unisciTitoli = (a, b) => [...new Set([...pulito(a).split(', '), ...pulito(b).split(', ')].map(pulito).filter(Boolean))].join(', ');
+const unisciCosa = (a, b) => (!pulito(b) || pulito(a).includes(pulito(b)) ? pulito(a) : pulito(a) ? `${pulito(a)}; ${pulito(b)}` : pulito(b));
+const unisciDettaglio = (a, b) => [pulito(a), pulito(b)].filter(Boolean).join('\n\n');
+const titoloDa = d => { const p = pulito(d).split(/[.!?\n]/)[0]; return p.length > 60 ? `${p.slice(0, 60).replace(/ [^ ]*$/, '')}…` : p; };
+const paroleDi = l => !l.fatto ? 0 : [l.fatto.dettaglio, ...(l.fatto.soli || []).map(s => s.dettaglio)].join(' ').split(/\s+/).filter(Boolean).length;
+const righeParole = l => paroleDi(l) ? [`scritto per filo e per segno: ${paroleDi(l)} parole`] : [];
+
 const AZIONI_VOCE = {
-  racconto(az, dubbi) {        // cosa si è fatto: il gruppo e chi da solo (corso), il testo (privata); il contenuto intero
+  racconto(az, dubbi) {        // cosa si è fatto: il gruppo e chi da solo (corso), il testo (privata); titolo e dettaglio
     const l = lezioneDa(az, dubbi); if (!l) return [];
-    const testo = String((l.tipo === 'corso' ? az.gruppo : az.testo) || '').trim();
-    if (!testo) { dubbi.push(`${luogoLezione(l)}: cosa avete fatto?`); return []; }
-    if (!iniziata(l)) return AZIONI_VOCE.previsto({ lezione: l.id, testo }, dubbi);   // prima della lezione è il previsto
+    const corto = pulito(l.tipo === 'corso' ? az.gruppo : az.testo), dettaglio = pulito(az.dettaglio);
+    const soliDetti = l.tipo !== 'corso' ? [] : (az.soli || []).map(s => ({ chi: conNome(s.allievo)?.nome || nomeSenzaScheda(s.allievo), cosa: pulito(s.cosa), dettaglio: pulito(s.dettaglio) }))
+      .filter(s => s.chi && (s.cosa || s.dettaglio)).map(s => conDettaglio({ chi: s.chi, cosa: s.cosa || titoloDa(s.dettaglio) }, s.dettaglio));
+    if (!corto && !dettaglio && !soliDetti.length) { dubbi.push(`${luogoLezione(l)}: cosa avete fatto?`); return []; }
+    if (!iniziata(l)) return AZIONI_VOCE.previsto({ lezione: l.id, testo: dettaglio || corto }, dubbi);   // prima della lezione è il previsto
+    const aggiungi = az.modo === 'aggiungi' && !!l.fatto;
     l.nonFatta = false; delete l.motivo;
-    if (l.tipo === 'privata') { l.fatto = { testo }; aggiornaForme(l.allievo, testo); return [{ luogo: luogoLezione(l), righe: [testo] }]; }
-    const soli = (az.soli || []).map(s => ({ chi: conNome(s.allievo)?.nome || nomeSenzaScheda(s.allievo), cosa: String(s.cosa || '').trim() })).filter(s => s.chi && s.cosa);
-    l.fatto = { gruppo: testo, soli };
+    if (l.tipo === 'privata') {
+      const testo = aggiungi ? unisciTitoli(l.fatto.testo, corto) : corto || titoloDa(dettaglio);
+      l.fatto = conDettaglio({ testo }, aggiungi ? unisciDettaglio(l.fatto.dettaglio, dettaglio) : dettaglio);
+      aggiornaForme(l.allievo, `${l.fatto.testo} ${l.fatto.dettaglio || ''}`);
+      return [{ luogo: luogoLezione(l), righe: [testo, ...righeParole(l)] }];
+    }
+    if (aggiungi) {
+      const soli = l.fatto.soli.map(s => ({ ...s }));
+      for (const n of soliDetti) {
+        const c = soli.find(s => s.chi === n.chi);
+        if (!c) { soli.push(n); continue; }
+        c.cosa = unisciCosa(c.cosa, n.cosa);
+        const d = unisciDettaglio(c.dettaglio, n.dettaglio); if (d) c.dettaglio = d;
+      }
+      l.fatto = conDettaglio({ gruppo: unisciTitoli(l.fatto.gruppo, corto), soli }, unisciDettaglio(l.fatto.dettaglio, dettaglio));
+    } else l.fatto = conDettaglio({ gruppo: corto || titoloDa(dettaglio), soli: soliDetti }, dettaglio);
     if (Array.isArray(az.assenti)) segnaAppello(l, assentiDi(l, az.assenti));
     if (Array.isArray(az.presenti_altri)) presentiAltri(l, az.presenti_altri);
-    return [{ luogo: luogoLezione(l), righe: [`gruppo: ${testo}`, ...soli.map(s => `da solo · ${s.chi}: ${s.cosa}`), ...righeAppello(l)] }];
+    const nuovi = aggiungi ? soliDetti : l.fatto.soli;
+    return [{ luogo: luogoLezione(l), righe: [`gruppo: ${l.fatto.gruppo}`, ...nuovi.map(s => `da solo · ${s.chi}: ${s.cosa}`), ...righeAppello(l), ...righeParole(l)] }];
+  },
+  correggi_parola(az, dubbi) {  // una parola sentita male, o la risposta a "cos'è?": cambia in tutto il racconto e nel previsto
+    const l = lezioneDa(az, dubbi); if (!l) return [];
+    const prima = pulito(az.prima).replace(/[«»]/g, ''), dopo = pulito(az.dopo);
+    if (!prima || !dopo) return [];
+    const re = new RegExp(`«?${prima.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}»?`, 'gi');
+    let n = 0;
+    const cambia = x => (typeof x === 'string' ? x.replace(re, () => { n++; return dopo; }) : x);
+    if (l.fatto) {
+      for (const k of ['gruppo', 'testo', 'dettaglio']) if (l.fatto[k]) l.fatto[k] = cambia(l.fatto[k]);
+      for (const s of l.fatto.soli || []) { s.cosa = cambia(s.cosa); if (s.dettaglio) s.dettaglio = cambia(s.dettaglio); }
+    }
+    if (l.previsto) l.previsto = cambia(l.previsto);
+    if (!n) { dubbi.push(`non trovo «${prima}» in ${luogoLezione(l)}`); return []; }
+    return [{ luogo: luogoLezione(l), righe: [`«${prima}» ora è «${dopo}»`] }];
   },
   appello(az, dubbi) {         // chi mancava: tutta la lista, anche quando si corregge
     const l = lezioneDa(az, dubbi); if (!l || l.tipo !== 'corso') return [];
@@ -505,8 +548,13 @@ const AZIONI_VOCE = {
     const l = gia || { id: `voce:${db.nuovoId()}`, giorno, tipo: 'privata', allievo: a.nome, inizio, fine, ore: oreFra(inizio, fine) || 1 };
     if (!gia) stato.lezioni.push(l);
     const righe = gia ? [] : [`privata nuova, ${inizio}-${fine}`];
-    const testo = String(az.testo || '').trim();
-    if (testo && iniziata(l)) { l.nonFatta = false; delete l.motivo; l.fatto = { testo }; aggiornaForme(a.nome, testo); righe.push(testo); }
+    const testo = pulito(az.testo) || titoloDa(az.dettaglio);
+    if (testo && iniziata(l)) {
+      l.nonFatta = false; delete l.motivo;
+      l.fatto = l.fatto ? conDettaglio({ testo: unisciTitoli(l.fatto.testo, testo) }, unisciDettaglio(l.fatto.dettaglio, az.dettaglio)) : conDettaglio({ testo }, az.dettaglio);
+      aggiornaForme(a.nome, `${l.fatto.testo} ${l.fatto.dettaglio || ''}`);
+      righe.push(testo, ...righeParole(l));
+    }
     return righe.length ? [{ luogo: luogoLezione(l), righe }] : [];
   },
 };
@@ -597,9 +645,21 @@ function rigaLezione(l, statoHtml, colonna, conTasto) {
 const colonnaOra = l => ({ su: l.inizio, giu: l.tipo === 'corso' ? (l.fineCorso || CORSI[l.corso]?.fine) : l.fine });
 const colonnaData = l => { const d = daChiave(l.giorno); return { data: true, su: `${d.getDate()}/${d.getMonth() + 1}`, giu: GG[d.getDay()] }; };
 
+function bloccoDomande() {
+  if (!stato.domande.length) return '';
+  return `<section class="blocco domande"><h2 class="titolo-blocco">DA RISPONDERE</h2>${stato.domande.map(d => `
+    <article class="domanda">
+      ${d.domande.map(q => `<div class="titolo">${esc(q)}</div>`).join('')}
+      <div class="riga">«${esc(d.testo)}»</div>
+      <div class="tasti-domanda">
+        <button type="button" class="tasto piccolo" data-az="rispondi" data-id="${esc(d.id)}">${d.errore ? 'Riprova' : 'Rispondi'}</button>
+        <button type="button" class="link" data-az="lascia" data-id="${esc(d.id)}">Lascia stare</button>
+      </div>
+    </article>`).join('')}</section>`;
+}
 function listaOggi() {
   const lez = stato.lezioni.filter(l => l.giorno === stato.giorno && !annullata(l)).sort((a, b) => a.inizio.localeCompare(b.inizio));
-  let html = lez.length ? lez.map(l => rigaLezione(l, statoOggi(l), colonnaOra(l), true)).join('') : '<div class="vuoto-logo"><span class="logo" aria-hidden="true"></span><p class="vuoto">Niente lezioni</p></div>';
+  let html = (stato.giorno === OGGI ? bloccoDomande() : '') + (lez.length ? lez.map(l => rigaLezione(l, statoOggi(l), colonnaOra(l), true)).join('') : '<div class="vuoto-logo"><span class="logo" aria-hidden="true"></span><p class="vuoto">Niente lezioni</p></div>');
   if (stato.giorno === OGGI) {
     const arretrate = daRaccontare();
     if (arretrate.length) {
@@ -1215,13 +1275,15 @@ function apriWhatsApp(a, testo) {
 const apriMessaggio = (nome, msg, m) => { const a = allievo(nome); apriWhatsApp(a, messaggio(a, msg, m)); };
 
 // --- La lezione ---------------------------------------------------------
+// Il dettaglio del racconto, intero: qui si legge tutto (nelle liste resta il titolo, una riga)
+const paragrafi = x => pulito(x) ? pulito(x).split(/\n+/).filter(p => p.trim()).map(p => `<p class="testo-blocco dettaglio">${esc(p.trim())}</p>`).join('') : '';
 function dettaglioLezione(l) {
   let fatto;
   if (l.nonFatta) fatto = `<p class="testo-blocco">${l.motivo === 'assente' ? `${esc(l.allievo)} non è venuto.` : `${maiuscola(nonFattaTesto(l))}.`}</p>`;
   else if (!l.fatto) fatto = `<p class="testo-blocco muto">${iniziata(l) ? 'Da raccontare.' : 'Non ancora.'}</p>`;
-  else if (l.tipo === 'privata') fatto = `<p class="testo-blocco">${esc(l.fatto.testo)}</p>`;
-  else fatto = `<p class="testo-blocco"><strong>gruppo:</strong> ${esc(l.fatto.gruppo)}</p>` +
-    l.fatto.soli.map(s => `<p class="testo-blocco"><strong>da solo · ${esc(s.chi)}:</strong> ${esc(s.cosa)}</p>`).join('');
+  else if (l.tipo === 'privata') fatto = `<p class="testo-blocco">${esc(l.fatto.testo)}</p>${paragrafi(l.fatto.dettaglio)}`;
+  else fatto = `<p class="testo-blocco"><strong>gruppo:</strong> ${esc(l.fatto.gruppo)}</p>${paragrafi(l.fatto.dettaglio)}` +
+    l.fatto.soli.map(s => `<p class="testo-blocco"><strong>da solo · ${esc(s.chi)}:</strong> ${esc(s.cosa)}</p>${paragrafi(s.dettaglio)}`).join('');
   let chi;
   if (l.tipo === 'privata') chi = `<p class="testo-blocco">${esc(l.allievo)} · ${l.calendario ? 'dal calendario Google' : 'detta a voce'}</p>`;
   else if (l.nonFatta) chi = '<p class="testo-blocco muto">Nessuno: non si è fatta.</p>';
@@ -1302,9 +1364,9 @@ async function apriVoce(ctx) {
   if (voce) return;
   const top = pila.at(-1);
   const l = ctx.tipo === 'lezione' ? trova(ctx.id) : null;
-  const scheda = top && top.tipo === 'scheda' ? top.nome : null;
-  const contesto = ctx.tipo === 'segnala' ? 'Segnala un problema' : l ? `${breve(l)} · ${quando(l)}` : scheda ? `Parla · ${scheda}` : 'Parla';
-  const v = voce = { ctx: { ...ctx, scheda, sezione: stato.sezione, dove: doveSono() }, secondi: 0, rec: null };
+  const scheda = ctx.rispondeA ? ctx.scheda || null : top && top.tipo === 'scheda' ? top.nome : null;
+  const contesto = ctx.rispondeA ? 'Rispondi' : ctx.tipo === 'segnala' ? 'Segnala un problema' : l ? `${breve(l)} · ${quando(l)}` : scheda ? `Parla · ${scheda}` : 'Parla';
+  const v = voce = { ctx: ctx.rispondeA ? { ...ctx } : { ...ctx, scheda, sezione: stato.sezione, dove: doveSono() }, secondi: 0, rec: null };
   $('sopra2').innerHTML = `
     <div class="pannello voce-pannello" role="dialog" aria-modal="true" aria-label="Ti ascolto">
       <div class="corpo-pannello gutter" id="voce-corpo">
@@ -1379,13 +1441,51 @@ async function capisci(reg, dopo = false) {
       return false;
     }
     chiudi();
+    if (reg.testo && reg.ctx.tipo !== 'segnala') {
+      const { riprova, ...ctx } = reg.ctx;
+      tieniDomanda({ id: riprova || db.nuovoId(), testo: reg.testo, domande: [e.message || 'Non sono riuscito a capire'], ctx, errore: true });
+      disegna();
+      avvisa('Il dettato è salvo in Oggi.');
+      return true;
+    }
+    if (!reg.testo && reg.blob && !['silenzio', 'ingresso'].includes(e.codice)) {
+      if (!dopo) { await mettiInAttesa(reg); avvisa('Lo tengo e riprovo.'); }
+      return false;
+    }
     avvisa(e.message || 'Non sono riuscito: riprova.');
     return true;
   }
 }
 
+// Le domande in sospeso (Simone, 22/10): se la voce non capisce una cosa ("a che ora?", una parola che non conosce), il
+// resto si fa e il dettato non si butta: resta in Oggi con "Rispondi" finché il Sifu risponde o lo lascia stare.
+// Solo su questo telefono. Chi risponde manda la risposta con il dettato di prima: si fa solo quello che mancava.
+const CHIAVE_DOMANDE = 'longkai.domande';
+function leggiDomande() {
+  if (PROVA) return [];
+  try { const d = JSON.parse(localStorage.getItem(CHIAVE_DOMANDE) || '[]'); return Array.isArray(d) ? d : []; } catch { return []; }
+}
+function salvaDomande() {
+  if (PROVA) return;
+  try { localStorage.setItem(CHIAVE_DOMANDE, JSON.stringify(stato.domande)); } catch { /* resta in memoria */ }
+}
+function tieniDomanda(d) {
+  stato.domande = [{ ...d, il: new Date().toISOString() }, ...stato.domande.filter(x => x.id !== d.id)].slice(0, 10);
+  salvaDomande();
+}
+function togliDomanda(id) {
+  stato.domande = stato.domande.filter(x => x.id !== id);
+  salvaDomande();
+}
+const tastoRispondi = id => ({ testo: 'Rispondi', dati: `data-az="rispondi" data-id="${esc(id)}"` });
+
 function faiQuelloCheHoCapito(testo, risposta, ctx) {
   const prima = foto();
+  if (ctx.riprova) togliDomanda(ctx.riprova);
+  const vecchia = ctx.rispondeA ? stato.domande.find(x => x.id === ctx.rispondeA) : null;
+  // un racconto solo, senza il dettaglio (la voce a volte lo dimentica): il dettaglio sono le parole dette, così non si perde
+  const racconti = (risposta.azioni || []).filter(a => a && (a.tipo === 'racconto' || (a.tipo === 'privata' && pulito(a.testo))));
+  if (!vecchia && racconti.length === 1 && !pulito(racconti[0].dettaglio) && pulito(racconti[0].gruppo || racconti[0].testo)) racconti[0].dettaglio = testo;
   const { gruppi, dubbi, segnalazioni } = applicaAzioni(risposta.azioni);
   for (const s of segnalazioni) {
     db.segnala({ testo: s, schermata: ctx.dove, versione_app: db.versione(), dispositivo: dispositivo() }).catch(() => avvisa('La segnalazione non è partita.'));
@@ -1393,9 +1493,15 @@ function faiQuelloCheHoCapito(testo, risposta, ctx) {
   }
   if (risposta.non_capito) dubbi.push(String(risposta.non_capito));
   const cambiato = foto() !== prima;
-  if (!gruppi.length && !dubbi.length) { avvisa(`Non ho capito: «${testo}»`); return; }
-  if (!gruppi.length) { mostraCapito([{ luogo: '', righe: dubbi }], null, 'Non ho capito'); return; }   // niente è cambiato
-  if (dubbi.length) gruppi.push({ luogo: 'Non ho capito', righe: dubbi });
+  // la risposta chiude la domanda di prima; se manca ancora qualcosa, il dettato (con la risposta) resta con la domanda nuova
+  if (vecchia) togliDomanda(vecchia.id);
+  const id = vecchia ? vecchia.id : db.nuovoId();
+  const tutto = vecchia ? `${vecchia.testo}\n\nAlla domanda «${vecchia.domande.join(' · ')}» il Sifu risponde: ${testo}` : testo;
+  const { rispondeA: _r, riprova: _p, ...ctxDomanda } = vecchia ? vecchia.ctx : ctx;
+  if (!gruppi.length && !dubbi.length) dubbi.push('non ho capito cosa fare');
+  if (dubbi.length) tieniDomanda({ id, testo: tutto, domande: dubbi, ctx: ctxDomanda });
+  if (!gruppi.length) { pulisciPila(); disegna(); mostraCapito([{ luogo: '', righe: dubbi, tasto: tastoRispondi(id) }], cambiato ? prima : null, 'Mi serve sapere'); return; }
+  if (dubbi.length) gruppi.push({ luogo: 'Mi serve sapere', righe: dubbi, tasto: tastoRispondi(id) });
   pulisciPila();
   disegna();
   mostraCapito(gruppi, cambiato ? prima : null);
@@ -1403,26 +1509,29 @@ function faiQuelloCheHoCapito(testo, risposta, ctx) {
 }
 
 // Quello che sa la voce: oggi, dove si è, le lezioni delle ultime due settimane, gli allievi, i corsi, le forme
-function descrivi(l) {
+function descrivi(l, intero) {
   const lezione = {
     id: l.id, giorno: l.giorno, ora: `${l.inizio}-${l.tipo === 'corso' ? l.fineCorso : l.fine}`, tipo: l.tipo,
     stato: l.nonFatta ? 'non fatta' : l.fatto ? 'raccontata' : iniziata(l) ? 'da raccontare' : 'non ancora cominciata',
   };
   if (l.tipo === 'corso') Object.assign(lezione, { corso: l.corso, iscritti: iscrittiDi(l), assenti: l.appello ? l.appello.assenti : null, senza_scheda: (l.appello && l.appello.senzaScheda) || [] });
   else lezione.allievo = l.allievo;
-  if (l.fatto) lezione.fatto = l.tipo === 'corso' ? { gruppo: l.fatto.gruppo, soli: l.fatto.soli.map(s => ({ allievo: s.chi, cosa: s.cosa })) } : { testo: l.fatto.testo };
+  const d = x => (intero && x.dettaglio ? { dettaglio: x.dettaglio } : {});
+  if (l.fatto) lezione.fatto = l.tipo === 'corso' ? { gruppo: l.fatto.gruppo, ...d(l.fatto), soli: l.fatto.soli.map(s => ({ allievo: s.chi, cosa: s.cosa, ...d(s) })) } : { testo: l.fatto.testo, ...d(l.fatto) };
   if (l.previsto) lezione.previsto = l.previsto;
   if (l.nonFatta && l.motivo) lezione.motivo = l.motivo;
   return lezione;
 }
 function contestoVoce(ctx) {
+  const domanda = ctx.rispondeA ? stato.domande.find(x => x.id === ctx.rispondeA) : null;
   return {
+    ...(domanda ? { risposta: { prima: domanda.testo, domande: domanda.domande } } : {}),
     oggi: OGGI, ora: stato.ora, giorno: dataLunga(OGGI), mese: MESE,
     dove: ctx.tipo === 'lezione' ? 'lezione' : ctx.scheda ? 'scheda' : ctx.sezione,
     lezione: ctx.tipo === 'lezione' ? ctx.id : null,
     allievo: ctx.scheda,
     lezioni: stato.lezioni.filter(l => l.giorno >= sposta(OGGI, -14) && l.giorno <= OGGI)
-      .sort((a, b) => (a.giorno + a.inizio).localeCompare(b.giorno + b.inizio)).map(descrivi),
+      .sort((a, b) => (a.giorno + a.inizio).localeCompare(b.giorno + b.inizio)).map(l => descrivi(l, l.giorno >= sposta(OGGI, -3) || l.id === ctx.id)),
     allievi: stato.allievi.map(a => ({ nome: a.nome, corsi: a.corsi, private: a.private, non_viene_piu: a.uscito })),
     corsi: Object.entries(CORSI).map(([corso, c]) => ({ corso, prezzo: c.prezzo, giorni: giorniCorso(c), orario: c.orario, settimane: c.settimane })),
     prezzo_privata: IMP.prezzoPrivata, tesseramento: IMP.tesseramento,
@@ -1964,6 +2073,15 @@ document.addEventListener('click', e => {
     case 'annulla': annulla(); break;
     // Allievi
     case 'filtro': stato.filtro = t.dataset.v; disegnaLista(); break;
+    case 'rispondi': {
+      const d = stato.domande.find(x => x.id === t.dataset.id);
+      if (!d) break;
+      $('avviso-posto').innerHTML = '';
+      if (d.errore) capisci({ id: db.nuovoId(), testo: d.testo, ctx: { ...d.ctx, riprova: d.id } });
+      else apriVoce({ ...d.ctx, rispondeA: d.id });
+      break;
+    }
+    case 'lascia': togliDomanda(t.dataset.id); disegna(); break;
     case 'mostra-usciti': stato.mostraUsciti = !stato.mostraUsciti; disegnaLista(); break;
     case 'scheda': $('sopra2').innerHTML = ''; stato.datiAperti = false; apri({ tipo: 'scheda', nome: t.dataset.nome }); break;
     case 'dati': stato.datiAperti = !stato.datiAperti; disegnaPila(); break;
@@ -2244,6 +2362,7 @@ async function entra() {
   if (!(await carica())) { mostraAccesso('entra'); $('a-errore').textContent = 'Senza rete: riprova quando torna.'; return; }
   $('accesso').hidden = true;
   disegna();
+  stato.domande = leggiDomande();
   stato.inAttesa = (await registrazioni.tutte().catch(() => [])).map(r => ({ id: r.id, ctx: r.ctx }));
   if (stato.inAttesa.length) { disegna(); elaboraAttese(); }
   sincronizzaPush();
@@ -2270,7 +2389,7 @@ $('apertura').addEventListener('click', chiudiApertura);
 setTimeout(chiudiApertura, 1400);
 
 // Solo in locale, per le prove automatiche (come nel prototipo)
-if (['localhost', '127.0.0.1'].includes(location.hostname)) globalThis.__app = { stato, IMP, CORSI, faiQuelloCheHoCapito, foto, ricarica, capisci };
+if (['localhost', '127.0.0.1'].includes(location.hostname)) globalThis.__app = { stato, IMP, CORSI, faiQuelloCheHoCapito, foto, ricarica, capisci, riordina: db.riordina, contestoVoce };
 const RECUPERO = /type=recovery/.test(location.hash);    // il link "scegli la password" dell'email
 document.documentElement.dataset.tema = IMP.tema;
 registraServiceWorker();

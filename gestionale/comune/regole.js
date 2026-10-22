@@ -109,6 +109,8 @@ export function lezioniDeiCorsi(corsi, primoGiorno, oggi, esistenti) {
 }
 
 // --- Dal database e verso il database ----------------------------------------
+// Il racconto: il titolo corto (gruppo, cosa, testo) e, se c'è, il dettaglio con le parole del Sifu (Simone, 22/10)
+const conDettaglio = (o, d) => (String(d || '').trim() ? { ...o, dettaglio: String(d).trim() } : o);
 const euro = cent => cent / 100;
 const cent = e => Math.round(Number(e || 0) * 100);
 const hhmm = s => String(s || '').slice(0, 5);
@@ -168,8 +170,8 @@ export function daDatabase({ allievi = [], lezioni = [], pagamenti = [] }) {
     if (l.appello && r.presenti_senza_scheda && r.presenti_senza_scheda.length) l.appello.senzaScheda = [...r.presenti_senza_scheda];
     if (r.fatto) {
       l.fatto = r.tipo === 'corso'   // chi lavora da solo: un allievo, o un nome senza scheda
-        ? { gruppo: r.fatto.gruppo || '', soli: (r.fatto.soli || []).map(s => ({ chi: nome(s.allievo_id) || s.nome, cosa: s.cosa })).filter(s => s.chi) }
-        : { testo: r.fatto.testo || '' };
+        ? conDettaglio({ gruppo: r.fatto.gruppo || '', soli: (r.fatto.soli || []).map(s => conDettaglio({ chi: nome(s.allievo_id) || s.nome, cosa: s.cosa }, s.dettaglio)).filter(s => s.chi) }, r.fatto.dettaglio)
+        : conDettaglio({ testo: r.fatto.testo || '' }, r.fatto.dettaglio);
     }
     if (r.previsto) l.previsto = r.previsto;
     if (r.non_fatta) { l.nonFatta = true; if (r.motivo) l.motivo = r.motivo; }
@@ -207,7 +209,11 @@ export function versoDatabase({ allievi, lezioni, imp, testi = {} }) {
     if (vuota) continue;
     const corso = l.tipo === 'corso';
     let fatto = null;
-    if (l.fatto) fatto = corso ? { gruppo: l.fatto.gruppo, soli: l.fatto.soli.map(s => (idDi.has(s.chi) ? { allievo_id: idDi.get(s.chi), cosa: s.cosa } : { nome: s.chi, cosa: s.cosa })) } : { testo: l.fatto.testo };
+    if (l.fatto) {
+      fatto = corso
+        ? conDettaglio({ gruppo: l.fatto.gruppo, soli: l.fatto.soli.map(s => conDettaglio(idDi.has(s.chi) ? { allievo_id: idDi.get(s.chi), cosa: s.cosa } : { nome: s.chi, cosa: s.cosa }, s.dettaglio)) }, l.fatto.dettaglio)
+        : conDettaglio({ testo: l.fatto.testo }, l.fatto.dettaglio);
+    }
     righeLezioni.set(l.id, {
       id: l.id, giorno: l.giorno, tipo: l.tipo, corso: corso ? l.corso : null, allievo_id: corso ? null : (idDi.get(l.allievo) || null),
       inizio: l.inizio, fine: corso ? l.fineCorso : l.fine, ore: l.ore ?? 1,

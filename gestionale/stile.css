@@ -513,3 +513,11 @@ button.colonna:active i { opacity: 0.7; }
 /* Un tasto dentro "Ho capito così": WhatsApp e le notifiche vogliono un tocco del Sifu */
 .capito .capito-tasto { display: block; margin-top: 6px; min-height: 44px; padding: 0 14px; border-radius: 10px; background: var(--oro); color: var(--inchiostro); }
 :root[data-tema="scuro"] .capito .capito-tasto { background: #8b4a2f; color: #f1e9df; }
+/* Le domande in sospeso, in cima a Oggi (Simone, 22/10): il dettato non si butta */
+.domanda { padding: 10px 0; border-bottom: 1px solid var(--linea); }
+.domanda .titolo { font-weight: 700; }
+.domanda .riga { color: var(--muto); }
+.tasti-domanda { display: flex; align-items: center; gap: 12px; margin-top: 6px; }
+/* Il dettaglio del racconto, intero, nella lezione aperta */
+.testo-blocco.dettaglio { margin-top: 6px; line-height: 1.5; }
+.testo-blocco.dettaglio + .testo-blocco:not(.dettaglio) { margin-top: 12px; }
