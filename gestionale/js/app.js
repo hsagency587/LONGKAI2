@@ -126,6 +126,41 @@ const assentiDi = (l, nomi) => (nomi || []).map(n => conNome(n)?.nome).filter(n 
 // Il certificato: si scrive il giorno in cui l'ha fatto, la scadenza è un anno dopo (Simone, 21/10)
 function segnaCertificato(a, fatto) { a.certFatto = fatto || ''; a.cert = scadenzaCertificato(a.certFatto); }
 const valeFino = a => a.cert ? `<span class="sotto-campo">vale fino ${elide(a.cert) ? "all'" : 'al '}${dataPiena(a.cert)}</span>` : '';   // subito sotto la data (Simone, 21/10)
+// Il nome nuovo di un allievo (Simone, 22/10): cambia anche nelle lezioni e nei pannelli aperti; le ore e i pagamenti
+// restano suoi (nel database stanno col suo id). Due allievi non hanno lo stesso nome; i due protetti hanno il nome bloccato.
+// Risponde il motivo se non si può, o '' se è fatto.
+function cambiaNome(a, nuovo) {
+  const nome = String(nuovo || '').trim().replace(/ +/g, ' ');
+  if (!nome || nome === a.nome) return '';
+  if (a.protetto) return `il nome di ${a.nome} è bloccato`;
+  const altro = conNome(nome);
+  if (altro && altro !== a) return `c'è già un allievo che si chiama ${altro.nome}`;
+  const vecchio = a.nome, cambia = n => (n === vecchio ? nome : n);
+  for (const l of stato.lezioni) {
+    if (l.allievo === vecchio) l.allievo = nome;
+    if (l.iscritti) l.iscritti = l.iscritti.map(cambia);
+    if (l.appello) l.appello.assenti = l.appello.assenti.map(cambia);
+    if (l.fatto && l.fatto.soli) for (const s of l.fatto.soli) s.chi = cambia(s.chi);
+  }
+  for (const p of pila) if (p.nome === vecchio) p.nome = nome;
+  a.nome = nome;
+  stato.allievi.sort((x, y) => x.nome.localeCompare(y.nome, 'it'));
+  return '';
+}
+// Cancellare un allievo segnato male (Simone, 22/10): sparisce con i suoi pagamenti e le sue private, e dalle lezioni.
+// Per chi ha solo smesso c'è "Non viene più", che tiene la storia. Annulla lo rimette com'era. I due protetti no.
+function cancellaAllievo(a) {
+  const nome = a.nome;
+  stato.allievi.splice(stato.allievi.indexOf(a), 1);
+  for (let i = stato.lezioni.length - 1; i >= 0; i--) if (stato.lezioni[i].tipo === 'privata' && stato.lezioni[i].allievo === nome) stato.lezioni.splice(i, 1);
+  for (const l of stato.lezioni) {
+    if (l.iscritti) l.iscritti = l.iscritti.filter(n => n !== nome);
+    if (l.appello) l.appello.assenti = l.appello.assenti.filter(n => n !== nome);
+    if (l.fatto && l.fatto.soli) l.fatto.soli = l.fatto.soli.filter(s => s.chi !== nome);
+  }
+  const i = pila.findIndex(p => p.nome === nome);
+  if (i >= 0) pila.length = i;
+}
 function aggiungiAllievo(a) {   // risponde in quante lezioni di prima c'era senza scheda: da ora contano
   stato.allievi.push(a);
   stato.allievi.sort((x, y) => x.nome.localeCompare(y.nome, 'it'));
@@ -234,9 +269,10 @@ const AZIONI_VOCE = {
     const prima = aggiungiAllievo(a);
     return [{ luogo: 'Allievi', righe: [`${nome} · ${fa(a)}${a.corsi.length ? ` · ${quotaCorsi(a)} € al mese` : ''}`, ...(prima ? [lezioniDiPrima(prima)] : [])] }];
   },
-  scheda(az, dubbi) {          // i cambi nella scheda: corsi, prezzi, private, cellulare, non viene più o torna
+  scheda(az, dubbi) {          // i cambi nella scheda: nome, corsi, prezzi, private, cellulare, non viene più o torna
     const a = allievoDa(az, dubbi); if (!a) return [];
     const righe = [];
+    if (az.nome_nuovo) { const prima = a.nome, no = cambiaNome(a, az.nome_nuovo); if (no) dubbi.push(no); else if (a.nome !== prima) righe.push(`nome: ${a.nome}, prima ${prima}`); }
     for (const c of (az.aggiungi_corsi || []).map(corsoVero)) if (c && !a.corsi.includes(c)) { a.corsi.push(c); righe.push(`fa anche ${c}`); }
     for (const c of (az.togli_corsi || []).map(corsoVero)) if (c && a.corsi.includes(c)) { a.corsi = a.corsi.filter(x => x !== c); righe.push(`non fa più ${c}`); }
     let prezzi = false;
@@ -305,6 +341,13 @@ const AZIONI_VOCE = {
     }
     if (az.tema === 'chiaro' || az.tema === 'scuro') { IMP.tema = az.tema; righe.push(`tema ${az.tema}`); }
     return righe.length ? [{ luogo: 'Impostazioni', righe }] : [];
+  },
+  cancella_allievo(az, dubbi) {   // segnato per sbaglio, o doppio: via con pagamenti e private (Annulla lo rimette)
+    const a = allievoDa(az, dubbi); if (!a) return [];
+    if (a.protetto) { dubbi.push(`${a.nome} non si può cancellare`); return []; }
+    const nome = a.nome;
+    cancellaAllievo(a);
+    return [{ luogo: 'Allievi', righe: [`${nome} cancellato`, 'con i suoi pagamenti e le sue private'] }];
   },
   forma(az, dubbi) {           // dove è arrivato: quante sezioni di una forma
     const a = allievoDa(az, dubbi); if (!a) return [];
@@ -537,6 +580,8 @@ function creditoScheda(a) {      // in alto nella scheda, solo se c'è: il credi
 function dati(a) {
   const ult = ultimoPagamento(a);
   return `
+    <div class="campo"><span class="nome-campo">Nome</span>
+      <div class="campo-valore">${a.protetto ? '<span class="valore">bloccato</span>' : `<input type="text" id="c-nome" data-nome-allievo value="${esc(a.nome)}" autocomplete="off" aria-label="Nome">`}</div></div>
     <div class="campo"><span class="nome-campo">Certificato del</span>
       <div class="campo-valore colonna"><input type="date" id="c-cert" data-campo="certFatto" value="${a.certFatto || ''}" max="${OGGI}" aria-label="Certificato fatto il">${valeFino(a)}</div></div>
     ${a.corsi.map(k => `<div class="campo"><span class="nome-campo">${k}</span>
@@ -560,7 +605,9 @@ function dati(a) {
     <div class="campo"><span class="nome-campo"></span>
       <div class="campo-valore">${a.uscito
         ? '<button type="button" class="link" data-az="torna">Torna a venire</button>'
-        : '<button type="button" class="link rosso" data-az="esce">Non viene più</button>'}</div></div>`;
+        : '<button type="button" class="link rosso" data-az="esce">Non viene più</button>'}</div></div>
+    ${a.protetto ? '' : `<div class="campo"><span class="nome-campo"></span>
+      <div class="campo-valore"><button type="button" class="link rosso" data-az="cancella">Cancella</button></div></div>`}`;
 }
 
 function statoStoria(l, nome) {
@@ -1367,6 +1414,8 @@ function annulla() {
   if (!prima) return;
   const dopo = foto();
   const p = JSON.parse(prima);
+  const nomeDiPrima = new Map(p.allievi.map(a => [a.id, a.nome]));   // un nome cambiato torna com'era anche nei pannelli
+  for (const x of pila) { const a = x.nome && stato.allievi.find(y => y.nome === x.nome); if (a && nomeDiPrima.has(a.id)) x.nome = nomeDiPrima.get(a.id); }
   stato.lezioni.splice(0, stato.lezioni.length, ...p.lezioni);
   stato.allievi.splice(0, stato.allievi.length, ...p.allievi);
   for (const k of Object.keys(CORSI)) { for (const x of Object.keys(CORSI[k])) delete CORSI[k][x]; Object.assign(CORSI[k], p.imp.corsi[k]); }
@@ -1627,6 +1676,14 @@ function apriTutteForme() {
       </div>
     </div>`;
 }
+function apriCancella() {        // la domanda prima di cancellare: si perde tutto quello che è suo
+  const a = allievo(pila.at(-1).nome);
+  $('sopra2').innerHTML = velo(`Cancellare ${a.nome}`, `
+      <h2>Cancellare ${esc(a.nome)}?</h2>
+      <p class="sotto">Con i suoi pagamenti e le sue private.</p>
+      <p class="sotto">Se ha solo smesso: «Non viene più».</p>
+      <button type="button" class="rosso" data-az="cancella-si">Cancella</button>`);
+}
 function apriForma(f, daLista = false) {
   const a = allievo(pila.at(-1).nome), n = FORME.find(x => x[0] === f)[1], v = a.forme[f] || 0;
   const voci = Array.from({ length: n + 1 }, (_, i) => i);
@@ -1643,7 +1700,13 @@ function apriForma(f, daLista = false) {
 // --- Tocchi -------------------------------------------------------------
 document.addEventListener('change', e => {
   const t = e.target;
-  if (t.matches('[data-campo]')) {
+  if (t.matches('[data-nome-allievo]')) {         // il nome nuovo (Simone, 22/10)
+    const prima = foto(), a = allievo(pila.at(-1).nome), no = cambiaNome(a, t.value);
+    if (no) { t.value = a.nome; avvisa(maiuscola(no) + '.'); return; }
+    if (a.nome === JSON.parse(prima).allievi.find(x => x.id === a.id).nome) return;
+    salvato('Nome cambiato', prima);
+    disegna();
+  } else if (t.matches('[data-campo]')) {
     const prima = foto();                         // i dati non sono ancora cambiati: solo il campo
     const a = allievo(pila.at(-1).nome), k = t.dataset.campo;
     a[k] = t.type === 'number' ? Number(t.value || 0) : t.value;
@@ -1813,6 +1876,13 @@ document.addEventListener('click', e => {
       delete a.pagato[m];
       delete a.cifre[m];
       $('sopra2').innerHTML = ''; disegna(); salvato('Spunta tolta', prima);
+      break;
+    }
+    case 'cancella': apriCancella(); break;
+    case 'cancella-si': {
+      const prima = foto(), a = allievo(pila.at(-1).nome), nome = a.nome;
+      cancellaAllievo(a);
+      $('sopra2').innerHTML = ''; disegna(); salvato(`${nome} cancellato`, prima);
       break;
     }
     case 'esce': {
