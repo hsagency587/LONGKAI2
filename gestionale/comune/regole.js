@@ -44,6 +44,16 @@ export const ilData = k => `${elide(k) ? "l'" : 'il '}${dataParole(k)}`;
 export const maiuscola = s => s.charAt(0).toUpperCase() + s.slice(1);
 // Una privata annullata sparisce dall'app (Simone, 21/10): resta nel database, non si conta e non si mostra
 export const annullata = l => l.tipo === 'privata' && !!l.nonFatta && l.motivo === 'annullata';
+// Un evento (un allenamento fuori programma, Simone 26/10) è una lezione di tipo "corso" che si chiama "Evento · nome":
+// nel database non cambia niente. Non ha iscritti: chi c'era lo dice il Sifu.
+// Il costo (a persona, in euro) sta nel nome: "Evento · Allenamento domenica · €15". Le ore e il costo di un evento non entrano
+// nei corsi, nelle private e nelle ore di un allievo: stanno a parte, nelle Impostazioni (Simone, 26/10).
+export const PREFISSO_EVENTO = 'Evento · ';
+const RE_EVENTO = /^Evento · (.*?)(?: · €(\d+(?:\.\d+)?))?$/;
+export const eEvento = l => l.tipo === 'corso' && String(l.corso || '').startsWith(PREFISSO_EVENTO);
+export const nomeEvento = l => (RE_EVENTO.exec(String(l.corso)) || [])[1] ?? '';
+export const costoEvento = l => Number((RE_EVENTO.exec(String(l.corso)) || [])[2] || 0);
+export const corsoEvento = (nome, costo) => `${PREFISSO_EVENTO}${String(nome).trim()}${Number(costo) > 0 ? ` · €${Number(costo)}` : ''}`;
 // Un nome detto è di una scheda se è lo stesso (senza badare alle maiuscole), o se è solo il nome e la scheda comincia così
 export function stessoNome(detto, scheda) {
   const d = String(detto || '').trim().toLowerCase(), s = String(scheda || '').trim().toLowerCase();
@@ -205,7 +215,7 @@ export function versoDatabase({ allievi, lezioni, imp, testi = {} }) {
     const delCorso = solito && solito.giorni.includes(daChiave(l.giorno).getDay()) && !(imp.corsi[l.corso].dal && l.giorno < imp.corsi[l.corso].dal);
     // l'orario di quella sola cambiato, o una lezione in più in un altro giorno: si tiene anche senza racconto
     const comeSempre = !solito || (delCorso && l.inizio === solito.inizio && l.fineCorso === solito.fine);
-    const vuota = l.tipo === 'corso' && !l.appello && !l.fatto && !l.previsto && !l.nonFatta && comeSempre;
+    const vuota = l.tipo === 'corso' && !l.appello && !l.fatto && !l.previsto && !l.nonFatta && comeSempre && !eEvento(l);   // un evento si tiene anche vuoto
     if (vuota) continue;
     const corso = l.tipo === 'corso';
     let fatto = null;
@@ -252,7 +262,7 @@ export function creaRegole(ctx) {
     return !!l.appello && iscrittiDi(l).includes(nome) && !l.appello.assenti.includes(nome);
   }
   const lezioniDi = nome => ctx.lezioni
-    .filter(l => !annullata(l))
+    .filter(l => !annullata(l) && !eEvento(l))   // gli eventi stanno a parte
     .filter(l => l.giorno <= ctx.oggi && (l.tipo === 'privata' ? l.allievo === nome : iscrittiDi(l).includes(nome)))
     .filter(l => l.giorno < ctx.oggi || iniziata(l))
     .sort((a, b) => (b.giorno + b.inizio).localeCompare(a.giorno + a.inizio));
@@ -271,7 +281,7 @@ export function creaRegole(ctx) {
         if (!l.fatto) { c.senzaRapporto.push(l.giorno); continue; }     // non ancora raccontata: non conta
         c.private.tot++; c.private.fatte++;
       } else {
-        if (l.nonFatta) continue;
+        if (l.nonFatta || eEvento(l)) continue;
         if (!l.appello) { c.senzaRapporto.push(l.giorno); continue; }
         c.corsi.tot++;
         if (cEra(l, nome)) c.corsi.fatte++;

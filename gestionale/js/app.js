@@ -4,7 +4,7 @@
 import {
   GG, MESI, MESI3, ORDINALI, FORME, CINTURE, TESSERAMENTO, due, daChiave, sposta, dataLunga, dataMedia, dataBreve, dataCorta, elide, ilGiorno, dataPiena,
   giorniFra, lunediDi, nomeMese, etichettaSettimana, etichettaIntervallo, meseDopo, dalGiorno, dataParole, ilData, delGiorno,
-  maiuscola, adessoRoma, scadenzaCertificato, spostaAnni, annullata, stessoNome, GIORNI, orarioDi, aggiornaOrario, oreFra, lezioniDeiCorsi, impostazioniDa, daDatabase, versoDatabase, creaRegole,
+  maiuscola, adessoRoma, scadenzaCertificato, spostaAnni, annullata, PREFISSO_EVENTO, eEvento, nomeEvento, costoEvento, corsoEvento, stessoNome, GIORNI, orarioDi, aggiornaOrario, oreFra, lezioniDeiCorsi, impostazioniDa, daDatabase, versoDatabase, creaRegole,
 } from '../comune/regole.js';
 import * as db from './dati.js';
 import { apriMicrofono, estensioneDi, registrazioni } from './voce.js';
@@ -49,15 +49,15 @@ const {
   imp: IMP, get lezioni() { return stato.lezioni; }, get allievi() { return stato.allievi; },
 });
 const trova = id => stato.lezioni.find(l => l.id === id);
-const titolo = l => l.tipo === 'corso' ? `Corso ${l.corso}` : `Privata · ${l.allievo}`;
-const breve = l => l.tipo === 'corso' ? `Corso ${l.corso}` : `Priv. · ${l.allievo}`;   // nelle righe: niente a capo
+const titolo = l => eEvento(l) ? `Evento · ${nomeEvento(l)}` : l.tipo === 'corso' ? `Corso ${l.corso}` : `Privata · ${l.allievo}`;
+const breve = l => eEvento(l) ? nomeEvento(l) : l.tipo === 'corso' ? `Corso ${l.corso}` : `Priv. · ${l.allievo}`;   // nelle righe: niente a capo
 const orario = l => l.tipo === 'corso' ? (l.orarioCorso || CORSI[l.corso]?.orario || '') : `${l.inizio}-${l.fine}`;
 const quando = l => l.giorno === OGGI ? 'oggi' : dataBreve(l.giorno);
 const mancano = assenti => `${assenti.length === 1 ? 'manca' : 'mancano'} ${assenti.join(', ')}`;
 const presenti = n => `${n} ${n === 1 ? 'presente' : 'presenti'}`;
 const testoAppello = l => l.appello.assenti.length
   ? `${presenti(presentiDi(l).length)} · ${mancano(l.appello.assenti)}`
-  : `tutti presenti (${presentiDi(l).length})`;
+  : eEvento(l) ? presenti(presentiDi(l).length) : `tutti presenti (${presentiDi(l).length})`;
 const appelloBreve = l => l.appello.assenti.length > 1 ? `${presenti(presentiDi(l).length)} · mancano ${l.appello.assenti.length}` : testoAppello(l);
 const daRaccontare = () => stato.lezioni
   .filter(l => l.giorno >= PRIMO_GIORNO && l.giorno < OGGI && l.giorno >= sposta(OGGI, -14) && !l.fatto && !l.nonFatta)
@@ -205,6 +205,16 @@ function presentiAltri(l, nomi) {
   }
   if (senza.length) l.appello.senzaScheda = senza; else delete l.appello.senzaScheda;
 }
+// Un evento non ha iscritti (Simone, 26/10): per capire chi mancava la voce parte da tutti gli allievi, poi restano solo i presenti,
+// così nessuno prende un'assenza per un allenamento che non era il suo.
+function apriEvento(l, az) {
+  if (eEvento(l) && !l.appello && Array.isArray(az.assenti)) l.iscritti = stato.allievi.filter(a => !a.uscito).map(a => a.nome);
+}
+function chiudiEvento(l) {
+  if (!eEvento(l)) return;
+  if (l.appello) { l.iscritti = l.iscritti.filter(n => !l.appello.assenti.includes(n)); l.appello.assenti = []; }
+  else l.iscritti = [];
+}
 const righeAppello = l => !l.appello ? [] : [testoAppello(l), ...(l.appello.senzaScheda ? [`senza scheda: ${l.appello.senzaScheda.join(', ')}`] : [])];
 
 // Il racconto (Simone, 22/10): il titolo corto per le liste (gruppo, cosa, testo) e il dettaglio, per filo e per segno, con
@@ -244,8 +254,10 @@ const AZIONI_VOCE = {
       }
       l.fatto = conDettaglio({ gruppo: unisciTitoli(l.fatto.gruppo, corto), soli }, unisciDettaglio(l.fatto.dettaglio, dettaglio));
     } else l.fatto = conDettaglio({ gruppo: corto || titoloDa(dettaglio), soli: soliDetti }, dettaglio);
+    apriEvento(l, az);
     if (Array.isArray(az.assenti)) segnaAppello(l, assentiDi(l, az.assenti));
     if (Array.isArray(az.presenti_altri)) presentiAltri(l, az.presenti_altri);
+    chiudiEvento(l);
     const nuovi = aggiungi ? soliDetti : l.fatto.soli;
     return [{ luogo: luogoLezione(l), righe: [`gruppo: ${l.fatto.gruppo}`, ...nuovi.map(s => `da solo · ${s.chi}: ${s.cosa}`), ...righeAppello(l), ...righeParole(l)] }];
   },
@@ -266,8 +278,10 @@ const AZIONI_VOCE = {
   },
   appello(az, dubbi) {         // chi mancava: tutta la lista, anche quando si corregge
     const l = lezioneDa(az, dubbi); if (!l || l.tipo !== 'corso') return [];
+    apriEvento(l, az);
     segnaAppello(l, assentiDi(l, az.assenti));
     if (Array.isArray(az.presenti_altri)) presentiAltri(l, az.presenti_altri);
+    chiudiEvento(l);
     return [{ luogo: luogoLezione(l), righe: righeAppello(l) }];
   },
   lezione_fatta(az, dubbi) {    // "il corso c'è stato", "la privata non era annullata": torna una lezione normale
@@ -309,7 +323,7 @@ const AZIONI_VOCE = {
   },
   cancella_lezione(az, dubbi) { // una privata detta a voce per sbaglio; un corso si dice "non si è fatto", una privata del calendario si annulla
     const l = lezioneDa(az, dubbi); if (!l) return [];
-    if (l.tipo !== 'privata' || l.calendario) { dubbi.push(l.tipo === 'corso' ? 'un corso non si cancella: si dice che non si è fatto' : 'una privata del calendario si annulla, non si cancella'); return []; }
+    if ((l.tipo !== 'privata' && !eEvento(l)) || l.calendario) { dubbi.push(l.tipo === 'corso' ? 'un corso non si cancella: si dice che non si è fatto' : 'una privata del calendario si annulla, non si cancella'); return []; }
     const luogo = luogoLezione(l);
     stato.lezioni.splice(stato.lezioni.indexOf(l), 1);
     return [{ luogo, righe: ['cancellata'] }];
@@ -659,7 +673,8 @@ function bloccoDomande() {
 }
 function listaOggi() {
   const lez = stato.lezioni.filter(l => l.giorno === stato.giorno && !annullata(l)).sort((a, b) => a.inizio.localeCompare(b.inizio));
-  let html = (stato.giorno === OGGI ? bloccoDomande() : '') + (lez.length ? lez.map(l => rigaLezione(l, statoOggi(l), colonnaOra(l), true)).join('') : '<div class="vuoto-logo"><span class="logo" aria-hidden="true"></span><p class="vuoto">Niente lezioni</p></div>');
+  let html = (stato.giorno === OGGI ? bloccoDomande() : '') + (lez.length ? lez.map(l => rigaLezione(l, statoOggi(l), colonnaOra(l), true)).join('') : '<div class="vuoto-logo"><span class="logo" aria-hidden="true"></span><p class="vuoto">Niente lezioni</p></div>')
+    + '<div class="piede-lista"><button type="button" class="aggiungi" data-az="allenamento">+ Allenamento</button></div>';
   if (stato.giorno === OGGI) {
     const arretrate = daRaccontare();
     if (arretrate.length) {
@@ -675,6 +690,64 @@ function listaOggi() {
     }
   }
   return html;
+}
+
+// --- + Allenamento (Simone, 26/10) --------------------------------------
+// Una lezione che non era in programma: il Sifu dice che cos'è (corso, privata, evento), poi la racconta come tutte le altre.
+const ORA_ALLENAMENTO = { inizio: '18:00', fine: '19:00' };
+function pannelloAllenamento() {
+  const n = stato.allenamento, attivi = stato.allievi.filter(a => !a.uscito);
+  const tipi = [['corso', 'Corso'], ['privata', 'Privata'], ['evento', 'Evento']];
+  const campo = (nome, valore, largo = '') => `<div class="campo${largo}"><span class="nome-campo">${nome}</span><div class="campo-valore">${valore}</div></div>`;
+  return `
+    <div class="pannello" role="dialog" aria-modal="true" aria-label="Aggiungi un allenamento">
+      <header class="alto"><button type="button" class="indietro" data-az="chiudi">${ICONA.sx}Oggi</button></header>
+      <div class="corpo-pannello gutter">
+        <h1>Aggiungi un allenamento</h1>
+        <p class="sotto">${dataLunga(n.giorno)}</p>
+        <section class="blocco">
+          <div class="campo largo"><span class="nome-campo">Era un</span><div class="scelte">${tipi.map(([k, nome]) =>
+            `<button type="button" class="scelta" data-az="all-tipo" data-v="${k}" aria-pressed="${n.tipo === k}">${nome}</button>`).join('')}</div></div>
+          ${n.tipo === 'corso' ? `<div class="campo largo"><span class="nome-campo">Quale corso</span><div class="scelte">${Object.keys(CORSI).map(c =>
+            `<button type="button" class="scelta" data-az="all-corso" data-c="${esc(c)}" aria-pressed="${n.corso === c}">${esc(c)}</button>`).join('')}</div></div>` : ''}
+          ${n.tipo === 'privata' ? campo('Con chi', `<select data-all="allievo" aria-label="Con chi"><option value="">Scegli</option>${attivi.map(a =>
+            `<option value="${esc(a.nome)}"${n.allievo === a.nome ? ' selected' : ''}>${esc(a.nome)}</option>`).join('')}</select>`) : ''}
+          ${n.tipo === 'evento' ? campo('Nome', `<input type="text" data-all="nome" value="${esc(n.nome)}" placeholder="Allenamento" aria-label="Nome dell'evento">`) : ''}
+          ${n.tipo === 'evento' ? campo('Costo', `<input type="number" inputmode="decimal" min="0" data-all="costo" value="${n.costo}" aria-label="Costo a persona in euro"><span class="unita">€ a persona</span>`) : ''}
+          ${n.tipo ? campo('Orario', `<input type="time" data-all="inizio" value="${n.inizio}" aria-label="Dalle"><span class="unita">alle</span><input type="time" data-all="fine" value="${n.fine}" aria-label="Alle">`, ' largo') : ''}
+        </section>
+      </div>
+      <div class="piede gutter">
+        <button type="button" class="tasto grande" data-az="all-crea">Aggiungi</button>
+        <p class="sotto">Poi tocca Detta e racconta com'è andata.</p>
+      </div>
+    </div>`;
+}
+// Risponde la lezione nuova, o il motivo per cui non si può
+function creaAllenamento(n) {
+  if (!n.tipo) return 'Dimmi cos\'era: corso, privata o evento.';
+  if (!oraValida(n.inizio) || !oraValida(n.fine) || n.fine <= n.inizio) return 'L\'orario: la fine viene dopo l\'inizio.';
+  if (n.giorno < PRIMO_GIORNO || n.giorno > OGGI) return 'Un giorno fino a oggi.';
+  if (n.tipo === 'corso') {
+    if (!corsoVero(n.corso)) return 'Quale corso?';
+    const id = `corso:${corsoVero(n.corso)}:${n.giorno}`;
+    if (trova(id)) return `${corsoVero(n.corso)} il ${dataCorta(n.giorno)} c'è già: apri quella dall'elenco.`;
+    return lezioneInPiu(id, n.inizio, n.fine);
+  }
+  const base = { id: `voce:${db.nuovoId()}`, giorno: n.giorno, inizio: n.inizio, ore: oreFra(n.inizio, n.fine) };
+  let l;
+  if (n.tipo === 'privata') {
+    const a = conNome(n.allievo);
+    if (!a) return 'Con chi era la privata?';
+    if (stato.lezioni.some(x => x.tipo === 'privata' && x.allievo === a.nome && x.giorno === n.giorno && x.inizio === n.inizio)) return `La privata di ${a.nome} a quell'ora c'è già.`;
+    l = { ...base, tipo: 'privata', allievo: a.nome, fine: n.fine };
+  } else {
+    const nome = pulito(n.nome).replace(/ +/g, ' ') || 'Allenamento';
+    const costo = Math.max(0, Number(n.costo) || 0);
+    l = { ...base, tipo: 'corso', corso: corsoEvento(nome, costo), fineCorso: n.fine, orarioCorso: orarioDi(n.inizio, n.fine), iscritti: [] };
+  }
+  stato.lezioni.push(l);
+  return l;
 }
 
 // --- Allievi: la lista --------------------------------------------------
@@ -812,7 +885,7 @@ function statoStoria(l, nome) {
   return `<div class="riga ok">${esc(l.fatto.gruppo)}${suo.length ? ` · da solo: ${esc(suo.join(', '))}` : ''}</div>`;
 }
 const righeLezioni = (lez, nome) => lez.map(l => rigaLezione(l, statoStoria(l, nome),
-  { ...colonnaData(l), titolo: l.tipo === 'corso' ? `Corso ${l.corso}` : 'Privata' }, false)).join('') || '<p class="vuoto">Nessuna lezione</p>';
+  { ...colonnaData(l), titolo: eEvento(l) ? nomeEvento(l) : l.tipo === 'corso' ? `Corso ${l.corso}` : 'Privata' }, false)).join('') || '<p class="vuoto">Nessuna lezione</p>';
 
 function righePeriodi(a, lez, per) {
   const gruppi = new Map();
@@ -1320,6 +1393,7 @@ function disegnaPila() {
   else if (top.tipo === 'lezione') $('sopra').innerHTML = dettaglioLezione(trova(top.id));
   else if (top.tipo === 'periodo') $('sopra').innerHTML = periodo(top);
   else if (top.tipo === 'nuovo') $('sopra').innerHTML = nuovoForm();
+  else if (top.tipo === 'allenamento') $('sopra').innerHTML = pannelloAllenamento();
   else if (top.tipo === 'settimana-corso') $('sopra').innerHTML = pannelloSettimanaCorso(top);
   else if (top.tipo === 'mese-corso') $('sopra').innerHTML = pannelloMeseCorso(top);
   else if (top.tipo === 'private') $('sopra').innerHTML = pannelloPrivate(top);
@@ -1514,7 +1588,7 @@ function descrivi(l, intero) {
     id: l.id, giorno: l.giorno, ora: `${l.inizio}-${l.tipo === 'corso' ? l.fineCorso : l.fine}`, tipo: l.tipo,
     stato: l.nonFatta ? 'non fatta' : l.fatto ? 'raccontata' : iniziata(l) ? 'da raccontare' : 'non ancora cominciata',
   };
-  if (l.tipo === 'corso') Object.assign(lezione, { corso: l.corso, iscritti: iscrittiDi(l), assenti: l.appello ? l.appello.assenti : null, senza_scheda: (l.appello && l.appello.senzaScheda) || [] });
+  if (l.tipo === 'corso') Object.assign(lezione, { corso: eEvento(l) ? PREFISSO_EVENTO + nomeEvento(l) : l.corso, iscritti: eEvento(l) && !l.appello ? stato.allievi.filter(a => !a.uscito).map(a => a.nome) : iscrittiDi(l), assenti: l.appello ? l.appello.assenti : null, senza_scheda: (l.appello && l.appello.senzaScheda) || [] });
   else lezione.allievo = l.allievo;
   const d = x => (intero && x.dettaglio ? { dettaglio: x.dettaglio } : {});
   if (l.fatto) lezione.fatto = l.tipo === 'corso' ? { gruppo: l.fatto.gruppo, ...d(l.fatto), soli: l.fatto.soli.map(s => ({ allievo: s.chi, cosa: s.cosa, ...d(s) })) } : { testo: l.fatto.testo, ...d(l.fatto) };
@@ -1735,6 +1809,7 @@ function pannelloImpostazioni() {
           <div class="campo"><span class="nome-campo">Prezzo</span><div class="campo-valore"><input type="number" inputmode="numeric" min="0" data-imp="prezzoPrivata" value="${IMP.prezzoPrivata}" aria-label="Prezzo della privata, di solito, in euro"><span class="unita">€ a lezione</span></div></div>
           <p class="nota">Di solito. Per un allievo, nella sua scheda.</p>
         </section>
+        ${sezioneEventi()}
         <section class="blocco"><h2 class="titolo-blocco">TESSERAMENTO</h2>
           <div class="campo"><span class="nome-campo">Quota</span><div class="campo-valore"><input type="number" inputmode="numeric" min="0" data-imp="tesseramento" value="${IMP.tesseramento}" aria-label="Quota del tesseramento in euro"><span class="unita">€ all'anno</span></div></div>
           <p class="nota">Nel conto di dicembre, per ogni allievo.</p>
@@ -1773,6 +1848,44 @@ function pannelloImpostazioni() {
         </section>
       </div>
     </div>`;
+}
+// Gli eventi (Simone, 26/10): le loro ore e i loro costi stanno qui, non nei corsi né nelle private
+const oreTesto = h => `${String(Math.round(h * 100) / 100).replace('.', ',')} ${h === 1 ? 'ora' : 'ore'}`;
+const euroTesto = e => (e > 0 ? `${String(e).replace('.', ',')} €` : 'gratis');
+const eventi = () => stato.lezioni.filter(l => eEvento(l) && !l.nonFatta && l.giorno <= OGGI).sort((a, b) => (b.giorno + b.inizio).localeCompare(a.giorno + a.inizio));
+function sezioneEventi() {
+  const ev = eventi(), ore = ev.reduce((t, l) => t + l.ore, 0);
+  return `<section class="blocco"><h2 class="titolo-blocco">EVENTI</h2>
+          ${ev.length ? ev.map(l => rigaImp('imp-evento', `data-id="${esc(l.id)}"`, `${dataCorta(l.giorno)} · ${esc(nomeEvento(l))}`, `${oreTesto(l.ore)} · ${euroTesto(costoEvento(l))}`)).join('') : '<p class="nota">Nessun evento.</p>'}
+          ${ev.length ? `<p class="nota">${ev.length} ${ev.length === 1 ? 'evento' : 'eventi'} · ${oreTesto(ore)}</p>` : ''}
+          <p class="nota">Si aggiunge da Oggi, con + Allenamento.</p>
+          <p class="nota">Il costo è a persona.</p>
+          <p class="nota">Le ore non entrano nei corsi.</p>
+        </section>`;
+}
+function apriEventoImp(id) {
+  const l = trova(id); if (!l || !eEvento(l)) return;
+  const chi = l.appello ? presentiDi(l) : [];
+  $('sopra2').innerHTML = velo(titolo(l), `
+      <h2>${esc(titolo(l))}</h2>
+      <p class="sotto">${dataLunga(l.giorno)} · ${oreTesto(l.ore)}</p>
+      <div class="campo"><span class="nome-campo">Nome</span><div class="campo-valore"><input type="text" data-ev="nome" data-id="${esc(id)}" value="${esc(nomeEvento(l))}" aria-label="Nome dell'evento"></div></div>
+      <div class="campo"><span class="nome-campo">Costo</span><div class="campo-valore"><input type="number" inputmode="decimal" min="0" data-ev="costo" data-id="${esc(id)}" value="${costoEvento(l)}" aria-label="Costo a persona in euro"><span class="unita">€ a persona</span></div></div>
+      <div class="campo largo"><span class="nome-campo">Orario</span><div class="orari"><input type="time" data-ev="inizio" data-id="${esc(id)}" value="${l.inizio}" aria-label="Dalle"><span>–</span><input type="time" data-ev="fine" data-id="${esc(id)}" value="${l.fineCorso}" aria-label="Alle"></div></div>
+      <p class="sotto">${chi.length ? `C'erano: ${esc(chi.join(', '))}` : `Chi c'era: non ancora detto`}</p>
+      <button type="button" class="link" data-az="imp-evento-apri" data-id="${esc(id)}">Apri la lezione</button>`);
+}
+function cambiaEvento(t) {                // nome, costo, orario di un evento, dalle Impostazioni
+  const l = trova(t.dataset.id), k = t.dataset.ev; if (!l || !eEvento(l)) return;
+  let nome = nomeEvento(l), costo = costoEvento(l), i = l.inizio, f = l.fineCorso;
+  if (k === 'nome') nome = pulito(t.value).replace(/ +/g, ' ') || 'Allenamento';
+  else if (k === 'costo') costo = Math.max(0, Number(t.value) || 0);
+  else if (!oraValida(t.value)) return;
+  else if (k === 'inizio') i = t.value; else f = t.value;
+  if (f <= i) { avvisa("L'orario: la fine viene dopo l'inizio."); apriEventoImp(l.id); return; }
+  const prima = foto();
+  l.corso = corsoEvento(nome, costo); l.inizio = i; l.fineCorso = f; l.orarioCorso = orarioDi(i, f); l.ore = oreFra(i, f);
+  disegna(); apriEventoImp(l.id); salvato('Salvato', prima);
 }
 function apriCorsoImp(k) {       // un corso: prezzo, giorni, orario
   const c = CORSI[k];
@@ -1996,6 +2109,8 @@ document.addEventListener('change', e => {
     if (campo === 'prezzo') c.prezzo = Number(t.value || 0);
     else { tieniOrarioDiPrima(c); c[campo === 'dalle' ? 'inizio' : 'fine'] = t.value; aggiornaOrario(c); }
     disegna(); salvato('Salvato', prima);
+  } else if (t.matches('[data-ev]')) {              // un evento: nome, costo, orario
+    cambiaEvento(t);
   } else if (t.matches('[data-testo]')) {          // il testo di un messaggio
     const prima = foto();
     IMP.testi[t.dataset.testo].testo = t.value;
@@ -2009,6 +2124,7 @@ document.addEventListener('change', e => {
 document.addEventListener('input', e => {
   if (e.target.id === 'cerca') { stato.cerca = e.target.value; disegnaLista(); }
   else if (e.target.matches('[data-nuovo]')) stato.nuovo[e.target.dataset.nuovo] = e.target.type === 'number' ? Number(e.target.value || 0) : e.target.value;
+  else if (e.target.matches('[data-all]')) stato.allenamento[e.target.dataset.all] = e.target.value;
 });
 
 document.addEventListener('click', e => {
@@ -2052,6 +2168,8 @@ document.addEventListener('click', e => {
     case 'aggiorna': aggiorna(); break;
     case 'segnala': $('sopra2').innerHTML = ''; apriVoce({ tipo: 'segnala' }); break;
     case 'imp-corso': apriCorsoImp(t.dataset.k); break;
+    case 'imp-evento': apriEventoImp(t.dataset.id); break;
+    case 'imp-evento-apri': $('sopra2').innerHTML = ''; apri({ tipo: 'lezione', id: t.dataset.id }); break;
     case 'imp-tema': { const prima = foto(); IMP.tema = t.dataset.v; disegna(); salvato(t.dataset.v === 'scuro' ? 'Tema scuro' : 'Tema chiaro', prima); break; }
     case 'imp-giorno': {
       const c = CORSI[t.dataset.k], g = Number(t.dataset.g);
@@ -2154,6 +2272,23 @@ document.addEventListener('click', e => {
     }
     case 'torna': { const prima = foto(); allievo(pila.at(-1).nome).uscito = false; disegna(); salvato('Torna a venire', prima); break; }
     case 'nuovo': stato.nuovo = { nome: '', cell: '', fa: [], privata: IMP.prezzoPrivata, privateMese: 4, certFatto: '' }; apri({ tipo: 'nuovo' }); break;
+    case 'allenamento': stato.allenamento = { tipo: '', giorno: stato.giorno, corso: '', allievo: '', nome: '', costo: 0, ...ORA_ALLENAMENTO }; apri({ tipo: 'allenamento' }); break;
+    case 'all-tipo': stato.allenamento.tipo = t.dataset.v; disegnaPila(); break;
+    case 'all-corso': {
+      const c = CORSI[t.dataset.c];
+      Object.assign(stato.allenamento, { corso: t.dataset.c, inizio: c.inizio, fine: c.fine });
+      disegnaPila();
+      break;
+    }
+    case 'all-crea': {
+      const n = stato.allenamento, prima = foto();
+      const l = creaAllenamento(n);
+      if (!l || typeof l === 'string') { avvisa(l || 'Un giorno fino a oggi.'); break; }
+      pila.length = 0; stato.giorno = l.giorno; $('sopra2').innerHTML = ''; disegna();
+      document.getElementById(`lez-${l.id}`)?.scrollIntoView({ block: 'nearest' });
+      salvato('Allenamento aggiunto', prima);
+      break;
+    }
     case 'nuovo-fa': {
       const c = t.dataset.c, f = stato.nuovo.fa;
       stato.nuovo.fa = f.includes(c) ? f.filter(x => x !== c) : [...f, c];

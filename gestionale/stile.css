@@ -166,6 +166,10 @@ main::-webkit-scrollbar, .corpo-pannello::-webkit-scrollbar, .foglio::-webkit-sc
 .campo input { font: inherit; font-size: 16px; min-width: 0; height: 40px; border: 1px solid var(--linea); border-radius: 8px; padding: 0 10px; background: var(--carta); color: var(--inchiostro); }
 .campo input[type="number"] { width: 72px; flex: none; }
 .campo input[type="date"], .campo input[type="tel"], .campo input[type="text"], .campo input[type="month"] { flex: 1; width: 100%; }
+.campo input[type="time"] { flex: none; width: 108px; }
+.campo-valore select { flex: 1; width: 100%; }
+.piede-lista { display: flex; justify-content: center; padding: 12px 0 16px; }
+.piede-lista .aggiungi { background: var(--oro); color: var(--bruno); }
 .campo .unita { font-size: 15px; color: var(--muto); }
 .scelte { display: flex; gap: 6px; }
 .scelta { min-height: 38px; padding: 0 12px; border-radius: 19px; border: 1px solid var(--terra); color: var(--terra); font-size: 15px; white-space: nowrap; }
